@@ -45,7 +45,7 @@ const Auth = (() => {
     saveSession(user);
     _startSessionTimer();
     _renderShell(user);
-    addAudit('Login', `${esc(user.name || user.u)} signed in as ${role}`, user.u, 'var(--green)');
+    addAudit('Login', `${esc(user.name || user.u)} signed in as ${user.role}`, user.u, 'var(--green)');
   }
 
   // ── Logout ────────────────────────────────────────────

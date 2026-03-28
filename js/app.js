@@ -615,7 +615,7 @@ function _profFaculty(root, user) {
   if (!f) { root.innerHTML = `<div class="empty-state"><div class="empty-ico">👤</div><div class="empty-title">Profile not found</div></div>`; return; }
 
   const allCourses   = DB.g('courses');
-  const myCourses    = allCourses.filter(c => c.fid===f.id || c.facId===f.id);
+  const myCourses    = allCourses.filter(c => c.fid===f.id);
   const allEnrolls   = DB.g('enrollments');
   const myStudentIds = new Set(allEnrolls.filter(e=>myCourses.some(c=>c.id===e.cid)).map(e=>e.sid));
   const assigns      = DB.g('assignments').filter(a=>myCourses.some(c=>c.id===a.cid));
@@ -675,7 +675,7 @@ function _profFaculty(root, user) {
         const c = allCourses.find(x=>x.id===a.cid);
         const ci = allCourses.indexOf(c) % _DEPT_COLORS.length;
         return _profCourseRow(c?.code||'?', a.title, `Due ${fmtDate(a.due)}`,
-          `<span class="bx bx-am" style="font-size:11px">${a.maxMarks||100} marks</span>`, _DEPT_COLORS[ci]);
+          `<span class="bx bx-am" style="font-size:11px">${a.marks||100} marks</span>`, _DEPT_COLORS[ci]);
       }).join('')
     : `<div class="empty-state" style="padding:20px"><div class="empty-title">No assignments</div></div>`;
 

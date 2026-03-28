@@ -1,7 +1,7 @@
 {
-  "name": "Academe",
+  "name": "Academe — Academic Management System",
   "short_name": "Academe",
-  "description": "Manage students, faculty, courses, grades, and more",
+  "description": "Academic management platform for educational institutions",
   "start_url": "./index.html",
   "display": "standalone",
   "orientation": "any",
@@ -10,15 +10,9 @@
   "categories": ["education", "productivity"],
   "icons": [
     {
-      "src": "icons/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "icons/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
       "purpose": "any maskable"
     }
   ],

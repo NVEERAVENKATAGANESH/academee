@@ -38,12 +38,6 @@ function rFDash() {
 
   const dist = { A:0, B:0, C:0, D:0, F:0 };
   mg.forEach(g => dist[grade(g.marks)]++);
-  Charts.bar('ch-fgrade',
-    Object.keys(dist), Object.values(dist).map((v, i) => v),
-    [{ data: Object.values(dist), backgroundColor: Charts.P.grade, borderRadius: 4 }],
-    { plugins:{ legend:{ display:false } } }
-  );
-  // Re-call with correct signature
   Charts.make('ch-fgrade', 'bar', {
     labels: Object.keys(dist),
     datasets: [{ data: Object.values(dist), backgroundColor: Charts.P.grade, borderRadius: 4 }],
