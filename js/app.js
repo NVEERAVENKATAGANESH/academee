@@ -53,16 +53,21 @@ const PAGES = {
 function go(id) {
   // Hide all pages, deactivate all nav items
   $$('.page').forEach(p => p.classList.remove('on'));
-  $$('.ni').forEach(n => n.classList.remove('on'));
+  $$('.tn-item,.tn-di').forEach(n => n.classList.remove('on','act'));
 
   // Show target page
   const pg = $('pg-' + id);
   if (pg) pg.classList.add('on');
 
-  // Highlight nav item
-  $$('.ni').forEach(n => {
-    if ((n.getAttribute('onclick') || '').includes("'" + id + "'")) n.classList.add('on');
+  // Highlight nav item; if it's inside a dropdown, also mark parent trigger
+  $$('.tn-item,.tn-di').forEach(n => {
+    if ((n.getAttribute('onclick') || '').includes("'" + id + "'")) {
+      n.classList.add('on');
+      const grp = n.closest('.tn-grp');
+      if (grp) grp.querySelector('.tn-item')?.classList.add('act');
+    }
   });
+  tnClose();
 
   // Update state
   State.set('page', id);
@@ -107,9 +112,15 @@ function init() {
     $('app').style.display   = 'none';
   }
 
-  // Escape key closes sign-in modal
+  // Escape / outside-click closes dropdowns and modals
   document.addEventListener('keydown', e => {
-    if (e.key === 'Escape' && $('land-modal')?.classList.contains('show')) hideSignIn();
+    if (e.key === 'Escape') {
+      closeUserMenu();
+      if ($('land-modal')?.classList.contains('show')) hideSignIn();
+    }
+  });
+  document.addEventListener('click', e => {
+    if (!$('hdr-user-wrap')?.contains(e.target)) closeUserMenu();
   });
 
   // Cookie notice
@@ -133,12 +144,9 @@ function init() {
     });
   }
 
-  // Close mobile sidebar on window resize to desktop
-  window.addEventListener('resize', () => {
-    if (window.innerWidth > 768) {
-      document.querySelector('.sb')?.classList.remove('mob-open');
-      $('sb-overlay')?.classList.remove('show');
-    }
+  // Close topnav dropdowns on outside click
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.tn-grp')) tnClose();
   });
 }
 
@@ -314,6 +322,31 @@ function quickLogin(u, p) {
 
 function goProfile() { go('myprofile'); }
 
+function toggleUserMenu() {
+  const chip = $('hdr-user-chip');
+  const dd   = $('hdr-dropdown');
+  const open = dd.classList.toggle('open');
+  chip.classList.toggle('open', open);
+  chip.setAttribute('aria-expanded', open);
+  // sync mini-avatar in dropdown
+  $('hdr-dd-av').textContent   = $('sbav').textContent;
+  $('hdr-dd-av').className     = $('sbav').className + ' hdr-dd-av';
+  $('hdr-dd-name').textContent = $('sbname').textContent;
+  $('hdr-dd-role').textContent = $('sbrole').textContent;
+}
+
+function closeUserMenu() {
+  $('hdr-dropdown')?.classList.remove('open');
+  $('hdr-user-chip')?.classList.remove('open');
+  $('hdr-user-chip')?.setAttribute('aria-expanded','false');
+}
+
+function userMenuGo(page, tab) {
+  closeUserMenu();
+  go(page);
+  if (tab) setTimeout(() => profTab(tab), 50);
+}
+
 function profTab(name) {
   $$('.prof-tab').forEach(t => t.classList.toggle('on', t.dataset.tab === name));
   $$('.prof-pane').forEach(p => p.classList.toggle('on', p.id === 'ptab-' + name));
@@ -379,6 +412,15 @@ function _profStats(items) {
       </div>
     </div>`
   ).join('')}</div>`;
+}
+
+function _profOvField(lbl, val, ico) {
+  const icoHtml = ico ? `<span style="color:var(--text4);margin-right:4px">${_PROF_ICONS[ico]||''}</span>` : '';
+  const valHtml = typeof val === 'string' && val.startsWith('<') ? val : esc(String(val??'—'));
+  return `<div class="prof-ov-field">
+    <div class="prof-ov-lbl">${icoHtml}${lbl}</div>
+    <div class="prof-ov-val">${valHtml}</div>
+  </div>`;
 }
 
 function _profField(lbl, val, ico) {
@@ -468,13 +510,13 @@ function _profNotifsPane(userId) {
   </div>`;
 }
 
+const _DEPT_COLORS = ['rgba(59,130,246,0.15)','rgba(168,85,247,0.15)','rgba(20,184,166,0.15)','rgba(245,158,11,0.15)','rgba(34,197,94,0.15)','rgba(249,115,22,0.15)'];
+
 // ── STUDENT profile ───────────────────────────────────────
 function _profStudent(root, user) {
   const s = DB.g('students').find(x => x.id === user.lid);
-  if (!s) {
-    root.innerHTML = `<div class="empty-state"><div class="empty-ico">👤</div><div class="empty-title">Profile not found</div></div>`;
-    return;
-  }
+  if (!s) { root.innerHTML = `<div class="empty-state"><div class="empty-ico">👤</div><div class="empty-title">Profile not found</div></div>`; return; }
+
   const enrs    = DB.g('enrollments').filter(e => e.sid === s.id);
   const gs      = DB.g('grades').filter(g => g.sid === s.id);
   const att     = DB.g('attendance').filter(a => a.sid === s.id);
@@ -487,89 +529,73 @@ function _profStudent(root, user) {
     gs.forEach(g => { const cr = courses.find(c => c.id === g.cid)?.cr || 3; tp += gpa(g.marks)*cr; tc += cr; });
     gpaVal = tc ? (tp/tc).toFixed(2) : null;
   }
-  const attPct = att.length
-    ? Math.round(att.reduce((sum, a) => sum + pct(a.present, a.total), 0) / att.length)
-    : null;
-  const totalCredits = enrs.reduce((sum, e) => sum + (courses.find(c => c.id === e.cid)?.cr || 0), 0);
+  const attPct       = att.length ? Math.round(att.reduce((s,a) => s + pct(a.present,a.total),0)/att.length) : null;
+  const totalCredits = enrs.reduce((s,e) => s + (courses.find(c=>c.id===e.cid)?.cr||0), 0);
   const feesPending  = fees.filter(f => f.status !== 'Paid').length;
   const st           = standing(gpaVal ? parseFloat(gpaVal) : null);
-  const initials     = (s.fn[0] || '') + (s.ln[0] || '');
-
-  const attColor  = attPct == null ? '' : attPct >= 75 ? 'var(--green)' : attPct >= 60 ? 'var(--amber)' : 'var(--red)';
-  const gpaColor  = !gpaVal ? '' : parseFloat(gpaVal) >= 3.5 ? 'var(--green)' : parseFloat(gpaVal) >= 2.0 ? 'var(--blue)' : 'var(--amber)';
+  const initials     = (s.fn[0]||'') + (s.ln[0]||'');
+  const attColor     = attPct==null?'':attPct>=75?'var(--green)':attPct>=60?'var(--amber)':'var(--red)';
+  const gpaColor     = !gpaVal?'':parseFloat(gpaVal)>=3.5?'var(--green)':parseFloat(gpaVal)>=2.0?'var(--blue)':'var(--amber)';
 
   const hero = _profHero(
-    initials, `av ${avCls(s.id % 5)}`,
-    `${s.fn} ${s.ln}`,
-    [stuId(s.id), s.dept, `Year ${s.yr}`],
-    `<span class="bx ${s.status === 'Active' ? 'bx-gr' : 'bx-gy'}">${esc(s.status)}</span>
-     ${gpaVal ? `<span class="bx bx-bl">GPA ${gpaVal}</span>` : ''}
+    initials, `av ${avCls(s.id%5)}`, `${s.fn} ${s.ln}`,
+    [stuId(s.id), s.dept, `Year ${s.yr}`, `Admitted ${s.adm||'—'}`],
+    `<span class="bx ${s.status==='Active'?'bx-gr':'bx-gy'}">${esc(s.status)}</span>
+     ${gpaVal?`<span class="bx bx-bl">GPA ${gpaVal}</span>`:''}
      <span class="bx ${st.cls}">${esc(st.label)}</span>`,
-    `<button class="btn btn-g" onclick="profTab('security')">Security</button>
-     <button class="btn btn-g" onclick="go('myfees')">My Fees</button>`
+    `<button class="btn btn-p" onclick="profTab('security')">${_PROF_ICONS.lock} Security</button>
+     <button class="btn btn-g" onclick="go('myfees')">${_PROF_ICONS.chart} My Fees</button>`
   );
 
   const stats = _profStats([
-    [enrs.length,                       'Enrolled Courses',  ''],
-    [gpaVal || '—',                     'Cumulative GPA',    gpaColor],
-    [attPct != null ? attPct + '%' : '—','Avg Attendance',   attColor],
-    [totalCredits,                      'Total Credits',     ''],
+    [enrs.length,                         'Enrolled Courses', '',        _PROF_ICONS.book,  'rgba(59,130,246,0.12)'],
+    [gpaVal||'—',                         'Cumulative GPA',   gpaColor,  _PROF_ICONS.chart, 'rgba(34,197,94,0.12)'],
+    [attPct!=null?attPct+'%':'—',         'Avg Attendance',   attColor,  _PROF_ICONS.check, 'rgba(245,158,11,0.12)'],
+    [totalCredits,                        'Total Credits',    '',        _PROF_ICONS.id,    'rgba(168,85,247,0.12)'],
   ]);
 
   const tabs = _profTabs([
-    { id: 'overview',  label: 'Overview'  },
-    { id: 'academic',  label: 'Academic'  },
-    { id: 'activity',  label: 'Activity'  },
-    { id: 'security',  label: 'Security'  },
+    {id:'overview', label:'Overview'},
+    {id:'academic', label:'Academic'},
+    {id:'activity', label:'Activity'},
+    {id:'security', label:'Security'},
   ]);
 
   const overviewPane = `<div class="prof-pane on" id="ptab-overview">
-    <div class="two-col">
-      ${_profCard('Personal Information', [
-        _profField('Full Name',     `${s.fn} ${s.ln}`),
-        _profField('Email',         s.em),
-        _profField('Phone',         s.ph  || '—'),
-        _profField('Date of Birth', s.dob ? fmtDate(s.dob) : '—'),
-        _profField('Address',       s.addr || '—'),
-      ].join(''))}
-      ${_profCard('Academic Information', [
-        _profField('Student ID',       stuId(s.id)),
-        _profField('Department',       s.dept),
-        _profField('Year of Study',    'Year ' + s.yr),
-        _profField('Admission Year',   s.adm || '—'),
-        _profField('Academic Standing',`<span class="bx ${st.cls}">${st.label}</span>`),
-        _profField('Fee Status', feesPending
+    ${_profCard('Profile Overview', `<div class="prof-ov-grid">
+      ${_profOvField('Full Name',       `${s.fn} ${s.ln}`, 'user')}
+      ${_profOvField('Student ID',       stuId(s.id),       'id')}
+      ${_profOvField('Email',            s.em,              'email')}
+      ${_profOvField('Department',       s.dept,            'dept')}
+      ${_profOvField('Phone',            s.ph||'—',         'phone')}
+      ${_profOvField('Year of Study',   'Year '+s.yr,       'book')}
+      ${_profOvField('Date of Birth',    s.dob?fmtDate(s.dob):'—', 'cal')}
+      ${_profOvField('Admission Year',   s.adm||'—',        'cal')}
+      ${_profOvField('Address',          s.addr||'—',       'addr')}
+      ${_profOvField('Academic Standing',`<span class="bx ${st.cls}">${st.label}</span>`)}
+      ${_profOvField('Fee Status', feesPending
           ? `<span class="bx bx-rd">${feesPending} pending</span>`
-          : `<span class="bx bx-gr">All clear</span>`),
-      ].join(''))}
-    </div>
+          : `<span class="bx bx-gr">All clear</span>`)}
+    </div>`)}
   </div>`;
 
   const enrolledRows = enrs.length
     ? enrs.map(e => {
-        const c = courses.find(x => x.id === e.cid);
-        if (!c) return '';
-        const g = gs.find(x => x.cid === c.id);
-        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px">
-          <div style="display:flex;align-items:center;gap:8px">
-            <span class="bx bx-gy">${esc(c.code)}</span>
-            <span>${esc(c.name)}</span>
-          </div>
-          <div style="display:flex;align-items:center;gap:10px">
-            ${g ? gChip(grade(g.marks)) : '<span class="text4" style="font-size:11px">No grade</span>'}
-            <span class="text3" style="font-size:11px">${c.cr} cr</span>
-          </div>
-        </div>`;
+        const c = courses.find(x => x.id===e.cid); if (!c) return '';
+        const g = gs.find(x => x.cid===c.id);
+        const ci = courses.indexOf(c) % _DEPT_COLORS.length;
+        return _profCourseRow(c.code, c.name, `${c.dept} · ${c.cr} credits`,
+          `${g ? gChip(grade(g.marks)) : '<span class="text4" style="font-size:11px">No grade</span>'}`,
+          _DEPT_COLORS[ci]);
       }).join('')
     : `<div class="empty-state" style="padding:20px"><div class="empty-title">No enrollments</div></div>`;
 
   const recentGrades = gs.length
-    ? [...gs].sort((a,b) => b.id - a.id).slice(0, 6).map(g => {
-        const c = courses.find(x => x.id === g.cid);
-        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px">
-          <span>${c ? esc(c.name) : '—'}</span>
-          <div style="display:flex;gap:10px;align-items:center">${gChip(grade(g.marks))}<span class="text2 mono" style="font-size:12px">${g.marks}/100</span></div>
-        </div>`;
+    ? [...gs].sort((a,b)=>b.id-a.id).slice(0,6).map(g => {
+        const c = courses.find(x=>x.id===g.cid);
+        const ci = courses.indexOf(c) % _DEPT_COLORS.length;
+        return _profCourseRow(c?.code||'?', c?.name||'Unknown', `${g.marks}/100 marks`,
+          gChip(grade(g.marks)), _DEPT_COLORS[ci]);
       }).join('')
     : `<div class="empty-state" style="padding:20px"><div class="empty-title">No grades yet</div></div>`;
 
@@ -585,86 +611,71 @@ function _profStudent(root, user) {
 
 // ── FACULTY profile ───────────────────────────────────────
 function _profFaculty(root, user) {
-  const f = DB.g('faculty').find(x => x.id === user.lid);
-  if (!f) {
-    root.innerHTML = `<div class="empty-state"><div class="empty-ico">👤</div><div class="empty-title">Profile not found</div></div>`;
-    return;
-  }
-  const myCourses    = DB.g('courses').filter(c => c.facId === f.id);
+  const f = DB.g('faculty').find(x => x.id===user.lid);
+  if (!f) { root.innerHTML = `<div class="empty-state"><div class="empty-ico">👤</div><div class="empty-title">Profile not found</div></div>`; return; }
+
+  const allCourses   = DB.g('courses');
+  const myCourses    = allCourses.filter(c => c.fid===f.id || c.facId===f.id);
   const allEnrolls   = DB.g('enrollments');
-  const myStudentIds = new Set(allEnrolls.filter(e => myCourses.some(c => c.id === e.cid)).map(e => e.sid));
-  const assigns      = DB.g('assignments').filter(a => myCourses.some(c => c.id === a.cid));
-  const gradesEntered= DB.g('grades').filter(g => myCourses.some(c => c.id === g.cid)).length;
-  const initials     = (f.fn[0] || '') + (f.ln[0] || '');
+  const myStudentIds = new Set(allEnrolls.filter(e=>myCourses.some(c=>c.id===e.cid)).map(e=>e.sid));
+  const assigns      = DB.g('assignments').filter(a=>myCourses.some(c=>c.id===a.cid));
+  const gradesEntered= DB.g('grades').filter(g=>myCourses.some(c=>c.id===g.cid)).length;
+  const initials     = (f.fn[0]||'')+(f.ln[0]||'');
 
   const hero = _profHero(
-    initials, `av ${avCls(f.id % 5)}`,
-    `${f.fn} ${f.ln}`,
-    [facId(f.id), f.dept, f.qual || 'Faculty'],
-    `<span class="bx bx-bl">Faculty</span>
-     ${f.spec ? `<span class="bx bx-gy">${esc(f.spec)}</span>` : ''}`,
-    `<button class="btn btn-g" onclick="profTab('security')">Security</button>
-     <button class="btn btn-g" onclick="go('mycourses')">My Courses</button>`
+    initials, `av ${avCls(f.id%5)}`, `${f.fn} ${f.ln}`,
+    [facId(f.id), f.dept, f.qual||'Faculty', f.spec||''],
+    `<span class="bx bx-bl">Faculty</span>${f.spec?`<span class="bx bx-gy">${esc(f.spec)}</span>`:''}`,
+    `<button class="btn btn-p" onclick="profTab('security')">${_PROF_ICONS.lock} Security</button>
+     <button class="btn btn-g" onclick="go('mycourses')">${_PROF_ICONS.book} My Courses</button>`
   );
 
   const stats = _profStats([
-    [myCourses.length,         'Courses Teaching',    ''],
-    [myStudentIds.size,        'Students',            ''],
-    [assigns.length,           'Assignments',         ''],
-    [gradesEntered,            'Grades Entered',      ''],
+    [myCourses.length,    'Courses Teaching', '', _PROF_ICONS.book,  'rgba(59,130,246,0.12)'],
+    [myStudentIds.size,   'Total Students',   '', _PROF_ICONS.user,  'rgba(34,197,94,0.12)'],
+    [assigns.length,      'Assignments Set',  '', _PROF_ICONS.check, 'rgba(168,85,247,0.12)'],
+    [gradesEntered,       'Grades Entered',   '', _PROF_ICONS.chart, 'rgba(245,158,11,0.12)'],
   ]);
 
   const tabs = _profTabs([
-    { id: 'overview',  label: 'Overview'  },
-    { id: 'teaching',  label: 'Teaching'  },
-    { id: 'activity',  label: 'Activity'  },
-    { id: 'security',  label: 'Security'  },
+    {id:'overview', label:'Overview'},
+    {id:'teaching', label:'Teaching'},
+    {id:'activity', label:'Activity'},
+    {id:'security', label:'Security'},
   ]);
 
   const overviewPane = `<div class="prof-pane on" id="ptab-overview">
-    <div class="two-col">
-      ${_profCard('Personal Information', [
-        _profField('Full Name',       `${f.fn} ${f.ln}`),
-        _profField('Email',           f.em),
-        _profField('Phone',           f.ph   || '—'),
-        _profField('Department',      f.dept),
-        _profField('Qualification',   f.qual || '—'),
-        _profField('Specialization',  f.spec || '—'),
-      ].join(''))}
-      ${_profCard('Professional Summary', [
-        _profField('Faculty ID',        facId(f.id)),
-        _profField('Department',        f.dept),
-        _profField('Active Courses',    myCourses.length),
-        _profField('Total Students',    myStudentIds.size),
-        _profField('Assignments Set',   assigns.length),
-        _profField('Grades Entered',    gradesEntered),
-      ].join(''))}
-    </div>
+    ${_profCard('Profile Overview', `<div class="prof-ov-grid">
+      ${_profOvField('Full Name',       `${f.fn} ${f.ln}`, 'user')}
+      ${_profOvField('Faculty ID',       facId(f.id),       'id')}
+      ${_profOvField('Email',            f.em,              'email')}
+      ${_profOvField('Department',       f.dept,            'dept')}
+      ${_profOvField('Phone',            f.ph||'—',         'phone')}
+      ${_profOvField('Qualification',    f.qual||'—',       'id')}
+      ${_profOvField('Specialization',   f.spec||'—',       'book')}
+      ${_profOvField('Joined',           f.join||'—',       'cal')}
+      ${_profOvField('Active Courses',   myCourses.length,  'book')}
+      ${_profOvField('Total Students',   myStudentIds.size, 'user')}
+      ${_profOvField('Assignments Set',  assigns.length,    'check')}
+      ${_profOvField('Grades Entered',   gradesEntered,     'chart')}
+    </div>`)}
   </div>`;
 
   const courseRows = myCourses.length
     ? myCourses.map(c => {
-        const enrolled = allEnrolls.filter(e => e.cid === c.id).length;
-        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px">
-          <div style="display:flex;align-items:center;gap:8px">
-            <span class="bx bx-gy">${esc(c.code)}</span>
-            <span>${esc(c.name)}</span>
-          </div>
-          <div style="display:flex;gap:10px">
-            <span class="text2">${enrolled} students</span>
-            <span class="text3">${c.cr} cr</span>
-          </div>
-        </div>`;
+        const enrolled = allEnrolls.filter(e=>e.cid===c.id).length;
+        const ci = allCourses.indexOf(c) % _DEPT_COLORS.length;
+        return _profCourseRow(c.code, c.name, `${enrolled} students · ${c.cr} credits · ${c.sem||''}`,
+          `<span class="bx bx-gy" style="font-size:11px">${c.cr} cr</span>`, _DEPT_COLORS[ci]);
       }).join('')
     : `<div class="empty-state" style="padding:20px"><div class="empty-title">No courses assigned</div></div>`;
 
   const assignRows = assigns.length
-    ? [...assigns].sort((a, b) => b.id - a.id).slice(0, 6).map(a => {
-        const c = DB.g('courses').find(x => x.id === a.cid);
-        return `<div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px">
-          <span>${esc(a.title)}</span>
-          <span class="text3">${c ? esc(c.code) : '—'} · ${fmtDate(a.due)}</span>
-        </div>`;
+    ? [...assigns].sort((a,b)=>b.id-a.id).slice(0,6).map(a => {
+        const c = allCourses.find(x=>x.id===a.cid);
+        const ci = allCourses.indexOf(c) % _DEPT_COLORS.length;
+        return _profCourseRow(c?.code||'?', a.title, `Due ${fmtDate(a.due)}`,
+          `<span class="bx bx-am" style="font-size:11px">${a.maxMarks||100} marks</span>`, _DEPT_COLORS[ci]);
       }).join('')
     : `<div class="empty-state" style="padding:20px"><div class="empty-title">No assignments</div></div>`;
 
@@ -684,84 +695,77 @@ function _profAdmin(root, user) {
   const totalFaculty  = DB.g('faculty').length;
   const totalCourses  = DB.g('courses').length;
   const allAudit      = DB.g('audit');
-  const myAudit       = allAudit.filter(a => a.user === user.u);
+  const myAudit       = allAudit.filter(a => a.user===user.u);
   const storageKB     = DB.usageKB();
-  const initials      = (user.name || user.u).slice(0, 2).toUpperCase();
+  const initials      = (user.name||user.u).slice(0,2).toUpperCase();
 
   const hero = _profHero(
-    initials, 'av av-bl',
-    user.name || user.u,
-    [`@${user.u}`, 'System Administrator'],
-    `<span class="bx bx-am">Administrator</span>
-     <span class="bx bx-gy">Full Access</span>`,
-    `<button class="btn btn-g" onclick="profTab('security')">Security</button>
-     <button class="btn btn-g" onclick="go('export')">Data Export</button>`
+    initials, 'av av-bl', user.name||user.u,
+    [`@${user.u}`, 'System Administrator', `${storageKB} KB used`],
+    `<span class="bx bx-am">Administrator</span><span class="bx bx-gy">Full Access</span>`,
+    `<button class="btn btn-p" onclick="profTab('security')">${_PROF_ICONS.lock} Security</button>
+     <button class="btn btn-g" onclick="go('export')">${_PROF_ICONS.chart} Export</button>`
   );
 
   const stats = _profStats([
-    [totalStudents,   'Students',       ''],
-    [totalFaculty,    'Faculty',        ''],
-    [totalCourses,    'Courses',        ''],
-    [myAudit.length,  'Actions Logged', ''],
+    [totalStudents,  'Students',       '', _PROF_ICONS.user,  'rgba(59,130,246,0.12)'],
+    [totalFaculty,   'Faculty',        '', _PROF_ICONS.book,  'rgba(168,85,247,0.12)'],
+    [totalCourses,   'Courses',        '', _PROF_ICONS.dept,  'rgba(20,184,166,0.12)'],
+    [myAudit.length, 'Actions Logged', '', _PROF_ICONS.chart, 'rgba(245,158,11,0.12)'],
   ]);
 
   const tabs = _profTabs([
-    { id: 'overview', label: 'Overview'    },
-    { id: 'system',   label: 'System'      },
-    { id: 'activity', label: 'My Activity' },
-    { id: 'security', label: 'Security'    },
+    {id:'overview', label:'Overview'},
+    {id:'system',   label:'System'},
+    {id:'activity', label:'My Activity'},
+    {id:'security', label:'Security'},
   ]);
 
   const overviewPane = `<div class="prof-pane on" id="ptab-overview">
-    <div class="two-col">
-      ${_profCard('Account Information', [
-        _profField('Username',     user.u),
-        _profField('Display Name', user.name || user.u),
-        _profField('Role',         'System Administrator'),
-        _profField('Access Level', 'Full Access'),
-      ].join(''))}
-      ${_profCard('System Snapshot', [
-        _profField('Total Students',  totalStudents),
-        _profField('Total Faculty',   totalFaculty),
-        _profField('Total Courses',   totalCourses),
-        _profField('Audit Entries',   allAudit.length),
-        _profField('Storage Used',    storageKB + ' KB'),
-        _profField('Current Semester',C.SEMESTER.CURRENT),
-      ].join(''))}
-    </div>
+    ${_profCard('Profile Overview', `<div class="prof-ov-grid">
+      ${_profOvField('Username',        user.u,                'user')}
+      ${_profOvField('Display Name',    user.name||user.u,     'id')}
+      ${_profOvField('Role',            'System Administrator','lock')}
+      ${_profOvField('Access Level',    'Full Access',         'check')}
+      ${_profOvField('Total Students',  totalStudents,         'user')}
+      ${_profOvField('Total Faculty',   totalFaculty,          'book')}
+      ${_profOvField('Total Courses',   totalCourses,          'dept')}
+      ${_profOvField('Audit Entries',   allAudit.length,       'chart')}
+      ${_profOvField('Storage Used',    storageKB+' KB',       'check')}
+      ${_profOvField('Current Semester',C.SEMESTER.CURRENT,    'cal')}
+    </div>`)}
   </div>`;
 
   const systemPane = `<div class="prof-pane" id="ptab-system">
-    <div class="two-col">
+    <div class="two-col" style="align-items:start">
       ${_profCard('Data Management', `
-        <p style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:16px">
-          Export all application data as CSV or JSON backup files.
-          Restoring from backup will overwrite current data.
+        <p style="font-size:13px;color:var(--text3);line-height:1.65;margin-bottom:18px">
+          Export all application data as JSON. Restoring from backup overwrites current data.
         </p>
-        <div style="display:flex;gap:8px">
-          <button class="btn btn-p" onclick="go('export')">Go to Export</button>
-          <button class="btn btn-g" onclick="go('auditlog')">View Audit Log</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-p" onclick="go('export')">${_PROF_ICONS.chart} Go to Export</button>
+          <button class="btn btn-g" onclick="go('auditlog')">${_PROF_ICONS.id} Audit Log</button>
         </div>
       `)}
-      ${_profCard('Storage Details', [
-        _profField('Used',             storageKB + ' KB'),
-        _profField('Engine',           'Browser localStorage'),
-        _profField('Students',         totalStudents + ' records'),
-        _profField('Faculty',          totalFaculty + ' records'),
-        _profField('Courses',          totalCourses + ' records'),
-        _profField('Audit cap',        C.DB.MAX_AUDIT + ' entries'),
+      ${_profCard('Storage Breakdown', [
+        _profField('Engine',     'Browser localStorage', 'check'),
+        _profField('Used',       storageKB+' KB',        'chart'),
+        _profField('Students',   totalStudents+' records','user'),
+        _profField('Faculty',    totalFaculty+' records', 'book'),
+        _profField('Courses',    totalCourses+' records', 'dept'),
+        _profField('Audit cap',  C.DB.MAX_AUDIT+' entries','id'),
       ].join(''))}
     </div>
   </div>`;
 
-  const auditRows = myAudit.slice(0, 12).map(a =>
-    `<div style="display:flex;align-items:flex-start;gap:12px;padding:9px 0;border-bottom:1px solid var(--border)">
-      <div style="width:8px;height:8px;border-radius:50%;background:${a.color||'var(--blue)'};margin-top:4px;flex-shrink:0"></div>
-      <div style="flex:1">
-        <div style="font-size:12px;font-weight:500">${esc(a.action)}</div>
-        <div style="font-size:11px;color:var(--text3);margin-top:2px">${esc(a.detail)}</div>
+  const auditRows = myAudit.slice(0,12).map(a =>
+    `<div class="prof-notif-row">
+      <div class="prof-notif-dot" style="background:${a.color||'var(--blue)'}"></div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:500">${esc(a.action)}</div>
+        <div style="font-size:12px;color:var(--text4);margin-top:2px">${esc(a.detail)}</div>
       </div>
-      <div style="font-size:10px;color:var(--text4);white-space:nowrap">${timeAgo(a.ts)}</div>
+      <div style="font-size:11px;color:var(--text4);white-space:nowrap;flex-shrink:0;margin-left:12px">${timeAgo(a.ts)}</div>
     </div>`
   ).join('') || `<div class="empty-state" style="padding:20px"><div class="empty-title">No activity yet</div></div>`;
 
@@ -771,7 +775,25 @@ function _profAdmin(root, user) {
 }
 
 // ═══════════════════════════════════════
-//  SIDEBAR TOGGLE
+//  TOPNAV DROPDOWN
+// ═══════════════════════════════════════
+function tnToggle(id) {
+  const drop = $(id);
+  if (!drop) return;
+  const isOpen = drop.classList.contains('open');
+  tnClose();
+  if (!isOpen) {
+    drop.classList.add('open');
+    drop.closest('.tn-grp')?.querySelector('.tn-item')?.classList.add('open');
+  }
+}
+function tnClose() {
+  $$('.tn-drop').forEach(d => d.classList.remove('open'));
+  $$('.tn-item').forEach(t => t.classList.remove('open'));
+}
+
+// ═══════════════════════════════════════
+//  SIDEBAR TOGGLE (legacy, no-op)
 // ═══════════════════════════════════════
 function toggleSidebar() {
   const sb  = document.querySelector('.sb');

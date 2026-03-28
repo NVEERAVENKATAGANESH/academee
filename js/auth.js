@@ -216,9 +216,10 @@ const Auth = (() => {
     $('sbrole').textContent  = { admin:'Administrator', faculty:'Faculty Member', student:'Student' }[user.role] || user.role;
 
     // Show correct nav
-    ['admin','faculty','student'].forEach(r =>
-      $('nav-' + r).style.display = (user.role === r) ? 'block' : 'none'
-    );
+    ['admin','faculty','student'].forEach(r => {
+      const el = $('tnav-' + r);
+      if (el) el.style.display = (user.role === r) ? 'flex' : 'none';
+    });
 
     updateNotifBadge();
 

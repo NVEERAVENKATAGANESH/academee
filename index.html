@@ -363,13 +363,11 @@
 <!-- GLOBAL HEADER -->
 <header class="app-hdr">
   <div class="app-hdr-l">
-    <button class="hdr-menu-btn" onclick="toggleSidebar()" aria-label="Toggle sidebar" title="Toggle sidebar">
-      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-    </button>
     <div class="app-hdr-logo">A</div>
     <div class="app-hdr-name">Academe</div>
-    <div class="hdr-divider-v"></div>
-    <span class="hdr-breadcrumb" id="hdr-breadcrumb">Dashboard</span>
+  </div>
+  <div class="app-hdr-c">
+    <span class="app-hdr-title">Academic Management System</span>
   </div>
   <div class="app-hdr-r">
     <button class="hdr-btn" onclick="toggleTheme()" title="Toggle theme">
@@ -380,100 +378,145 @@
       <span class="notif-badge" id="nbadge" style="display:none"></span>
     </button>
     <div class="hdr-divider"></div>
-    <div class="hdr-user" onclick="goProfile()" title="View profile" role="button" tabindex="0" aria-label="View my profile">
-      <div class="sb-av" id="sbav">AD</div>
-      <div class="hdr-user-info">
-        <div class="hdr-user-name" id="sbname">admin</div>
-        <div class="hdr-user-role" id="sbrole">Administrator</div>
+    <!-- User dropdown -->
+    <div class="hdr-user-wrap" id="hdr-user-wrap">
+      <div class="hdr-user" onclick="toggleUserMenu()" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false" id="hdr-user-chip">
+        <div class="sb-av" id="sbav">AD</div>
+        <div class="hdr-user-info">
+          <div class="hdr-user-name" id="sbname">admin</div>
+          <div class="hdr-user-role" id="sbrole">Administrator</div>
+        </div>
+        <svg class="hdr-user-caret" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="hdr-dropdown" id="hdr-dropdown" role="menu">
+        <div class="hdr-dd-header">
+          <div class="hdr-dd-av sb-av" id="hdr-dd-av">AD</div>
+          <div>
+            <div class="hdr-dd-name" id="hdr-dd-name">admin</div>
+            <div class="hdr-dd-role" id="hdr-dd-role">Administrator</div>
+          </div>
+        </div>
+        <div class="hdr-dd-sep"></div>
+        <button class="hdr-dd-item" onclick="userMenuGo('myprofile')" role="menuitem">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+          My Profile
+        </button>
+        <button class="hdr-dd-item" onclick="userMenuGo('myprofile','security')" role="menuitem">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Security & Password
+        </button>
+        <button class="hdr-dd-item" onclick="userMenuGo('settings')" role="menuitem" id="hdr-dd-settings" style="display:none">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          Settings
+        </button>
+        <div class="hdr-dd-sep"></div>
+        <button class="hdr-dd-item hdr-dd-danger" onclick="closeUserMenu();confirmDlg('Sign out of Academe?',doLogout,false)" role="menuitem">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Sign out
+        </button>
       </div>
     </div>
   </div>
 </header>
 
-<div class="shell">
+<!-- TOP NAV -->
+<nav class="topnav" id="topnav">
 
-<!-- SIDEBAR -->
-<nav class="sb">
-  <div class="sb-nav">
-    <div id="nav-admin" style="display:none">
-      <div class="nav-sec"><div class="nav-lbl">Overview</div>
-        <div class="ni on" onclick="go('dash')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Dashboard</div>
-      </div>
-      <div class="nav-sec"><div class="nav-lbl">People</div>
-        <div class="ni" onclick="go('students')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>Students</div>
-        <div class="ni" onclick="go('faculty')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Faculty</div>
-        <div class="ni" onclick="go('departments')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Departments</div>
-      </div>
-      <div class="nav-sec"><div class="nav-lbl">Academics</div>
-        <div class="ni" onclick="go('courses')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Courses</div>
-        <div class="ni" onclick="go('enrollment')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Enrollment</div>
-        <div class="ni" onclick="go('grades')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Grades</div>
-        <div class="ni" onclick="go('attendance')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Attendance</div>
-        <div class="ni" onclick="go('exams')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>Exams</div>
-        <div class="ni" onclick="go('leaves')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Leave Requests</div>
-      </div>
-      <div class="nav-sec"><div class="nav-lbl">Finance</div>
-        <div class="ni" onclick="go('fees')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Fees</div>
-        <div class="ni" onclick="go('scholarships')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>Scholarships</div>
-      </div>
-      <div class="nav-sec"><div class="nav-lbl">Communication</div>
-        <div class="ni" onclick="go('announcements')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Announcements</div>
-        <div class="ni" onclick="go('messages')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>Messages</div>
-      </div>
-      <div class="nav-sec"><div class="nav-lbl">System</div>
-        <div class="ni" onclick="go('calendar')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Academic Calendar</div>
-        <div class="ni" onclick="go('reports')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>Reports</div>
-        <div class="ni" onclick="go('users')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>User Accounts</div>
-        <div class="ni" onclick="go('auditlog')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Audit Log</div>
-        <div class="ni" onclick="go('export')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Data Export</div>
-      </div>
-      <div class="nav-sec"><div class="nav-lbl">Account</div>
-        <div class="ni" onclick="go('myprofile')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>My Profile</div>
+  <!-- ADMIN -->
+  <div id="tnav-admin" class="tn-role" style="display:none">
+    <div class="tn-item" onclick="go('dash')">Dashboard</div>
+    <div class="tn-grp">
+      <div class="tn-item tn-has-drop" onclick="tnToggle('td-people')">People<svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>
+      <div class="tn-drop" id="td-people">
+        <div class="tn-di" onclick="go('students')">Students</div>
+        <div class="tn-di" onclick="go('faculty')">Faculty</div>
+        <div class="tn-di" onclick="go('departments')">Departments</div>
       </div>
     </div>
-    <div id="nav-faculty" style="display:none">
-      <div class="nav-sec"><div class="nav-lbl">Overview</div>
-        <div class="ni on" onclick="go('fdash')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Dashboard</div>
-      </div>
-      <div class="nav-sec"><div class="nav-lbl">Teaching</div>
-        <div class="ni" onclick="go('mycourses')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>My Courses</div>
-        <div class="ni" onclick="go('gradeentry')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Enter Grades</div>
-        <div class="ni" onclick="go('markatt')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Attendance</div>
-        <div class="ni" onclick="go('assignments')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Assignments</div>
-        <div class="ni" onclick="go('leaves')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Leave Requests</div>
-        <div class="ni" onclick="go('messages')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>Messages</div>
-      </div>
-      <div class="nav-sec"><div class="nav-lbl">Account</div>
-        <div class="ni" onclick="go('myprofile')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>My Profile</div>
+    <div class="tn-grp">
+      <div class="tn-item tn-has-drop" onclick="tnToggle('td-academics')">Academics<svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>
+      <div class="tn-drop" id="td-academics">
+        <div class="tn-di" onclick="go('courses')">Courses</div>
+        <div class="tn-di" onclick="go('enrollment')">Enrollment</div>
+        <div class="tn-di" onclick="go('grades')">Grades</div>
+        <div class="tn-di" onclick="go('attendance')">Attendance</div>
+        <div class="tn-di" onclick="go('exams')">Exams</div>
+        <div class="tn-di" onclick="go('leaves')">Leave Requests</div>
       </div>
     </div>
-    <div id="nav-student" style="display:none">
-      <div class="nav-sec"><div class="nav-lbl">Overview</div>
-        <div class="ni on" onclick="go('sdash')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Dashboard</div>
+    <div class="tn-grp">
+      <div class="tn-item tn-has-drop" onclick="tnToggle('td-finance')">Finance<svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>
+      <div class="tn-drop" id="td-finance">
+        <div class="tn-di" onclick="go('fees')">Fees</div>
+        <div class="tn-di" onclick="go('scholarships')">Scholarships</div>
       </div>
-      <div class="nav-sec"><div class="nav-lbl">Academics</div>
-        <div class="ni" onclick="go('myen')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>My Courses</div>
-        <div class="ni" onclick="go('mygrades')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Grades & GPA</div>
-        <div class="ni" onclick="go('myatt')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Attendance</div>
-        <div class="ni" onclick="go('myassign')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Assignments</div>
-        <div class="ni" onclick="go('gcalc')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>Grade Calculator</div>
-        <div class="ni" onclick="go('transcript')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>Transcript</div>
-        <div class="ni" onclick="go('hallticket')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M20 12V22H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>Hall Ticket</div>
-        <div class="ni" onclick="go('wishlist')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>Course Wishlist</div>
+    </div>
+    <div class="tn-grp">
+      <div class="tn-item tn-has-drop" onclick="tnToggle('td-comm')">Communication<svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>
+      <div class="tn-drop" id="td-comm">
+        <div class="tn-di" onclick="go('announcements')">Announcements</div>
+        <div class="tn-di" onclick="go('messages')">Messages</div>
       </div>
-      <div class="nav-sec"><div class="nav-lbl">Finance</div>
-        <div class="ni" onclick="go('myfees')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>My Fees</div>
-      </div>
-      <div class="nav-sec"><div class="nav-lbl">More</div>
-        <div class="ni" onclick="go('achievements')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>Achievements</div>
-        <div class="ni" onclick="go('applyleave')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Apply Leave</div>
-        <div class="ni" onclick="go('messages')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>Messages</div>
-        <div class="ni" onclick="go('myprofile')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>My Profile</div>
+    </div>
+    <div class="tn-grp">
+      <div class="tn-item tn-has-drop" onclick="tnToggle('td-system')">System<svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>
+      <div class="tn-drop" id="td-system">
+        <div class="tn-di" onclick="go('calendar')">Academic Calendar</div>
+        <div class="tn-di" onclick="go('reports')">Reports</div>
+        <div class="tn-di" onclick="go('users')">User Accounts</div>
+        <div class="tn-di" onclick="go('auditlog')">Audit Log</div>
+        <div class="tn-di" onclick="go('export')">Data Export</div>
       </div>
     </div>
   </div>
-  <div class="sb-foot"><span class="text4 mono" style="font-size:10px">Academe</span></div>
+
+  <!-- FACULTY -->
+  <div id="tnav-faculty" class="tn-role" style="display:none">
+    <div class="tn-item" onclick="go('fdash')">Dashboard</div>
+    <div class="tn-grp">
+      <div class="tn-item tn-has-drop" onclick="tnToggle('td-teaching')">Teaching<svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>
+      <div class="tn-drop" id="td-teaching">
+        <div class="tn-di" onclick="go('mycourses')">My Courses</div>
+        <div class="tn-di" onclick="go('gradeentry')">Enter Grades</div>
+        <div class="tn-di" onclick="go('markatt')">Attendance</div>
+        <div class="tn-di" onclick="go('assignments')">Assignments</div>
+        <div class="tn-di" onclick="go('leaves')">Leave Requests</div>
+        <div class="tn-di" onclick="go('messages')">Messages</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STUDENT -->
+  <div id="tnav-student" class="tn-role" style="display:none">
+    <div class="tn-item" onclick="go('sdash')">Dashboard</div>
+    <div class="tn-grp">
+      <div class="tn-item tn-has-drop" onclick="tnToggle('td-sacademics')">Academics<svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>
+      <div class="tn-drop" id="td-sacademics">
+        <div class="tn-di" onclick="go('myen')">My Courses</div>
+        <div class="tn-di" onclick="go('mygrades')">Grades &amp; GPA</div>
+        <div class="tn-di" onclick="go('myatt')">Attendance</div>
+        <div class="tn-di" onclick="go('myassign')">Assignments</div>
+        <div class="tn-di" onclick="go('gcalc')">Grade Calculator</div>
+        <div class="tn-di" onclick="go('transcript')">Transcript</div>
+        <div class="tn-di" onclick="go('hallticket')">Hall Ticket</div>
+        <div class="tn-di" onclick="go('wishlist')">Course Wishlist</div>
+      </div>
+    </div>
+    <div class="tn-item" onclick="go('myfees')">My Fees</div>
+    <div class="tn-grp">
+      <div class="tn-item tn-has-drop" onclick="tnToggle('td-more')">More<svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>
+      <div class="tn-drop" id="td-more">
+        <div class="tn-di" onclick="go('achievements')">Achievements</div>
+        <div class="tn-di" onclick="go('applyleave')">Apply Leave</div>
+        <div class="tn-di" onclick="go('messages')">Messages</div>
+      </div>
+    </div>
+  </div>
+
+
 </nav>
+
+<div class="shell">
 
 <!-- NOTIFICATION PANEL -->
 <div class="npanel" id="npanel">
@@ -799,7 +842,7 @@
 <footer class="app-footer">
   <div class="app-footer-l">© 2025 Academe · Academic Year 2024–25</div>
   <div class="app-footer-r">
-    <span>Student Information System</span>
+    <span>Academic Management System</span>
   </div>
 </footer>
 </div><!-- /.main-wrap -->
