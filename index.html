@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#09090b">
+<meta name="description" content="Academe — Manage students, faculty, courses, grades, and more">
+<title>Academe</title>
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/crypto-js@4.2.0/crypto-js.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ══ LANDING PAGE ══ -->
+<div id="login">
+
+  <!-- ── Nav ── -->
+  <nav class="land-nav">
+    <div class="land-brand">
+      <div class="lm">A</div>
+      <span class="ln">Academe</span>
+    </div>
+    <div class="land-links">
+      <span class="land-link" onclick="document.getElementById('land-features').scrollIntoView({behavior:'smooth'})">Features</span>
+      <span class="land-link" onclick="document.getElementById('land-roles').scrollIntoView({behavior:'smooth'})">Roles</span>
+      <span class="land-link" onclick="showSignIn('signup')">Sign up</span>
+    </div>
+    <div class="land-nav-actions">
+      <button class="land-signin-btn" onclick="showSignIn('signin')">Sign in →</button>
+    </div>
+  </nav>
+
+  <!-- ── Hero ── -->
+  <div class="land-hero-glow"></div>
+  <section class="land-hero">
+    <div class="land-hero-l">
+      <div class="land-badge">Academic Management Platform</div>
+      <h1 class="land-h1">The modern platform for educational institutions</h1>
+      <p class="land-sub">Manage students, faculty, courses, grades, attendance, and more — all in one unified, intuitive platform.</p>
+      <div class="land-btns">
+        <button class="land-cta" onclick="showSignIn('signup')">Get started →</button>
+      </div>
+      <div class="land-quick-wrap">
+        <span class="land-quick-l">Try a demo:</span>
+        <div class="land-quick-btns">
+          <button class="land-qbtn" onclick="quickLogin('admin','admin123','admin')">
+            <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>Admin
+          </button>
+          <button class="land-qbtn" onclick="quickLogin('srk','faculty123','faculty')">
+            <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>Faculty
+          </button>
+          <button class="land-qbtn" onclick="quickLogin('prabhas','student123','student')">
+            <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>Student
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="land-hero-r">
+      <div class="land-preview">
+        <div class="land-prev-titlebar">
+          <div class="land-prev-dots">
+            <span style="background:#ef4444"></span>
+            <span style="background:#f59e0b"></span>
+            <span style="background:#22c55e"></span>
+          </div>
+          <span class="land-prev-title">Academe — Dashboard</span>
+        </div>
+        <div class="land-prev-body">
+          <div class="land-prev-stats">
+            <div class="land-ps"><div class="land-ps-n" style="color:var(--blue)">248</div><div class="land-ps-l">Students</div></div>
+            <div class="land-ps"><div class="land-ps-n" style="color:var(--green)">32</div><div class="land-ps-l">Faculty</div></div>
+            <div class="land-ps"><div class="land-ps-n" style="color:var(--purple)">18</div><div class="land-ps-l">Courses</div></div>
+            <div class="land-ps"><div class="land-ps-n" style="color:var(--amber)">87%</div><div class="land-ps-l">Attend.</div></div>
+          </div>
+          <div class="land-prev-chart-wrap">
+            <div class="land-prev-chart-lbl">Enrollment by Dept</div>
+            <div class="land-prev-bars">
+              <div class="land-pb-item"><div class="land-pb-bar" style="height:55%"></div><div class="land-pb-lbl">CS</div></div>
+              <div class="land-pb-item"><div class="land-pb-bar" style="height:78%"></div><div class="land-pb-lbl">ME</div></div>
+              <div class="land-pb-item"><div class="land-pb-bar" style="height:42%"></div><div class="land-pb-lbl">EE</div></div>
+              <div class="land-pb-item"><div class="land-pb-bar" style="height:90%"></div><div class="land-pb-lbl">BBA</div></div>
+              <div class="land-pb-item"><div class="land-pb-bar" style="height:66%"></div><div class="land-pb-lbl">PHY</div></div>
+            </div>
+          </div>
+          <div class="land-prev-list">
+            <div class="land-prev-list-hdr">Recent Students</div>
+            <div class="land-prev-row">
+              <div class="land-pr-av" style="background:rgba(59,130,246,0.15);color:var(--blue)">JD</div>
+              <div class="land-pr-info"><div class="land-pr-n">John Doe</div><div class="land-pr-s">CS-101 · A</div></div>
+              <div class="land-pr-badge" style="color:var(--green)">Active</div>
+            </div>
+            <div class="land-prev-row">
+              <div class="land-pr-av" style="background:rgba(168,85,247,0.15);color:var(--purple)">AK</div>
+              <div class="land-pr-info"><div class="land-pr-n">Anita Kumar</div><div class="land-pr-s">MATH-201 · B+</div></div>
+              <div class="land-pr-badge" style="color:var(--green)">Active</div>
+            </div>
+            <div class="land-prev-row">
+              <div class="land-pr-av" style="background:rgba(34,197,94,0.15);color:var(--green)">RS</div>
+              <div class="land-pr-info"><div class="land-pr-n">Rahul Singh</div><div class="land-pr-s">PHY-101 · A-</div></div>
+              <div class="land-pr-badge" style="color:var(--amber)">Pending</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Stats ── -->
+  <div class="land-stats-band">
+    <div class="land-stat-item"><div class="land-stat-n">500+</div><div class="land-stat-l">Students managed</div></div>
+    <div class="land-stat-sep"></div>
+    <div class="land-stat-item"><div class="land-stat-n">50+</div><div class="land-stat-l">Faculty members</div></div>
+    <div class="land-stat-sep"></div>
+    <div class="land-stat-item"><div class="land-stat-n">30+</div><div class="land-stat-l">Active courses</div></div>
+    <div class="land-stat-sep"></div>
+    <div class="land-stat-item"><div class="land-stat-n">8</div><div class="land-stat-l">Departments</div></div>
+  </div>
+
+  <!-- ── Features ── -->
+  <section class="land-section" id="land-features">
+    <div class="land-sec-kicker">Features</div>
+    <h2 class="land-sec-h">Everything your institution needs</h2>
+    <p class="land-sec-sub">A complete platform purpose-built for managing every aspect of academic institutions.</p>
+    <div class="land-feat-grid">
+      <div class="land-feat-card">
+        <div class="land-feat-ico" style="background:rgba(59,130,246,0.12);color:var(--blue)"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+        <div class="land-feat-t">Student Management</div>
+        <div class="land-feat-d">Full lifecycle from enrollment to graduation. Track records, documents, fees, and academic progress.</div>
+      </div>
+      <div class="land-feat-card">
+        <div class="land-feat-ico" style="background:rgba(168,85,247,0.12);color:var(--purple)"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+        <div class="land-feat-t">Faculty Portal</div>
+        <div class="land-feat-d">Manage assignments, workload, and profiles. Grade, mark attendance, and set assignments with ease.</div>
+      </div>
+      <div class="land-feat-card">
+        <div class="land-feat-ico" style="background:rgba(20,184,166,0.12);color:var(--teal)"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div>
+        <div class="land-feat-t">Course Management</div>
+        <div class="land-feat-d">Create courses, sections, and schedules. Handle enrollment caps and prerequisites seamlessly.</div>
+      </div>
+      <div class="land-feat-card">
+        <div class="land-feat-ico" style="background:rgba(34,197,94,0.12);color:var(--green)"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+        <div class="land-feat-t">Grades & Assessments</div>
+        <div class="land-feat-d">Grade entry, GPA calculation, report cards, and transcripts with support for custom grading scales.</div>
+      </div>
+      <div class="land-feat-card">
+        <div class="land-feat-ico" style="background:rgba(245,158,11,0.12);color:var(--amber)"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+        <div class="land-feat-t">Attendance Tracking</div>
+        <div class="land-feat-d">Daily attendance with leave applications, automated alerts, and detailed historical reports.</div>
+      </div>
+      <div class="land-feat-card">
+        <div class="land-feat-ico" style="background:rgba(249,115,22,0.12);color:var(--orange)"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
+        <div class="land-feat-t">Reports & Analytics</div>
+        <div class="land-feat-d">Dashboards with charts, exportable reports, and audit logs for data-driven institutional decisions.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Roles ── -->
+  <section class="land-roles-sec" id="land-roles">
+    <div class="land-roles-inner">
+      <div class="land-sec-kicker">Roles</div>
+      <h2 class="land-sec-h">Built for everyone in your institution</h2>
+      <p class="land-sec-sub">Different roles, tailored experiences. Everyone gets exactly the tools they need.</p>
+      <div class="land-roles-grid">
+        <div class="land-role-card">
+          <div class="land-role-ico" style="background:rgba(59,130,246,0.12)"><svg width="24" height="24" fill="none" stroke="var(--blue)" stroke-width="1.5" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div>
+          <div class="land-role-t">Administrator</div>
+          <div class="land-role-d">Full platform control — manage all users, departments, data, audit logs, announcements, and settings.</div>
+          <ul class="land-role-list">
+            <li>Manage students &amp; faculty</li>
+            <li>Department &amp; course oversight</li>
+            <li>Financial &amp; scholarship records</li>
+            <li>Audit logs &amp; data exports</li>
+          </ul>
+          <button class="land-role-btn" onclick="quickLogin('admin','admin123','admin')">Try as Admin →</button>
+        </div>
+        <div class="land-role-card land-role-card-hl">
+          <div class="land-role-ico" style="background:rgba(168,85,247,0.12)"><svg width="24" height="24" fill="none" stroke="var(--purple)" stroke-width="1.5" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+          <div class="land-role-t">Faculty</div>
+          <div class="land-role-d">Manage your courses, mark attendance, enter grades, post assignments, and communicate with students.</div>
+          <ul class="land-role-list">
+            <li>Course &amp; section management</li>
+            <li>Grade entry &amp; assessment</li>
+            <li>Attendance marking</li>
+            <li>Assignment management</li>
+          </ul>
+          <button class="land-role-btn" onclick="quickLogin('srk','faculty123','faculty')">Try as Faculty →</button>
+        </div>
+        <div class="land-role-card">
+          <div class="land-role-ico" style="background:rgba(34,197,94,0.12)"><svg width="24" height="24" fill="none" stroke="var(--green)" stroke-width="1.5" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div>
+          <div class="land-role-t">Student</div>
+          <div class="land-role-d">View enrollment, grades, attendance, assignments, and generate transcripts and hall tickets.</div>
+          <ul class="land-role-list">
+            <li>Course enrollment &amp; wishlist</li>
+            <li>Grade &amp; GPA calculator</li>
+            <li>Attendance &amp; leave tracking</li>
+            <li>Transcript &amp; hall ticket export</li>
+          </ul>
+          <button class="land-role-btn" onclick="quickLogin('prabhas','student123','student')">Try as Student →</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Footer ── -->
+  <footer class="land-ftr">
+    <div class="land-ftr-top">
+      <div class="land-ftr-brand-col">
+        <div class="land-ftr-logo">
+          <div class="lm" style="width:30px;height:30px;font-size:14px">A</div>
+          <span class="land-ftr-name">Academe</span>
+        </div>
+        <p class="land-ftr-tagline">A complete academic management platform for modern educational institutions.</p>
+      </div>
+      <div class="land-ftr-col">
+        <div class="land-ftr-col-hdr">Platform</div>
+        <span class="land-ftr-lnk" onclick="document.getElementById('land-features').scrollIntoView({behavior:'smooth'})">Features</span>
+        <span class="land-ftr-lnk" onclick="document.getElementById('land-roles').scrollIntoView({behavior:'smooth'})">Roles</span>
+        <span class="land-ftr-lnk" onclick="showSignIn()">Sign in</span>
+      </div>
+      <div class="land-ftr-col">
+        <div class="land-ftr-col-hdr">Try a demo</div>
+        <span class="land-ftr-lnk" onclick="quickLogin('admin','admin123','admin')">Administrator</span>
+        <span class="land-ftr-lnk" onclick="quickLogin('srk','faculty123','faculty')">Faculty</span>
+        <span class="land-ftr-lnk" onclick="quickLogin('prabhas','student123','student')">Student</span>
+      </div>
+    </div>
+    <div class="land-ftr-bottom">
+      <span>© 2025 Academe · All rights reserved</span>
+      <span>Built for educational institutions</span>
+    </div>
+  </footer>
+
+  <!-- ── Auth Modal (Sign In / Sign Up) ── -->
+  <div class="land-overlay" id="land-overlay" onclick="hideSignIn()"></div>
+  <div class="land-modal" id="land-modal" role="dialog" aria-modal="true">
+    <button class="land-modal-x" onclick="hideSignIn()" aria-label="Close">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+
+    <!-- Tabs -->
+    <div class="auth-tabs">
+      <button class="auth-tab on" id="tab-signin" onclick="switchAuthTab('signin')">Sign in</button>
+      <button class="auth-tab" id="tab-signup" onclick="switchAuthTab('signup')">Sign up</button>
+    </div>
+
+    <!-- ── Sign In pane ── -->
+    <div id="pane-signin">
+      <div class="lerr" id="lerr"></div>
+      <div class="lf"><label>Username</label><input id="lu" placeholder="username" autocomplete="off"></div>
+      <div class="lf"><label>Password</label><input id="lp" type="password" placeholder="••••••••"></div>
+      <div class="lf"><label>Role</label><select id="lr"><option value="admin">Administrator</option><option value="faculty">Faculty</option><option value="student">Student</option></select></div>
+      <button class="lbtn" onclick="doLogin()">Sign in →</button>
+      <div class="ldemo">
+        <div class="ldemo-t">Demo accounts</div>
+        <div class="drow"><span>Administrator</span><span class="dcred">admin / admin123</span></div>
+        <div class="drow"><span>Faculty</span><span class="dcred">srk / faculty123</span></div>
+        <div class="drow"><span>Student</span><span class="dcred">prabhas / student123</span></div>
+      </div>
+    </div>
+
+    <!-- ── Sign Up pane ── -->
+    <div id="pane-signup" style="display:none">
+      <div class="lerr" id="su-err"></div>
+      <div class="lf"><label>Full Name</label><input id="su-name" placeholder="Your full name" autocomplete="off"></div>
+      <div class="lf"><label>Username</label><input id="su-user" placeholder="letters, numbers, _" autocomplete="off"></div>
+      <div class="lf">
+        <label>Role</label>
+        <select id="su-role" onchange="suRoleChange()">
+          <option value="student">Student</option>
+          <option value="faculty">Faculty</option>
+          <option value="admin">Administrator</option>
+        </select>
+      </div>
+      <div class="lf" id="su-dept-wrap">
+        <label>Department</label>
+        <select id="su-dept">
+          <option>Computer Science</option>
+          <option>Mathematics</option>
+          <option>Physics</option>
+          <option>Business</option>
+          <option>Engineering</option>
+        </select>
+      </div>
+      <div class="lf"><label>Password</label><input id="su-pass" type="password" placeholder="Min 8 characters"></div>
+      <div class="lf"><label>Confirm Password</label><input id="su-conf" type="password" placeholder="Re-enter password"></div>
+      <button class="lbtn" onclick="doSignup()">Create account →</button>
+      <div class="auth-switch">Already have an account? <span onclick="switchAuthTab('signin')">Sign in</span></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══ APP ══ -->
+<div id="app">
+
+<!-- GLOBAL HEADER -->
+<header class="app-hdr">
+  <div class="app-hdr-l">
+    <button class="hdr-menu-btn" onclick="toggleSidebar()" aria-label="Toggle sidebar" title="Toggle sidebar">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <div class="app-hdr-logo">A</div>
+    <div class="app-hdr-name">Academe</div>
+    <div class="hdr-divider-v"></div>
+    <span class="hdr-breadcrumb" id="hdr-breadcrumb">Dashboard</span>
+  </div>
+  <div class="app-hdr-r">
+    <button class="hdr-btn" onclick="toggleTheme()" title="Toggle theme">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <button class="hdr-btn" onclick="toggleNotif()" title="Notifications" style="position:relative">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      <span class="notif-badge" id="nbadge" style="display:none"></span>
+    </button>
+    <div class="hdr-divider"></div>
+    <div class="hdr-user" onclick="goProfile()" title="View profile" role="button" tabindex="0" aria-label="View my profile">
+      <div class="sb-av" id="sbav">AD</div>
+      <div class="hdr-user-info">
+        <div class="hdr-user-name" id="sbname">admin</div>
+        <div class="hdr-user-role" id="sbrole">Administrator</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="shell">
+
+<!-- SIDEBAR -->
+<nav class="sb">
+  <div class="sb-nav">
+    <div id="nav-admin" style="display:none">
+      <div class="nav-sec"><div class="nav-lbl">Overview</div>
+        <div class="ni on" onclick="go('dash')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Dashboard</div>
+      </div>
+      <div class="nav-sec"><div class="nav-lbl">People</div>
+        <div class="ni" onclick="go('students')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>Students</div>
+        <div class="ni" onclick="go('faculty')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Faculty</div>
+        <div class="ni" onclick="go('departments')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Departments</div>
+      </div>
+      <div class="nav-sec"><div class="nav-lbl">Academics</div>
+        <div class="ni" onclick="go('courses')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Courses</div>
+        <div class="ni" onclick="go('enrollment')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Enrollment</div>
+        <div class="ni" onclick="go('grades')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Grades</div>
+        <div class="ni" onclick="go('attendance')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Attendance</div>
+        <div class="ni" onclick="go('exams')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>Exams</div>
+        <div class="ni" onclick="go('leaves')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Leave Requests</div>
+      </div>
+      <div class="nav-sec"><div class="nav-lbl">Finance</div>
+        <div class="ni" onclick="go('fees')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Fees</div>
+        <div class="ni" onclick="go('scholarships')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>Scholarships</div>
+      </div>
+      <div class="nav-sec"><div class="nav-lbl">Communication</div>
+        <div class="ni" onclick="go('announcements')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Announcements</div>
+        <div class="ni" onclick="go('messages')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>Messages</div>
+      </div>
+      <div class="nav-sec"><div class="nav-lbl">System</div>
+        <div class="ni" onclick="go('calendar')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Academic Calendar</div>
+        <div class="ni" onclick="go('reports')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>Reports</div>
+        <div class="ni" onclick="go('users')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>User Accounts</div>
+        <div class="ni" onclick="go('auditlog')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Audit Log</div>
+        <div class="ni" onclick="go('export')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Data Export</div>
+      </div>
+      <div class="nav-sec"><div class="nav-lbl">Account</div>
+        <div class="ni" onclick="go('myprofile')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>My Profile</div>
+      </div>
+    </div>
+    <div id="nav-faculty" style="display:none">
+      <div class="nav-sec"><div class="nav-lbl">Overview</div>
+        <div class="ni on" onclick="go('fdash')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Dashboard</div>
+      </div>
+      <div class="nav-sec"><div class="nav-lbl">Teaching</div>
+        <div class="ni" onclick="go('mycourses')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>My Courses</div>
+        <div class="ni" onclick="go('gradeentry')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Enter Grades</div>
+        <div class="ni" onclick="go('markatt')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Attendance</div>
+        <div class="ni" onclick="go('assignments')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Assignments</div>
+        <div class="ni" onclick="go('leaves')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Leave Requests</div>
+        <div class="ni" onclick="go('messages')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>Messages</div>
+      </div>
+      <div class="nav-sec"><div class="nav-lbl">Account</div>
+        <div class="ni" onclick="go('myprofile')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>My Profile</div>
+      </div>
+    </div>
+    <div id="nav-student" style="display:none">
+      <div class="nav-sec"><div class="nav-lbl">Overview</div>
+        <div class="ni on" onclick="go('sdash')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Dashboard</div>
+      </div>
+      <div class="nav-sec"><div class="nav-lbl">Academics</div>
+        <div class="ni" onclick="go('myen')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>My Courses</div>
+        <div class="ni" onclick="go('mygrades')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Grades & GPA</div>
+        <div class="ni" onclick="go('myatt')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Attendance</div>
+        <div class="ni" onclick="go('myassign')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Assignments</div>
+        <div class="ni" onclick="go('gcalc')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>Grade Calculator</div>
+        <div class="ni" onclick="go('transcript')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>Transcript</div>
+        <div class="ni" onclick="go('hallticket')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M20 12V22H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>Hall Ticket</div>
+        <div class="ni" onclick="go('wishlist')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>Course Wishlist</div>
+      </div>
+      <div class="nav-sec"><div class="nav-lbl">Finance</div>
+        <div class="ni" onclick="go('myfees')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>My Fees</div>
+      </div>
+      <div class="nav-sec"><div class="nav-lbl">More</div>
+        <div class="ni" onclick="go('achievements')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>Achievements</div>
+        <div class="ni" onclick="go('applyleave')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Apply Leave</div>
+        <div class="ni" onclick="go('messages')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>Messages</div>
+        <div class="ni" onclick="go('myprofile')"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>My Profile</div>
+      </div>
+    </div>
+  </div>
+  <div class="sb-foot"><span class="text4 mono" style="font-size:10px">Academe</span></div>
+</nav>
+
+<!-- NOTIFICATION PANEL -->
+<div class="npanel" id="npanel">
+  <div class="np-head">
+    <div class="np-title">Notifications</div>
+    <div style="display:flex;gap:6px">
+      <button class="btn btn-g" onclick="markAllRead()" style="font-size:11px;padding:4px 8px">Mark all read</button>
+      <button class="mx" onclick="toggleNotif()">×</button>
+    </div>
+  </div>
+  <div class="np-body" id="npbody"></div>
+</div>
+
+<!-- MAIN WRAP -->
+<div class="main-wrap">
+<main class="main" id="mainarea">
+
+<!-- ══ ADMIN DASHBOARD ══ -->
+<div class="page" id="pg-dash">
+  <div class="topbar"><div><h1>Dashboard</h1><p id="dash-date"></p></div><div class="topbar-r"><span class="mono text4" style="font-size:11px" id="dash-time"></span></div></div>
+  <div class="stats" id="astats"></div>
+  <div style="display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:14px">
+    <div class="card"><div class="card-h"><div class="card-t">Enrollment trend</div><span class="text4 mono" style="font-size:11px">Last 6 months</span></div><div class="card-b"><div class="chart-wrap"><canvas id="ch-enroll"></canvas></div></div></div>
+    <div class="card"><div class="card-h"><div class="card-t">Grade distribution</div></div><div class="card-b"><div class="chart-wrap-sm"><canvas id="ch-grade"></canvas></div></div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px">
+    <div class="card"><div class="card-h"><div class="card-t">At-risk students</div><span class="bx bx-rd" style="font-size:10px" id="risk-count">0</span></div><div class="tw"><table class="t" id="risk-tbl"></table></div></div>
+    <div class="card"><div class="card-h"><div class="card-t">Recent activity</div></div><div class="card-b" id="recent-act" style="max-height:200px;overflow-y:auto"></div></div>
+    <div class="card"><div class="card-h"><div class="card-t">Fee collection</div></div><div class="card-b"><div class="chart-wrap-sm"><canvas id="ch-fee"></canvas></div></div></div>
+  </div>
+</div>
+
+<!-- ══ STUDENTS ══ -->
+<div class="page" id="pg-students">
+  <div class="topbar"><div><h1>Students</h1><p>Manage student records</p></div><div class="topbar-r"><button class="btn btn-g" onclick="importStudentsCSV()">⬆ Import CSV</button><button class="btn btn-p" onclick="openM('m-student')">+ Add Student</button></div></div>
+  <div class="card">
+    <div class="card-h">
+      <div class="fr">
+        <input class="inp" id="ss" placeholder="Search name, email, ID…" style="width:200px" oninput="rStudents()">
+        <select class="inp sel" id="sd" style="width:150px" onchange="rStudents()"><option value="">All Departments</option></select>
+        <select class="inp sel" id="sy" style="width:100px" onchange="rStudents()"><option value="">All Years</option><option>1</option><option>2</option><option>3</option><option>4</option></select>
+        <select class="inp sel" id="sst" style="width:110px" onchange="rStudents()"><option value="">All Status</option><option>Active</option><option>Inactive</option><option>Alumni</option></select>
+      </div>
+      <div class="card-acts"><span class="text4 mono" style="font-size:11px" id="sc"></span></div>
+    </div>
+    <div class="tw"><table class="t"><thead><tr><th>Student</th><th>ID</th><th>Department</th><th>Year</th><th>Contact</th><th>Status</th><th>Courses</th><th>GPA</th><th>Risk</th><th></th></tr></thead><tbody id="stbody"></tbody></table></div>
+  </div>
+</div>
+
+<!-- ══ FACULTY ══ -->
+<div class="page" id="pg-faculty">
+  <div class="topbar"><div><h1>Faculty</h1><p>Teaching staff</p></div><div class="topbar-r"><button class="btn btn-p" onclick="openM('m-faculty')">+ Add Faculty</button></div></div>
+  <div class="card"><div class="card-h"><input class="inp" id="fs" placeholder="Search…" style="width:200px" oninput="rFaculty()"></div><div class="tw"><table class="t"><thead><tr><th>Faculty</th><th>ID</th><th>Department</th><th>Qualification</th><th>Courses</th><th>Students</th><th></th></tr></thead><tbody id="ftbody"></tbody></table></div></div>
+</div>
+
+<!-- ══ DEPARTMENTS ══ -->
+<div class="page" id="pg-departments">
+  <div class="topbar"><div><h1>Departments</h1></div><div class="topbar-r"><button class="btn btn-p" onclick="openM('m-dept')">+ Add Department</button></div></div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px" id="dept-grid"></div>
+</div>
+
+<!-- ══ COURSES ══ -->
+<div class="page" id="pg-courses">
+  <div class="topbar"><div><h1>Courses</h1></div><div class="topbar-r"><button class="btn btn-p" onclick="openM('m-course')">+ Add Course</button></div></div>
+  <div class="card"><div class="card-h"><input class="inp" id="cs" placeholder="Search…" style="width:200px" oninput="rCourses()"></div><div class="tw"><table class="t"><thead><tr><th>Code</th><th>Course</th><th>Department</th><th>Faculty</th><th>Credits</th><th>Enrolled/Seats</th><th></th></tr></thead><tbody id="ctbody"></tbody></table></div></div>
+</div>
+
+<!-- ══ ENROLLMENT ══ -->
+<div class="page" id="pg-enrollment">
+  <div class="topbar"><div><h1>Enrollment</h1></div><div class="topbar-r"><button class="btn btn-p" onclick="openEnrollModal()">+ Enroll Student</button></div></div>
+  <div class="card"><div class="card-h"><div class="fr"><select class="inp sel" id="ef" style="width:200px" onchange="rEnroll()"><option value="">All Courses</option></select><select class="inp sel" id="esf" style="width:140px" onchange="rEnroll()"><option value="">All Semesters</option></select></div></div><div class="tw"><table class="t"><thead><tr><th>Student</th><th>Course</th><th>Faculty</th><th>Semester</th><th>Status</th><th></th></tr></thead><tbody id="enbody"></tbody></table></div></div>
+</div>
+
+<!-- ══ GRADES (admin) ══ -->
+<div class="page" id="pg-grades">
+  <div class="topbar"><div><h1>Grades</h1></div></div>
+  <div class="card"><div class="card-h"><div class="fr"><select class="inp sel" id="gaf" style="width:200px" onchange="rGradesA()"><option value="">All Courses</option></select><select class="inp sel" id="ggf" style="width:100px" onchange="rGradesA()"><option value="">All Grades</option><option>A</option><option>B</option><option>C</option><option>D</option><option>F</option></select></div></div><div class="tw"><table class="t"><thead><tr><th>Student</th><th>Course</th><th>Marks</th><th>Grade</th><th>GPA Pts</th><th>Semester</th><th>Result</th></tr></thead><tbody id="grabody"></tbody></table></div></div>
+</div>
+
+<!-- ══ ATTENDANCE (admin) ══ -->
+<div class="page" id="pg-attendance">
+  <div class="topbar"><div><h1>Attendance</h1></div></div>
+  <div class="card"><div class="card-h"><select class="inp sel" id="aaf" style="width:200px" onchange="rAttA()"><option value="">All Courses</option></select></div><div class="tw"><table class="t"><thead><tr><th>Student</th><th>Course</th><th>Present/Total</th><th>Percentage</th><th>Status</th></tr></thead><tbody id="attabody"></tbody></table></div></div>
+</div>
+
+<!-- ══ EXAMS ══ -->
+<div class="page" id="pg-exams">
+  <div class="topbar"><div><h1>Exam Management</h1></div><div class="topbar-r"><button class="btn btn-p" onclick="openM('m-exam')">+ Schedule Exam</button></div></div>
+  <div class="card"><div class="card-h"><div class="card-t">Upcoming Exams</div></div><div class="tw"><table class="t"><thead><tr><th>Course</th><th>Date</th><th>Time</th><th>Hall</th><th>Duration</th><th>Students</th><th></th></tr></thead><tbody id="examtbl"></tbody></table></div></div>
+</div>
+
+<!-- ══ LEAVE REQUESTS ══ -->
+<div class="page" id="pg-leaves">
+  <div class="topbar"><div><h1>Leave Requests</h1></div></div>
+  <div class="two-col">
+    <div><div class="section-title" style="margin-bottom:12px">Pending</div><div id="leaves-pending"></div></div>
+    <div><div class="section-title" style="margin-bottom:12px">Decided</div><div id="leaves-decided"></div></div>
+  </div>
+</div>
+
+<!-- ══ FEES ══ -->
+<div class="page" id="pg-fees">
+  <div class="topbar"><div><h1>Fee Management</h1></div><div class="topbar-r"><button class="btn btn-p" onclick="openM('m-fee')">+ Record Payment</button></div></div>
+  <div class="stats" id="feestats"></div>
+  <div class="card"><div class="card-h"><div class="fr"><input class="inp" id="fes" placeholder="Search student…" style="width:180px" oninput="rFees()"><select class="inp sel" id="fest" style="width:120px" onchange="rFees()"><option value="">All Status</option><option>Paid</option><option>Pending</option><option>Overdue</option></select></div></div><div class="tw"><table class="t"><thead><tr><th>Student</th><th>Type</th><th>Amount</th><th>Due</th><th>Paid On</th><th>Status</th><th></th></tr></thead><tbody id="feebody"></tbody></table></div></div>
+</div>
+
+<!-- ══ SCHOLARSHIPS ══ -->
+<div class="page" id="pg-scholarships">
+  <div class="topbar"><div><h1>Scholarships</h1></div><div class="topbar-r"><button class="btn btn-p" onclick="openM('m-scholarship')">+ Add Scholarship</button></div></div>
+  <div class="stats" id="schstats"></div>
+  <div class="card"><div class="tw"><table class="t"><thead><tr><th>Student</th><th>Scholarship</th><th>Amount</th><th>Criteria</th><th>Status</th><th></th></tr></thead><tbody id="schtbl"></tbody></table></div></div>
+</div>
+
+<!-- ══ ANNOUNCEMENTS ══ -->
+<div class="page" id="pg-announcements">
+  <div class="topbar"><div><h1>Announcements</h1></div><div class="topbar-r"><button class="btn btn-p" onclick="openM('m-ann')">+ Post Announcement</button></div></div>
+  <div id="ann-list"></div>
+</div>
+
+<!-- ══ MESSAGES ══ -->
+<div class="page" id="pg-messages">
+  <div class="topbar"><div><h1>Messages</h1></div></div>
+  <div class="card" style="padding:0">
+    <div class="msg-shell">
+      <div class="msg-list" id="msg-list"></div>
+      <div class="msg-chat">
+        <div class="msg-chat-head" id="msg-chathead">Select a conversation</div>
+        <div class="msg-messages" id="msg-msgs"></div>
+        <div class="msg-foot">
+          <input class="inp" id="msg-inp" placeholder="Type a message…" style="flex:1" onkeydown="if(event.key==='Enter')sendMsg()">
+          <button class="btn btn-p" onclick="sendMsg()">Send</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ACADEMIC CALENDAR ══ -->
+<div class="page" id="pg-calendar">
+  <div class="topbar"><div><h1>Academic Calendar</h1></div><div class="topbar-r"><button class="btn btn-p" onclick="openM('m-event')">+ Add Event</button></div></div>
+  <div class="two-col">
+    <div class="card"><div class="card-h"><div id="cal-month-title" class="card-t"></div><div class="card-acts"><button class="bico" onclick="calNav(-1)">‹</button><button class="bico" onclick="calNav(1)">›</button></div></div><div class="card-b"><div class="cal-grid" id="cal-grid"></div></div></div>
+    <div><div class="card"><div class="card-h"><div class="card-t">Events this month</div></div><div class="card-b" id="cal-events"></div></div></div>
+  </div>
+</div>
+
+<!-- ══ REPORTS ══ -->
+<div class="page" id="pg-reports">
+  <div class="topbar"><div><h1>Reports & Analytics</h1></div></div>
+  <div class="stats" id="rpt-stats"></div>
+  <div class="two-col">
+    <div class="card"><div class="card-h"><div class="card-t">Top 5 students by GPA</div></div><div class="tw"><table class="t"><thead><tr><th>Student</th><th>GPA</th><th>Trend</th></tr></thead><tbody id="rpt-top"></tbody></table></div></div>
+    <div class="card"><div class="card-h"><div class="card-t">Low attendance alerts</div></div><div class="tw"><table class="t"><thead><tr><th>Student</th><th>Course</th><th>%</th></tr></thead><tbody id="rpt-att"></tbody></table></div></div>
+  </div>
+  <div class="two-col" style="margin-top:14px">
+    <div class="card"><div class="card-h"><div class="card-t">Department performance</div></div><div class="card-b" id="rpt-dept"></div></div>
+    <div class="card"><div class="card-h"><div class="card-t">Semester-over-semester GPA</div></div><div class="card-b"><div class="chart-wrap"><canvas id="ch-sos"></canvas></div></div></div>
+  </div>
+</div>
+
+<!-- ══ USERS ══ -->
+<div class="page" id="pg-users">
+  <div class="topbar"><div><h1>User Accounts</h1></div></div>
+  <div class="card"><div class="tw"><table class="t"><thead><tr><th>Username</th><th>Role</th><th>Linked To</th></tr></thead><tbody id="usertbl"></tbody></table></div></div>
+</div>
+
+<!-- ══ AUDIT LOG ══ -->
+<div class="page" id="pg-auditlog">
+  <div class="topbar"><div><h1>Audit Log</h1><p>All system changes</p></div></div>
+  <div class="card"><div class="card-b" id="auditbody"></div></div>
+</div>
+
+<!-- ══ DATA EXPORT ══ -->
+<div class="page" id="pg-export">
+  <div class="topbar"><div><h1>Data Export</h1><p>Download data as CSV</p></div></div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px" id="export-grid"></div>
+</div>
+
+<!-- ══ FACULTY DASHBOARD ══ -->
+<div class="page" id="pg-fdash">
+  <div class="topbar"><div><h1 id="fdash-t">Faculty Dashboard</h1><p>Your teaching overview</p></div></div>
+  <div class="stats" id="fstats"></div>
+  <div class="two-col">
+    <div class="card"><div class="card-h"><div class="card-t">My Courses</div></div><div class="tw"><table class="t" id="fcourse-tbl"></table></div></div>
+    <div class="card"><div class="card-h"><div class="card-t">Grade distribution</div></div><div class="card-b"><div class="chart-wrap"><canvas id="ch-fgrade"></canvas></div></div></div>
+  </div>
+</div>
+
+<!-- ══ MY COURSES (faculty) ══ -->
+<div class="page" id="pg-mycourses">
+  <div class="topbar"><div><h1>My Courses</h1></div></div>
+  <div class="card"><div class="card-h"><select class="inp sel" id="mcsel" style="width:280px" onchange="rMyCourseStudents()"></select></div><div class="tw"><table class="t"><thead><tr><th>Student</th><th>ID</th><th>Dept</th><th>Year</th><th>Grade</th><th>Attendance</th></tr></thead><tbody id="mcbody"></tbody></table></div></div>
+</div>
+
+<!-- ══ GRADE ENTRY (faculty) ══ -->
+<div class="page" id="pg-gradeentry">
+  <div class="topbar"><div><h1>Enter Grades</h1></div></div>
+  <div class="card"><div class="card-h"><select class="inp sel" id="gesel" style="width:280px" onchange="rGradeRows()"></select><div class="card-acts"><button class="btn btn-g" onclick="importGradesCSV()">⬆ CSV</button><button class="btn btn-p" onclick="saveAllGrades()">Save All</button></div></div><div class="tw"><table class="t"><thead><tr><th>Student</th><th>Marks /100</th><th>Grade</th><th>GPA Pts</th><th>Bell Curve</th></tr></thead><tbody id="gebdy"></tbody></table></div></div>
+</div>
+
+<!-- ══ MARK ATTENDANCE (faculty) ══ -->
+<div class="page" id="pg-markatt">
+  <div class="topbar"><div><h1>Mark Attendance</h1></div></div>
+  <div class="card"><div class="card-h"><div class="fr"><select class="inp sel" id="masel" style="width:280px" onchange="rAttEntry()"></select><input type="date" class="inp" id="madate" style="width:140px"></div><div class="card-acts"><button class="btn btn-p" onclick="saveAtt()">Save</button></div></div><div class="tw"><table class="t"><thead><tr><th>Student</th><th>Overall</th><th>Today</th></tr></thead><tbody id="mabdy"></tbody></table></div></div>
+</div>
+
+<!-- ══ ASSIGNMENTS ══ -->
+<div class="page" id="pg-assignments">
+  <div class="topbar"><div><h1>Assignments</h1></div><div class="topbar-r"><button class="btn btn-p" onclick="openM('m-assign')">+ Create Assignment</button></div></div>
+  <div class="card"><div class="tw"><table class="t"><thead><tr><th>Title</th><th>Course</th><th>Due Date</th><th>Max Marks</th><th>Weightage</th><th>Submissions</th><th></th></tr></thead><tbody id="assigntbl"></tbody></table></div></div>
+</div>
+
+<!-- ══ STUDENT DASHBOARD ══ -->
+<div class="page" id="pg-sdash">
+  <div class="topbar"><div><h1 id="sdash-t">Dashboard</h1><p>Your academic snapshot</p></div></div>
+  <div class="stats" id="sstats"></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+    <div class="card"><div class="card-h"><div class="card-t">Semester progress</div></div><div class="card-b" id="sem-progress"></div></div>
+    <div class="card"><div class="card-h"><div class="card-t">Upcoming deadlines</div></div><div class="card-b" id="deadlines"></div></div>
+  </div>
+  <div class="two-col">
+    <div class="card"><div class="card-h"><div class="card-t">Enrolled courses</div></div><div class="tw"><table class="t" id="senroll-tbl"></table></div></div>
+    <div class="card"><div class="card-h"><div class="card-t">Recent grades</div></div><div class="tw"><table class="t" id="sgrades-tbl"></table></div></div>
+  </div>
+</div>
+
+<!-- ══ MY ENROLLMENT (student) ══ -->
+<div class="page" id="pg-myen">
+  <div class="topbar"><div><h1>My Courses</h1></div><div class="topbar-r"><button class="btn btn-p" onclick="openM('m-self-enroll')">+ Register Course</button></div></div>
+  <div class="card"><div class="tw"><table class="t"><thead><tr><th>Code</th><th>Course</th><th>Faculty</th><th>Credits</th><th>Semester</th><th>Grade</th></tr></thead><tbody id="myenbody"></tbody></table></div></div>
+</div>
+
+<!-- ══ MY GRADES ══ -->
+<div class="page" id="pg-mygrades">
+  <div class="topbar"><div><h1>Grades & GPA</h1></div></div>
+  <div style="display:grid;grid-template-columns:200px 1fr;gap:14px;align-items:start">
+    <div>
+      <div class="card"><div class="card-b" style="text-align:center;padding:20px">
+        <div style="position:relative;width:80px;height:80px;margin:0 auto 12px"><svg width="80" height="80" viewBox="0 0 180 180" style="transform:rotate(-90deg)"><circle cx="90" cy="90" r="76" fill="none" stroke="var(--bg3)" stroke-width="14"/><circle cx="90" cy="90" r="76" fill="none" stroke="var(--blue)" stroke-width="14" id="gpa-ring" stroke-dasharray="0 477" stroke-linecap="round"/></svg><div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center"><div style="font-size:18px;font-weight:600;letter-spacing:-0.5px" id="gpa-num">0.0</div><div style="font-size:9px;color:var(--text4);text-transform:uppercase;letter-spacing:0.5px">GPA</div></div></div>
+        <div style="font-size:13px;font-weight:500" id="gpa-label">—</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:3px" id="gpa-sub">—</div>
+      </div></div>
+    </div>
+    <div class="card"><div class="tw"><table class="t"><thead><tr><th>Course</th><th>Marks</th><th>Grade</th><th>GPA Pts</th><th>Semester</th></tr></thead><tbody id="mygradesbody"></tbody></table></div></div>
+  </div>
+</div>
+
+<!-- ══ MY ATTENDANCE ══ -->
+<div class="page" id="pg-myatt"><div class="topbar"><div><h1>My Attendance</h1></div></div><div id="myatt-cards" style="display:grid;gap:12px"></div></div>
+
+<!-- ══ MY ASSIGNMENTS (student) ══ -->
+<div class="page" id="pg-myassign">
+  <div class="topbar"><div><h1>My Assignments</h1></div></div>
+  <div class="card"><div class="tw"><table class="t"><thead><tr><th>Title</th><th>Course</th><th>Due Date</th><th>Max Marks</th><th>Status</th></tr></thead><tbody id="myassigntbl"></tbody></table></div></div>
+</div>
+
+<!-- ══ GRADE CALCULATOR ══ -->
+<div class="page" id="pg-gcalc">
+  <div class="topbar"><div><h1>Grade Calculator</h1><p>What-if scenario — enter hypothetical marks to see GPA impact</p></div></div>
+  <div class="two-col" style="align-items:start">
+    <div class="card"><div class="card-h"><div class="card-t">Enter marks</div></div><div class="card-b" id="gcalc-body"></div></div>
+    <div class="card"><div class="card-b" id="gcalc-result"></div></div>
+  </div>
+</div>
+
+<!-- ══ TRANSCRIPT ══ -->
+<div class="page" id="pg-transcript">
+  <div class="topbar"><div><h1>Academic Transcript</h1></div><div class="topbar-r"><button class="btn btn-p" onclick="printTranscript()">⬇ Print</button></div></div>
+  <div id="transcript-content"></div>
+</div>
+
+<!-- ══ HALL TICKET ══ -->
+<div class="page" id="pg-hallticket">
+  <div class="topbar"><div><h1>Hall Ticket</h1></div><div class="topbar-r"><button class="btn btn-p" onclick="window.print()">⬇ Print</button></div></div>
+  <div id="hallticket-content"></div>
+</div>
+
+<!-- ══ COURSE WISHLIST ══ -->
+<div class="page" id="pg-wishlist">
+  <div class="topbar"><div><h1>Course Wishlist</h1><p>Browse and save courses for next semester</p></div></div>
+  <div class="two-col">
+    <div class="card"><div class="card-h"><div class="card-t">Available courses</div></div><div class="card-b" id="wishlist-avail"></div></div>
+    <div class="card"><div class="card-h"><div class="card-t">My wishlist</div></div><div class="card-b" id="wishlist-saved"></div></div>
+  </div>
+</div>
+
+<!-- ══ MY FEES ══ -->
+<div class="page" id="pg-myfees">
+  <div class="topbar"><div><h1>My Fees</h1></div></div>
+  <div class="stats" id="myfstats"></div>
+  <div class="card" style="margin-bottom:14px"><div class="card-h"><div class="card-t">Payment timeline</div></div><div class="card-b" id="fee-timeline"></div></div>
+  <div class="card"><div class="tw"><table class="t"><thead><tr><th>Type</th><th>Amount</th><th>Due</th><th>Status</th><th>Paid On</th></tr></thead><tbody id="myfeebody"></tbody></table></div></div>
+</div>
+
+<!-- ══ ACHIEVEMENTS ══ -->
+<div class="page" id="pg-achievements">
+  <div class="topbar"><div><h1>Achievements</h1><p>Your academic recognition</p></div></div>
+  <div class="card" style="margin-bottom:14px"><div class="card-b"><div class="ach-grid" id="ach-grid"></div></div></div>
+</div>
+
+<!-- ══ APPLY LEAVE ══ -->
+<div class="page" id="pg-applyleave">
+  <div class="topbar"><div><h1>Apply for Leave</h1></div></div>
+  <div class="two-col" style="align-items:start">
+    <div class="card"><div class="card-h"><div class="card-t">New Application</div></div><div class="card-b">
+      <div class="ff"><label>Course</label><select id="lv-course" class="sel"></select></div>
+      <div class="frow"><div class="ff"><label>From Date</label><input type="date" id="lv-from"></div><div class="ff"><label>To Date</label><input type="date" id="lv-to"></div></div>
+      <div class="ff"><label>Reason</label><textarea id="lv-reason" rows="3" placeholder="Explain reason for leave…"></textarea></div>
+      <button class="btn btn-p" onclick="submitLeave()">Submit Application</button>
+    </div></div>
+    <div><div class="section-title" style="margin-bottom:10px">My Applications</div><div id="my-leaves"></div></div>
+  </div>
+</div>
+
+<!-- ══ PROFILE (all roles) ══ -->
+<div class="page" id="pg-myprofile">
+  <div class="topbar"><div><h1>My Profile</h1><p>Account details and preferences</p></div></div>
+  <div id="profile-root"></div>
+</div>
+
+</main>
+<footer class="app-footer">
+  <div class="app-footer-l">© 2025 Academe · Academic Year 2024–25</div>
+  <div class="app-footer-r">
+    <span>Student Information System</span>
+  </div>
+</footer>
+</div><!-- /.main-wrap -->
+</div><!-- /.shell -->
+</div><!-- /#app -->
+
+<!-- ══ NOTIFICATION PANEL OVERLAY ══ -->
+<div id="npoverlay" onclick="toggleNotif()" style="position:fixed;inset:0;z-index:997;display:none;background:transparent"></div>
+
+<!-- ══ TOASTS ══ -->
+<div class="toasts" id="toasts"></div>
+
+<!-- ══ MODALS ══ -->
+<div class="mbg" id="m-student"><div class="mbox"><div class="mh"><div class="mt" id="mst-title">Add Student</div><button class="mx" onclick="closeM('m-student')">×</button></div><div class="mb"><input type="hidden" id="mst-id"><div class="frow"><div class="ff"><label>First Name *</label><input id="mst-fn"></div><div class="ff"><label>Last Name *</label><input id="mst-ln"></div></div><div class="ff"><label>Email *</label><input id="mst-em" type="email"></div><div class="frow"><div class="ff"><label>Phone</label><input id="mst-ph"></div><div class="ff"><label>Date of Birth</label><input id="mst-dob" type="date"></div></div><div class="frow"><div class="ff"><label>Department</label><select id="mst-dept" class="sel"><option>Computer Science</option><option>Mathematics</option><option>Physics</option><option>Chemistry</option><option>Business</option><option>Arts & Humanities</option><option>Engineering</option></select></div><div class="ff"><label>Year</label><select id="mst-yr" class="sel"><option>1</option><option>2</option><option>3</option><option>4</option></select></div></div><div class="frow"><div class="ff"><label>Status</label><select id="mst-st" class="sel"><option>Active</option><option>Inactive</option><option>Alumni</option></select></div><div class="ff"><label>Admission Year</label><input id="mst-adm" type="number" placeholder="2024"></div></div><div class="ff"><label>Address</label><textarea id="mst-addr"></textarea></div></div><div class="mf"><button class="btn btn-g" onclick="closeM('m-student')">Cancel</button><button class="btn btn-p" onclick="saveStudent()">Save</button></div></div></div>
+
+<div class="mbg" id="m-faculty"><div class="mbox"><div class="mh"><div class="mt" id="mf-title">Add Faculty</div><button class="mx" onclick="closeM('m-faculty')">×</button></div><div class="mb"><input type="hidden" id="mf-id"><div class="frow"><div class="ff"><label>First Name *</label><input id="mf-fn"></div><div class="ff"><label>Last Name *</label><input id="mf-ln"></div></div><div class="ff"><label>Email *</label><input id="mf-em" type="email"></div><div class="ff"><label>Department</label><select id="mf-dept" class="sel"><option>Computer Science</option><option>Mathematics</option><option>Physics</option><option>Chemistry</option><option>Business</option><option>Arts & Humanities</option><option>Engineering</option></select></div><div class="frow"><div class="ff"><label>Qualification</label><input id="mf-qual"></div><div class="ff"><label>Specialization</label><input id="mf-spec"></div></div><div class="ff"><label>Phone</label><input id="mf-ph"></div></div><div class="mf"><button class="btn btn-g" onclick="closeM('m-faculty')">Cancel</button><button class="btn btn-p" onclick="saveFaculty()">Save</button></div></div></div>
+
+<div class="mbg" id="m-dept"><div class="mbox narrow"><div class="mh"><div class="mt">Add Department</div><button class="mx" onclick="closeM('m-dept')">×</button></div><div class="mb"><div class="ff"><label>Department Name</label><input id="mdept-n"></div><div class="ff"><label>Code</label><input id="mdept-c" placeholder="CS"></div><div class="ff"><label>Head of Department</label><select id="mdept-hod" class="sel"></select></div><div class="ff"><label>Budget ($)</label><input id="mdept-b" type="number"></div></div><div class="mf"><button class="btn btn-g" onclick="closeM('m-dept')">Cancel</button><button class="btn btn-p" onclick="saveDept()">Save</button></div></div></div>
+
+<div class="mbg" id="m-course"><div class="mbox"><div class="mh"><div class="mt" id="mc-title">Add Course</div><button class="mx" onclick="closeM('m-course')">×</button></div><div class="mb"><input type="hidden" id="mco-id"><div class="frow"><div class="ff"><label>Course Code *</label><input id="mco-code"></div><div class="ff"><label>Credits</label><input id="mco-cr" type="number" value="3"></div></div><div class="ff"><label>Course Name *</label><input id="mco-name"></div><div class="frow"><div class="ff"><label>Department</label><select id="mco-dept" class="sel"><option>Computer Science</option><option>Mathematics</option><option>Physics</option><option>Chemistry</option><option>Business</option><option>Arts & Humanities</option><option>Engineering</option></select></div><div class="ff"><label>Semester</label><select id="mco-sem" class="sel"><option>Fall 2024</option><option>Spring 2025</option><option>Summer 2025</option></select></div></div><div class="frow"><div class="ff"><label>Faculty</label><select id="mco-fac" class="sel"></select></div><div class="ff"><label>Seats</label><input id="mco-seats" type="number" value="40"></div></div><div class="ff"><label>Description</label><textarea id="mco-desc"></textarea></div></div><div class="mf"><button class="btn btn-g" onclick="closeM('m-course')">Cancel</button><button class="btn btn-p" onclick="saveCourse()">Save</button></div></div></div>
+
+<div class="mbg" id="m-enroll"><div class="mbox narrow"><div class="mh"><div class="mt">Enroll Student</div><button class="mx" onclick="closeM('m-enroll')">×</button></div><div class="mb"><div class="ff"><label>Student</label><select id="men-stu" class="sel"></select></div><div class="ff"><label>Course</label><select id="men-co" class="sel"></select></div><div class="ff"><label>Semester</label><select id="men-sem" class="sel"><option>Fall 2024</option><option>Spring 2025</option><option>Summer 2025</option></select></div></div><div class="mf"><button class="btn btn-g" onclick="closeM('m-enroll')">Cancel</button><button class="btn btn-p" onclick="saveEnroll()">Enroll</button></div></div></div>
+
+<div class="mbg" id="m-exam"><div class="mbox"><div class="mh"><div class="mt">Schedule Exam</div><button class="mx" onclick="closeM('m-exam')">×</button></div><div class="mb"><div class="ff"><label>Course</label><select id="mex-co" class="sel"></select></div><div class="frow"><div class="ff"><label>Date</label><input id="mex-date" type="date"></div><div class="ff"><label>Time</label><input id="mex-time" type="time" value="09:00"></div></div><div class="frow"><div class="ff"><label>Hall / Room</label><input id="mex-hall" placeholder="Hall A"></div><div class="ff"><label>Duration (mins)</label><input id="mex-dur" type="number" value="120"></div></div></div><div class="mf"><button class="btn btn-g" onclick="closeM('m-exam')">Cancel</button><button class="btn btn-p" onclick="saveExam()">Save</button></div></div></div>
+
+<div class="mbg" id="m-fee"><div class="mbox narrow"><div class="mh"><div class="mt">Record Fee</div><button class="mx" onclick="closeM('m-fee')">×</button></div><div class="mb"><div class="ff"><label>Student</label><select id="mfe-stu" class="sel"></select></div><div class="ff"><label>Fee Type</label><select id="mfe-type" class="sel"><option>Tuition</option><option>Library</option><option>Lab</option><option>Exam</option><option>Hostel</option><option>Transport</option></select></div><div class="frow"><div class="ff"><label>Amount ($)</label><input id="mfe-amt" type="number"></div><div class="ff"><label>Due Date</label><input id="mfe-due" type="date"></div></div><div class="frow"><div class="ff"><label>Status</label><select id="mfe-st" class="sel"><option>Paid</option><option>Pending</option><option>Overdue</option></select></div><div class="ff"><label>Paid Date</label><input id="mfe-paid" type="date"></div></div></div><div class="mf"><button class="btn btn-g" onclick="closeM('m-fee')">Cancel</button><button class="btn btn-p" onclick="saveFee()">Save</button></div></div></div>
+
+<div class="mbg" id="m-scholarship"><div class="mbox narrow"><div class="mh"><div class="mt">Add Scholarship</div><button class="mx" onclick="closeM('m-scholarship')">×</button></div><div class="mb"><div class="ff"><label>Student</label><select id="msc-stu" class="sel"></select></div><div class="ff"><label>Scholarship Name</label><input id="msc-name" placeholder="Merit Scholarship"></div><div class="frow"><div class="ff"><label>Amount ($)</label><input id="msc-amt" type="number"></div><div class="ff"><label>Status</label><select id="msc-st" class="sel"><option>Active</option><option>Pending</option><option>Expired</option></select></div></div><div class="ff"><label>Criteria</label><input id="msc-crit" placeholder="GPA ≥ 3.5"></div></div><div class="mf"><button class="btn btn-g" onclick="closeM('m-scholarship')">Cancel</button><button class="btn btn-p" onclick="saveScholarship()">Save</button></div></div></div>
+
+<div class="mbg" id="m-ann"><div class="mbox"><div class="mh"><div class="mt">Post Announcement</div><button class="mx" onclick="closeM('m-ann')">×</button></div><div class="mb"><div class="ff"><label>Title</label><input id="mann-t"></div><div class="ff"><label>Content</label><textarea id="mann-b" rows="4"></textarea></div><div class="frow"><div class="ff"><label>Audience</label><select id="mann-aud" class="sel"><option>All</option><option>Students</option><option>Faculty</option></select></div><div class="ff"><label>Priority</label><select id="mann-pri" class="sel"><option>Normal</option><option>High</option><option>Urgent</option></select></div></div></div><div class="mf"><button class="btn btn-g" onclick="closeM('m-ann')">Cancel</button><button class="btn btn-p" onclick="saveAnn()">Post</button></div></div></div>
+
+<div class="mbg" id="m-event"><div class="mbox narrow"><div class="mh"><div class="mt">Add Calendar Event</div><button class="mx" onclick="closeM('m-event')">×</button></div><div class="mb"><div class="ff"><label>Event Title</label><input id="mev-t"></div><div class="frow"><div class="ff"><label>Date</label><input id="mev-d" type="date"></div><div class="ff"><label>Type</label><select id="mev-type" class="sel"><option>Holiday</option><option>Exam</option><option>Event</option><option>Deadline</option></select></div></div></div><div class="mf"><button class="btn btn-g" onclick="closeM('m-event')">Cancel</button><button class="btn btn-p" onclick="saveEvent()">Save</button></div></div></div>
+
+<div class="mbg" id="m-assign"><div class="mbox"><div class="mh"><div class="mt">Create Assignment</div><button class="mx" onclick="closeM('m-assign')">×</button></div><div class="mb"><div class="ff"><label>Title</label><input id="mas-t"></div><div class="ff"><label>Course</label><select id="mas-co" class="sel"></select></div><div class="frow"><div class="ff"><label>Due Date</label><input id="mas-due" type="date"></div><div class="ff"><label>Max Marks</label><input id="mas-marks" type="number" value="100"></div></div><div class="ff"><label>Weightage (%)</label><input id="mas-wt" type="number" value="20" min="1" max="100"></div><div class="ff"><label>Instructions</label><textarea id="mas-inst" rows="3"></textarea></div></div><div class="mf"><button class="btn btn-g" onclick="closeM('m-assign')">Cancel</button><button class="btn btn-p" onclick="saveAssignment()">Create</button></div></div></div>
+
+<div class="mbg" id="m-self-enroll"><div class="mbox narrow"><div class="mh"><div class="mt">Register for a Course</div><button class="mx" onclick="closeM('m-self-enroll')">×</button></div><div class="mb"><div id="se-courses"></div></div><div class="mf"><button class="btn btn-g" onclick="closeM('m-self-enroll')">Cancel</button><button class="btn btn-p" onclick="selfEnroll()">Register</button></div></div></div>
+
+<!-- ══ CONFIRM DIALOG ══ -->
+<div class="mbg" id="m-confirm">
+  <div class="mbox narrow">
+    <div class="mh"><div class="mt">Confirm Action</div></div>
+    <div class="mb">
+      <p id="cdlg-msg" style="font-size:13px;color:var(--text2);line-height:1.5"></p>
+    </div>
+    <div class="mf">
+      <button class="btn btn-g" onclick="closeM('m-confirm')">Cancel</button>
+      <button class="btn btn-danger" id="cdlg-ok">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODULAR SCRIPTS ══ -->
+<script src="js/constants.js"></script>
+<script src="js/db.js"></script>
+<script src="js/state.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/validation.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/pdf.js"></script>
+<script src="js/seed.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/admin.js"></script>
+<script src="js/faculty.js"></script>
+<script src="js/student.js"></script>
+<script src="js/app.js"></script>
+
+<!-- ══ MOBILE SIDEBAR OVERLAY ══ -->
+<div id="sb-overlay" class="sb-overlay" onclick="toggleSidebar()"></div>
+
+<!-- ══ SCROLL TO TOP ══ -->
+<button class="scroll-top" id="scroll-top" onclick="scrollToTop()" aria-label="Scroll to top" title="Scroll to top">↑</button>
+
+<!-- ══ CHANGE PASSWORD MODAL ══ -->
+<div class="mbg" id="m-changepw">
+  <div class="mbox narrow">
+    <div class="mh"><div class="mt">Change Password</div><button class="mx" onclick="closeM('m-changepw')">×</button></div>
+    <div class="mb">
+      <div class="ff"><label>Current Password</label><input id="cpw-old" type="password" placeholder="Enter current password"></div>
+      <div class="ff"><label>New Password</label><input id="cpw-new" type="password" placeholder="Min 8 characters" oninput="checkPwStrength()">
+        <div class="pw-strength"><div class="pw-strength-fill" id="cpw-bar" style="width:0%"></div></div>
+      </div>
+      <div class="ff"><label>Confirm New Password</label><input id="cpw-conf" type="password" placeholder="Repeat new password"></div>
+    </div>
+    <div class="mf"><button class="btn btn-g" onclick="closeM('m-changepw')">Cancel</button><button class="btn btn-p" onclick="doChangePw()">Update Password</button></div>
+  </div>
+</div>
+</body>
+</html>
