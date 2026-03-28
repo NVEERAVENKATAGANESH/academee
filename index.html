@@ -4,8 +4,36 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#09090b">
-<meta name="description" content="Academe — Manage students, faculty, courses, grades, and more">
-<title>Academe</title>
+
+<!-- Primary Meta -->
+<title>Academe — Academic Management Platform</title>
+<meta name="description" content="Academe is a complete academic management platform for educational institutions. Manage students, faculty, courses, grades, attendance, and more.">
+<meta name="keywords" content="academic management, student information system, LMS, faculty portal, grade management, attendance tracking, university software">
+<meta name="author" content="Academe">
+<meta name="robots" content="index, follow">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://nveeravenkataganesh.github.io/Academe/">
+<meta property="og:title" content="Academe — Academic Management Platform">
+<meta property="og:description" content="A complete academic management platform for modern educational institutions. Manage students, faculty, courses, grades, attendance, and more.">
+<meta property="og:image" content="https://nveeravenkataganesh.github.io/Academe/icons/og-image.png">
+<meta property="og:site_name" content="Academe">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:url" content="https://nveeravenkataganesh.github.io/Academe/">
+<meta name="twitter:title" content="Academe — Academic Management Platform">
+<meta name="twitter:description" content="A complete academic management platform for modern educational institutions.">
+<meta name="twitter:image" content="https://nveeravenkataganesh.github.io/Academe/icons/og-image.png">
+
+<!-- Canonical -->
+<link rel="canonical" href="https://nveeravenkataganesh.github.io/Academe/">
+
+<!-- Favicon (inline SVG) -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%233b82f6'/><text x='16' y='22' text-anchor='middle' font-family='system-ui,sans-serif' font-size='18' font-weight='700' fill='white'>A</text></svg>">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+
 <link rel="manifest" href="manifest.json">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -48,13 +76,13 @@
       <div class="land-quick-wrap">
         <span class="land-quick-l">Try a demo:</span>
         <div class="land-quick-btns">
-          <button class="land-qbtn" onclick="quickLogin('admin','admin123','admin')">
+          <button class="land-qbtn" onclick="quickLogin('admin','admin123')">
             <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>Admin
           </button>
-          <button class="land-qbtn" onclick="quickLogin('srk','faculty123','faculty')">
+          <button class="land-qbtn" onclick="quickLogin('srk','faculty123')">
             <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>Faculty
           </button>
-          <button class="land-qbtn" onclick="quickLogin('prabhas','student123','student')">
+          <button class="land-qbtn" onclick="quickLogin('prabhas','student123')">
             <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>Student
           </button>
         </div>
@@ -90,19 +118,19 @@
           <div class="land-prev-list">
             <div class="land-prev-list-hdr">Recent Students</div>
             <div class="land-prev-row">
-              <div class="land-pr-av" style="background:rgba(59,130,246,0.15);color:var(--blue)">JD</div>
-              <div class="land-pr-info"><div class="land-pr-n">John Doe</div><div class="land-pr-s">CS-101 · A</div></div>
+              <div class="land-pr-av" style="background:rgba(59,130,246,0.15);color:var(--blue)">P</div>
+              <div class="land-pr-info"><div class="land-pr-n">Prabhas</div><div class="land-pr-s">CS-101 · A</div></div>
               <div class="land-pr-badge" style="color:var(--green)">Active</div>
             </div>
             <div class="land-prev-row">
-              <div class="land-pr-av" style="background:rgba(168,85,247,0.15);color:var(--purple)">AK</div>
-              <div class="land-pr-info"><div class="land-pr-n">Anita Kumar</div><div class="land-pr-s">MATH-201 · B+</div></div>
+              <div class="land-pr-av" style="background:rgba(168,85,247,0.15);color:var(--purple)">KK</div>
+              <div class="land-pr-info"><div class="land-pr-n">Katrina Kaif</div><div class="land-pr-s">MATH-201 · B+</div></div>
               <div class="land-pr-badge" style="color:var(--green)">Active</div>
             </div>
             <div class="land-prev-row">
-              <div class="land-pr-av" style="background:rgba(34,197,94,0.15);color:var(--green)">RS</div>
-              <div class="land-pr-info"><div class="land-pr-n">Rahul Singh</div><div class="land-pr-s">PHY-101 · A-</div></div>
-              <div class="land-pr-badge" style="color:var(--amber)">Pending</div>
+              <div class="land-pr-av" style="background:rgba(34,197,94,0.15);color:var(--green)">AA</div>
+              <div class="land-pr-info"><div class="land-pr-n">Allu Arjun</div><div class="land-pr-s">CS-101 · A-</div></div>
+              <div class="land-pr-badge" style="color:var(--green)">Active</div>
             </div>
           </div>
         </div>
@@ -177,7 +205,7 @@
             <li>Financial &amp; scholarship records</li>
             <li>Audit logs &amp; data exports</li>
           </ul>
-          <button class="land-role-btn" onclick="quickLogin('admin','admin123','admin')">Try as Admin →</button>
+          <button class="land-role-btn" onclick="quickLogin('admin','admin123')">Try as Admin →</button>
         </div>
         <div class="land-role-card land-role-card-hl">
           <div class="land-role-ico" style="background:rgba(168,85,247,0.12)"><svg width="24" height="24" fill="none" stroke="var(--purple)" stroke-width="1.5" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
@@ -189,7 +217,7 @@
             <li>Attendance marking</li>
             <li>Assignment management</li>
           </ul>
-          <button class="land-role-btn" onclick="quickLogin('srk','faculty123','faculty')">Try as Faculty →</button>
+          <button class="land-role-btn" onclick="quickLogin('srk','faculty123')">Try as Faculty →</button>
         </div>
         <div class="land-role-card">
           <div class="land-role-ico" style="background:rgba(34,197,94,0.12)"><svg width="24" height="24" fill="none" stroke="var(--green)" stroke-width="1.5" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div>
@@ -201,7 +229,7 @@
             <li>Attendance &amp; leave tracking</li>
             <li>Transcript &amp; hall ticket export</li>
           </ul>
-          <button class="land-role-btn" onclick="quickLogin('prabhas','student123','student')">Try as Student →</button>
+          <button class="land-role-btn" onclick="quickLogin('prabhas','student123')">Try as Student →</button>
         </div>
       </div>
     </div>
@@ -225,16 +253,49 @@
       </div>
       <div class="land-ftr-col">
         <div class="land-ftr-col-hdr">Try a demo</div>
-        <span class="land-ftr-lnk" onclick="quickLogin('admin','admin123','admin')">Administrator</span>
-        <span class="land-ftr-lnk" onclick="quickLogin('srk','faculty123','faculty')">Faculty</span>
-        <span class="land-ftr-lnk" onclick="quickLogin('prabhas','student123','student')">Student</span>
+        <span class="land-ftr-lnk" onclick="quickLogin('admin','admin123')">Administrator</span>
+        <span class="land-ftr-lnk" onclick="quickLogin('srk','faculty123')">Faculty</span>
+        <span class="land-ftr-lnk" onclick="quickLogin('prabhas','student123')">Student</span>
+      </div>
+      <div class="land-ftr-col">
+        <div class="land-ftr-col-hdr">Legal</div>
+        <span class="land-ftr-lnk" onclick="openLegal('privacy')">Privacy Policy</span>
+        <span class="land-ftr-lnk" onclick="openLegal('terms')">Terms of Service</span>
+        <span class="land-ftr-lnk" onclick="openLegal('data')">Data Handling</span>
       </div>
     </div>
     <div class="land-ftr-bottom">
-      <span>© 2025 Academe · All rights reserved</span>
-      <span>Built for educational institutions</span>
+      <span>© 2026 Academe · All rights reserved</span>
+      <div class="land-ftr-legal-links">
+        <span onclick="openLegal('privacy')">Privacy Policy</span>
+        <span>·</span>
+        <span onclick="openLegal('terms')">Terms of Service</span>
+        <span>·</span>
+        <span onclick="openLegal('data')">Data Handling</span>
+      </div>
     </div>
   </footer>
+
+  <!-- ── Cookie Notice ── -->
+  <div class="cookie-bar" id="cookie-bar">
+    <div class="cookie-bar-text">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+      This app stores data locally in your browser (localStorage) to save your academic records. No data is sent to any external server. <span onclick="openLegal('data')" class="cookie-lnk">Learn more</span>
+    </div>
+    <button class="cookie-btn" onclick="acceptCookies()">Got it</button>
+  </div>
+
+  <!-- ── Legal Modal ── -->
+  <div class="land-overlay" id="legal-overlay" onclick="closeLegal()"></div>
+  <div class="legal-modal" id="legal-modal" role="dialog" aria-modal="true">
+    <div class="legal-modal-hdr">
+      <div class="legal-modal-title" id="legal-title">Privacy Policy</div>
+      <button class="land-modal-x" onclick="closeLegal()" aria-label="Close">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="legal-modal-body" id="legal-body"></div>
+  </div>
 
   <!-- ── Auth Modal (Sign In / Sign Up) ── -->
   <div class="land-overlay" id="land-overlay" onclick="hideSignIn()"></div>
@@ -254,8 +315,8 @@
       <div class="lerr" id="lerr"></div>
       <div class="lf"><label>Username</label><input id="lu" placeholder="username" autocomplete="off"></div>
       <div class="lf"><label>Password</label><input id="lp" type="password" placeholder="••••••••"></div>
-      <div class="lf"><label>Role</label><select id="lr"><option value="admin">Administrator</option><option value="faculty">Faculty</option><option value="student">Student</option></select></div>
       <button class="lbtn" onclick="doLogin()">Sign in →</button>
+      <div class="auth-switch">New here? <span onclick="switchAuthTab('signup')">Create an account</span></div>
       <div class="ldemo">
         <div class="ldemo-t">Demo accounts</div>
         <div class="drow"><span>Administrator</span><span class="dcred">admin / admin123</span></div>

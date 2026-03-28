@@ -14,9 +14,8 @@ const Auth = (() => {
 
   // ── Login ─────────────────────────────────────────────
   function doLogin() {
-    const u    = $('lu').value.trim();
-    const raw  = $('lp').value;
-    const role = $('lr').value;
+    const u     = $('lu').value.trim();
+    const raw   = $('lp').value;
     const errEl = $('lerr');
 
     errEl.style.display = 'none';
@@ -29,14 +28,15 @@ const Auth = (() => {
 
     const hashed = hashPw(raw);
     const users  = DB.g('users');
-    const user   = users.find(x => x.u === u && x.p === hashed && x.role === role);
+    // Match by username + password only — role is stored, not selected at login
+    const user   = users.find(x => x.u === u && x.p === hashed);
 
     if (!user) {
-      errEl.textContent = 'Invalid credentials. Please try again.';
+      errEl.textContent = 'Incorrect username or password.';
       errEl.style.display = 'block';
       $('lp').value = '';
       $('lp').focus();
-      addAudit('Login Failed', `Failed login attempt for "${esc(u)}" as ${role}`, 'system', 'var(--red)');
+      addAudit('Login Failed', `Failed login attempt for "${esc(u)}"`, 'system', 'var(--red)');
       return;
     }
 

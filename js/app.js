@@ -112,6 +112,9 @@ function init() {
     if (e.key === 'Escape' && $('land-modal')?.classList.contains('show')) hideSignIn();
   });
 
+  // Cookie notice
+  initCookieNotice();
+
   // Register service worker for PWA
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(() => {});
@@ -137,6 +140,118 @@ function init() {
       $('sb-overlay')?.classList.remove('show');
     }
   });
+}
+
+// ═══════════════════════════════════════════
+//  COOKIE NOTICE
+// ═══════════════════════════════════════════
+function initCookieNotice() {
+  if (!localStorage.getItem('acs_cookie_ok')) {
+    setTimeout(() => $('cookie-bar')?.classList.add('show'), 800);
+  }
+}
+function acceptCookies() {
+  localStorage.setItem('acs_cookie_ok', '1');
+  $('cookie-bar')?.classList.remove('show');
+}
+
+// ═══════════════════════════════════════════
+//  LEGAL MODALS
+// ═══════════════════════════════════════════
+const _legalContent = {
+  privacy: {
+    title: 'Privacy Policy',
+    body: `
+      <h3>Overview</h3>
+      <p>Academe is a client-side academic management platform. All data you enter is stored exclusively in your browser's localStorage. We do not operate any servers, collect personal information, or transmit any data externally.</p>
+      <h3>Data We Store</h3>
+      <ul>
+        <li>Account credentials (username + SHA-256 hashed password)</li>
+        <li>Student and faculty profile information you enter</li>
+        <li>Academic records: grades, attendance, enrollments, assignments</li>
+        <li>Application preferences: theme, sidebar state</li>
+      </ul>
+      <h3>Where Your Data Lives</h3>
+      <p>All data is stored in your browser's localStorage under the key prefix <code>acs_</code>. It never leaves your device. Clearing your browser data will permanently delete all Academe data.</p>
+      <h3>Third-Party Services</h3>
+      <p>Academe loads the following resources from CDNs at runtime:</p>
+      <ul>
+        <li>Google Fonts (Geist typeface) — font delivery only</li>
+        <li>Chart.js via jsDelivr — data visualisation</li>
+        <li>CryptoJS via jsDelivr — password hashing</li>
+        <li>jsPDF via jsDelivr — PDF export</li>
+      </ul>
+      <p>These services may log your IP address per their own privacy policies. No academic data is shared with them.</p>
+      <h3>Cookies</h3>
+      <p>Academe does not use cookies. Session state is stored in <code>sessionStorage</code> and expires when you close the browser tab.</p>
+      <h3>Your Rights</h3>
+      <p>You can export all your data via Admin → Export, or clear it entirely via browser settings. Since we store nothing on our end, there is no account to delete with us.</p>
+      <h3>Contact</h3>
+      <p>For privacy questions, open an issue on the project repository.</p>
+    `
+  },
+  terms: {
+    title: 'Terms of Service',
+    body: `
+      <h3>Acceptance</h3>
+      <p>By using Academe you agree to these terms. If you do not agree, please do not use the application.</p>
+      <h3>Description</h3>
+      <p>Academe is an open-source, browser-based academic management platform provided free of charge for educational and demonstration purposes.</p>
+      <h3>Use of the Application</h3>
+      <ul>
+        <li>You may use Academe for personal, educational, or institutional purposes</li>
+        <li>You must not use Academe for any unlawful purpose</li>
+        <li>You are responsible for maintaining the security of your account credentials</li>
+        <li>Demo accounts are shared — do not store sensitive real data in demo sessions</li>
+      </ul>
+      <h3>Data Responsibility</h3>
+      <p>Since all data is stored locally in your browser, you are solely responsible for backing up your data. We recommend using the Export feature regularly. We are not liable for data loss due to browser storage clearing, device failure, or any other cause.</p>
+      <h3>Disclaimer of Warranties</h3>
+      <p>Academe is provided "as is" without warranty of any kind. We make no guarantees regarding uptime, data integrity, or fitness for a particular purpose.</p>
+      <h3>Limitation of Liability</h3>
+      <p>To the maximum extent permitted by law, the authors of Academe shall not be liable for any indirect, incidental, or consequential damages arising from your use of the application.</p>
+      <h3>Changes</h3>
+      <p>These terms may be updated at any time. Continued use of the application constitutes acceptance of the updated terms.</p>
+    `
+  },
+  data: {
+    title: 'Data Handling',
+    body: `
+      <h3>Storage Mechanism</h3>
+      <p>Academe uses the browser's <strong>localStorage API</strong> to persist all application data. Data is stored under the prefix <code>acs_</code> and remains in your browser until you clear it manually.</p>
+      <h3>What Is Stored</h3>
+      <ul>
+        <li><strong>acs_users</strong> — usernames and SHA-256 hashed passwords</li>
+        <li><strong>acs_students</strong> — student profiles and records</li>
+        <li><strong>acs_faculty</strong> — faculty profiles</li>
+        <li><strong>acs_grades, acs_attendance, acs_enrollments</strong> — academic data</li>
+        <li><strong>acs_fees, acs_scholarships, acs_leaves</strong> — administrative records</li>
+        <li><strong>acs_audit</strong> — action log for accountability</li>
+        <li><strong>acs_cookie_ok</strong> — records that you acknowledged this notice</li>
+      </ul>
+      <h3>Password Security</h3>
+      <p>Passwords are never stored in plain text. They are hashed using SHA-256 via CryptoJS before being written to localStorage. The original password cannot be recovered from the stored hash.</p>
+      <h3>Session Handling</h3>
+      <p>Login sessions are stored in <code>sessionStorage</code> (not localStorage), meaning they expire automatically when you close the browser tab. Sessions also expire after 30 minutes of inactivity.</p>
+      <h3>Data Export & Deletion</h3>
+      <p>You can export a full JSON backup of all data from Admin → Export. To delete all data, clear your browser's localStorage for this site, or use the browser's "Clear site data" option in DevTools.</p>
+      <h3>GDPR Note</h3>
+      <p>Since no data is transmitted to or stored on any external server, Academe's data processing is entirely local. There is no data controller in the GDPR sense. You are the sole controller of your own data.</p>
+    `
+  }
+};
+
+function openLegal(type) {
+  const content = _legalContent[type];
+  if (!content) return;
+  $('legal-title').textContent = content.title;
+  $('legal-body').innerHTML = content.body;
+  $('legal-overlay').classList.add('show');
+  $('legal-modal').classList.add('show');
+}
+function closeLegal() {
+  $('legal-overlay').classList.remove('show');
+  $('legal-modal').classList.remove('show');
 }
 
 // ═══════════════════════════════════════════
@@ -173,10 +288,9 @@ function suRoleChange() {
   if (wrap) wrap.style.display = (role === 'admin') ? 'none' : 'block';
 }
 
-function quickLogin(u, p, r) {
+function quickLogin(u, p) {
   $('lu').value = u;
   $('lp').value = p;
-  $('lr').value = r;
   doLogin();
 }
 
@@ -216,18 +330,36 @@ function rProfile() {
 }
 
 // ── shared HTML builders ──────────────────────────────────
+const _PROF_ICONS = {
+  user:   `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>`,
+  email:  `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></svg>`,
+  phone:  `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7 12.8 12.8 0 0 0 .7 2.8 2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5 12.8 12.8 0 0 0 2.8.7A2 2 0 0 1 22 16.9z"/></svg>`,
+  id:     `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M16 10h2M16 14h2M6 10h6M6 14h4"/></svg>`,
+  dept:   `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>`,
+  book:   `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>`,
+  cal:    `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
+  lock:   `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`,
+  logout: `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>`,
+  chart:  `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>`,
+  check:  `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>`,
+  addr:   `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`,
+};
+
 function _profHero(initials, avClass, name, metaItems, badges, actions) {
   const meta = metaItems.map((m, i) =>
     i === 0 ? esc(m) : `<span class="prof-meta-sep"></span>${esc(m)}`
   ).join('');
-  return `<div class="prof-hero">
-    <div class="prof-av ${avClass}">${esc(initials)}</div>
-    <div class="prof-info">
-      <div class="prof-name">${esc(name)}</div>
-      <div class="prof-meta">${meta}</div>
-      <div class="prof-badges">${badges}</div>
+  return `<div class="prof-wrap">
+    <div class="prof-cover"><div class="prof-cover-pattern"></div></div>
+    <div class="prof-identity">
+      <div class="prof-av-wrap"><div class="prof-av ${avClass}">${esc(initials)}</div></div>
+      <div class="prof-id-center">
+        <div class="prof-name">${esc(name)}</div>
+        <div class="prof-meta">${meta}</div>
+        <div class="prof-badges">${badges}</div>
+      </div>
+      <div class="prof-id-actions">${actions}</div>
     </div>
-    <div class="prof-hero-actions">${actions}</div>
   </div>`;
 }
 
@@ -238,49 +370,75 @@ function _profTabs(tabs) {
 }
 
 function _profStats(items) {
-  return `<div class="prof-stats">${items.map(([val, lbl, color]) =>
+  return `<div class="prof-stats">${items.map(([val, lbl, color, ico, icoBg]) =>
     `<div class="prof-stat">
-      <div class="prof-stat-val" style="${color ? 'color:' + color : ''}">${esc(String(val))}</div>
-      <div class="prof-stat-lbl">${lbl}</div>
+      <div class="prof-stat-ico" style="background:${icoBg||'var(--bg3)'}">${ico||''}</div>
+      <div class="prof-stat-body">
+        <div class="prof-stat-val" style="${color ? 'color:' + color : ''}">${esc(String(val))}</div>
+        <div class="prof-stat-lbl">${lbl}</div>
+      </div>
     </div>`
   ).join('')}</div>`;
 }
 
-function _profField(lbl, val) {
+function _profField(lbl, val, ico) {
+  const icoHtml = ico ? `<span style="color:var(--text4)">${_PROF_ICONS[ico]||''}</span>` : '';
   return `<div class="prof-field">
-    <span class="prof-field-lbl">${lbl}</span>
+    <span class="prof-field-lbl">${icoHtml}${lbl}</span>
     <span class="prof-field-val">${typeof val === 'string' && val.startsWith('<') ? val : esc(String(val ?? '—'))}</span>
   </div>`;
 }
 
-function _profCard(title, body) {
-  return `<div class="card"><div class="card-h"><div class="card-t">${title}</div></div><div class="card-b">${body}</div></div>`;
+function _profCard(title, body, action) {
+  const act = action ? `<div style="margin-left:auto">${action}</div>` : '';
+  return `<div class="card"><div class="card-h"><div class="card-t">${title}</div>${act}</div><div class="card-b">${body}</div></div>`;
+}
+
+function _profCourseRow(code, name, meta, right, color) {
+  return `<div class="prof-course-row">
+    <div class="prof-course-ico" style="background:${color||'var(--bg3)'};color:var(--text2)">${esc(code.slice(0,2))}</div>
+    <div class="prof-course-body">
+      <div class="prof-course-name">${esc(name)}</div>
+      <div class="prof-course-meta">${esc(meta)}</div>
+    </div>
+    <div class="prof-course-right">${right}</div>
+  </div>`;
 }
 
 function _profSecurityPane(username, roleLabel) {
   return `<div class="prof-pane" id="ptab-security">
     <div class="two-col" style="align-items:start">
       ${_profCard('Change Password', `
-        <p style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:16px">
-          Use a strong password with a mix of uppercase letters, numbers, and symbols.
-          Minimum 8 characters required.
+        <p style="font-size:13px;color:var(--text3);line-height:1.65;margin-bottom:18px">
+          Use a strong password with uppercase letters, numbers, and symbols. Minimum 8 characters.
         </p>
-        <button class="btn btn-p" onclick="openChangePw()">
-          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-          Change Password
-        </button>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--green)">
+            ${_PROF_ICONS.check} Password is hashed with SHA-256
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--green)">
+            ${_PROF_ICONS.check} Never stored in plain text
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--green)">
+            ${_PROF_ICONS.check} Stored only on this device
+          </div>
+        </div>
+        <div style="margin-top:18px">
+          <button class="btn btn-p" onclick="openChangePw()">
+            ${_PROF_ICONS.lock} Change Password
+          </button>
+        </div>
       `)}
-      ${_profCard('Session Details', [
-        _profField('Username', username),
-        _profField('Role', roleLabel),
-        _profField('Session type', 'Browser session (tab)'),
-        _profField('Timeout', '30 minutes inactivity'),
-        _profField('Data storage', 'localStorage (this device)'),
+      ${_profCard('Session & Sign Out', [
+        _profField('Username', username, 'user'),
+        _profField('Role', roleLabel, 'id'),
+        _profField('Session type', 'Browser tab (sessionStorage)', 'lock'),
+        _profField('Timeout', '30 min inactivity', 'cal'),
+        _profField('Data storage', 'localStorage · this device only', 'check'),
       ].join('') + `
-        <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+        <div style="margin-top:18px;padding-top:16px;border-top:1px solid var(--border)">
           <button class="btn btn-danger" onclick="confirmDlg('Sign out of Academe?', doLogout, false)" style="width:100%;justify-content:center;gap:8px">
-            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-            Sign out
+            ${_PROF_ICONS.logout} Sign out of Academe
           </button>
         </div>
       `)}
@@ -296,16 +454,18 @@ function _profNotifsPane(userId) {
   };
   const rows = notifs.length
     ? notifs.map(n => `<div class="prof-notif-row">
-        <div class="prof-notif-dot" style="background:${TAG_COLORS[n.tag]||'var(--blue)'};${n.read?'opacity:.35':''}"></div>
-        <div style="flex:1">
-          <div style="font-size:12px;font-weight:500;${n.read?'color:var(--text2)':''}">${esc(n.title)}</div>
-          <div style="font-size:11px;color:var(--text3);margin-top:2px">${esc(n.body)}</div>
-          ${n.tag ? `<span style="font-size:10px;color:${TAG_COLORS[n.tag]||'var(--blue)'};margin-top:4px;display:inline-block">${esc(n.tag)}</span>` : ''}
+        <div class="prof-notif-dot" style="background:${TAG_COLORS[n.tag]||'var(--blue)'};${n.read?'opacity:.3':''}"></div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:500;${n.read?'color:var(--text3)':''}">${esc(n.title)}</div>
+          <div style="font-size:12px;color:var(--text4);margin-top:2px;line-height:1.4">${esc(n.body)}</div>
+          ${n.tag ? `<span class="bx" style="margin-top:5px;display:inline-flex;font-size:10px;background:${TAG_COLORS[n.tag]+'22'};color:${TAG_COLORS[n.tag]||'var(--blue)'};border-color:${TAG_COLORS[n.tag]+'44'}">${esc(n.tag)}</span>` : ''}
         </div>
-        <div style="font-size:10px;color:var(--text4);white-space:nowrap;margin-left:10px">${timeAgo(n.ts)}</div>
+        <div style="font-size:11px;color:var(--text4);white-space:nowrap;margin-left:12px;flex-shrink:0">${timeAgo(n.ts)}</div>
       </div>`).join('')
     : `<div class="empty-state"><div class="empty-ico">🔔</div><div class="empty-title">No notifications</div><div class="empty-sub">You're all caught up</div></div>`;
-  return `<div class="prof-pane" id="ptab-activity">${_profCard('Recent Notifications', rows)}</div>`;
+  return `<div class="prof-pane" id="ptab-activity">
+    ${_profCard('Notifications', rows)}
+  </div>`;
 }
 
 // ── STUDENT profile ───────────────────────────────────────
