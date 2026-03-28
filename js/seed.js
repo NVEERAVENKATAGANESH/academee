@@ -32,7 +32,7 @@ function seed() {
     {id:12,u:'ram',       p:H.student, role:'student', lid:7,    name:'Ram Charan'},
     {id:13,u:'nani',      p:H.student, role:'student', lid:8,    name:'Nani'},
     {id:14,u:'pawan',     p:H.student, role:'student', lid:9,    name:'Pawan Kalyan'},
-    {id:15,u:'deepika',   p:H.student, role:'student', lid:10,   name:'Deepika Padukone'},
+    {id:15,u:'raashi',    p:H.student, role:'student', lid:10,   name:'Raashi Khanna'},
     {id:16,u:'ranveer',   p:H.student, role:'student', lid:11,   name:'Ranveer Singh'},
   ]);
 
@@ -53,7 +53,7 @@ function seed() {
     {id:7,  fn:'Ram',      ln:'Charan',    em:'ram@uni.edu',       ph:'555-0107', dept:'Engineering',      yr:'2', dob:'2003-09-20', status:'Inactive', addr:'67 Birch Ln',  adm:'2023'},
     {id:8,  fn:'Nani',     ln:'',          em:'nani@uni.edu',      ph:'555-0108', dept:'Mathematics',      yr:'1', dob:'2004-02-10', status:'Active',   addr:'22 Cedar St',  adm:'2024'},
     {id:9,  fn:'Pawan',    ln:'Kalyan',    em:'pawan@uni.edu',     ph:'555-0109', dept:'Business',         yr:'3', dob:'2002-09-02', status:'Active',   addr:'55 River Rd',  adm:'2022'},
-    {id:10, fn:'Deepika',  ln:'Padukone',  em:'deepika@uni.edu',   ph:'555-0110', dept:'Computer Science', yr:'2', dob:'2003-07-05', status:'Active',   addr:'18 Hill Ave',  adm:'2023'},
+    {id:10, fn:'Raashi',   ln:'Khanna',    em:'raashi@uni.edu',    ph:'555-0110', dept:'Computer Science', yr:'2', dob:'2003-07-05', status:'Active',   addr:'18 Hill Ave',  adm:'2023'},
     {id:11, fn:'Ranveer',  ln:'Singh',     em:'ranveer@uni.edu',   ph:'555-0111', dept:'Business',         yr:'1', dob:'2004-04-20', status:'Active',   addr:'99 Park Blvd', adm:'2024'},
   ]);
 
