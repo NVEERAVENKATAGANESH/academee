@@ -2,7 +2,7 @@
 
 A fully client-side academic management platform for educational institutions. No backend, no server — runs entirely in the browser using localStorage.
 
-**Live demo:** [nveeravenkataganesh.github.io/Academe](https://nveeravenkataganesh.github.io/Academe/)
+**Live demo:** [nveeravenkataganesh.github.io/academe](https://nveeravenkataganesh.github.io/academe/)
 
 ---
 

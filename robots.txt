@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://nveeravenkataganesh.github.io/Academe/sitemap.xml
+Sitemap: https://nveeravenkataganesh.github.io/academe/sitemap.xml
