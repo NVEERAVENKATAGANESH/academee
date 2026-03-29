@@ -5,7 +5,7 @@
 // ════════════════════════════════════════════════════════
 'use strict';
 
-const CACHE  = 'academe-v1';
+const CACHE  = 'academe-v2';
 const STATIC = [
   './',
   './index.html',

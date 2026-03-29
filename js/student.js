@@ -14,7 +14,13 @@ function rSDash() {
   const enrs  = DB.g('enrollments').filter(e => e.sid === user.lid);
   const gs    = DB.g('grades').filter(g => g.sid === user.lid);
   const att   = DB.g('attendance').filter(a => a.sid === user.lid);
-  const myGPA = gs.length ? (gs.reduce((t, g) => t + gpa(g.marks), 0) / gs.length) : null;
+  const courses = DB.g('courses');
+  let myGPA = null;
+  if (gs.length) {
+    let tp = 0, tc = 0;
+    gs.forEach(g => { const cr = courses.find(c => c.id === g.cid)?.cr || 3; tp += gpa(g.marks)*cr; tc += cr; });
+    myGPA = tc ? tp / tc : null;
+  }
   const avgAtt = att.length ? Math.round(att.reduce((t, a) => t + pct(a.pres, a.tot), 0) / att.length) : null;
 
   $('sstats').innerHTML = `

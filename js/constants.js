@@ -41,16 +41,16 @@ const C = {
   // ── DB / Storage ─────────────────────────────────────
   DB: {
     PREFIX: 'acs_',
-    VERSION: 'v5',
+    VERSION: 'v6',
     MAX_AUDIT: 100,
   },
 
   // ── Semester ─────────────────────────────────────────
   SEMESTER: {
-    CURRENT: 'Spring 2025',
-    START: '2025-01-13',
-    END:   '2025-05-09',
-    MID:   '2025-03-03',
+    CURRENT: 'Spring 2026',
+    START: '2026-01-12',
+    END:   '2026-05-08',
+    MID:   '2026-03-02',
   },
 
   // ── Pagination ───────────────────────────────────────

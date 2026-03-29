@@ -1010,6 +1010,31 @@ function rExport() {
       </div>
     </div>`).join('');
 
+  // Semester settings — shown below the CSV grid
+  const semWrap = $('sem-settings');
+  if (semWrap) semWrap.innerHTML = `
+    <div class="card" style="margin-top:24px">
+      <div class="card-hd"><h2>Semester Settings</h2></div>
+      <div class="card-b">
+        <p style="font-size:12px;color:var(--text3);margin-bottom:16px">
+          Change the active semester name and dates. All new enrollments, courses, and grades will use this semester.
+        </p>
+        <div class="form-grid" style="gap:12px">
+          <div class="fg"><label class="lbl">Semester Name</label>
+            <input id="sem-name" class="inp" value="${esc(C.SEMESTER.CURRENT)}" placeholder="e.g. Fall 2026"></div>
+          <div class="fg"><label class="lbl">Start Date</label>
+            <input id="sem-start" type="date" class="inp" value="${esc(C.SEMESTER.START)}"></div>
+          <div class="fg"><label class="lbl">End Date</label>
+            <input id="sem-end" type="date" class="inp" value="${esc(C.SEMESTER.END)}"></div>
+          <div class="fg"><label class="lbl">Mid-term Date</label>
+            <input id="sem-mid" type="date" class="inp" value="${esc(C.SEMESTER.MID)}"></div>
+        </div>
+        <div style="margin-top:16px">
+          <button class="btn btn-p" onclick="_saveSemester()">Save Semester</button>
+        </div>
+      </div>
+    </div>`;
+
   // Also show full backup/restore controls
   const g = $('export-grid');
   if (g) g.innerHTML += `
@@ -1030,6 +1055,25 @@ function rExport() {
         <button class="btn btn-dg" style="width:100%" onclick="_resetData()">Reset to Demo</button>
       </div>
     </div>`;
+}
+
+function _saveSemester() {
+  const name  = $('sem-name')?.value.trim();
+  const start = $('sem-start')?.value;
+  const end   = $('sem-end')?.value;
+  const mid   = $('sem-mid')?.value;
+  if (!name || !start || !end) { toast('Semester name, start and end date are required', false); return; }
+  if (end <= start) { toast('End date must be after start date', false); return; }
+  DB.setSetting('semester', name);
+  DB.setSetting('semStart', start);
+  DB.setSetting('semEnd',   end);
+  DB.setSetting('semMid',   mid || '');
+  C.SEMESTER.CURRENT = name;
+  C.SEMESTER.START   = start;
+  C.SEMESTER.END     = end;
+  C.SEMESTER.MID     = mid || C.SEMESTER.MID;
+  toast('Semester settings saved');
+  addAudit('Semester Updated', `Semester changed to "${name}"`, State.getUser()?.u || 'admin', 'var(--teal)');
 }
 
 function _exportCSV(key, label) {
@@ -1068,5 +1112,5 @@ function _resetData() {
   confirmDlg('Reset all data to demo state? This cannot be undone.', () => {
     DB.clearAll();
     location.reload();
-  });
+  }, true, 'Reset');
 }

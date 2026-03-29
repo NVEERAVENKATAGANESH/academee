@@ -81,11 +81,11 @@ document.addEventListener('keydown', e => {
 });
 
 // ── Confirm dialog (replaces browser confirm) ─────────
-function confirmDlg(msg, onConfirm, danger = true) {
+function confirmDlg(msg, onConfirm, danger = true, btnLabel = '') {
   $('cdlg-msg').textContent = msg;
   const btn = $('cdlg-ok');
   btn.className = 'btn ' + (danger ? 'btn-danger' : 'btn-p');
-  btn.textContent = danger ? 'Delete' : 'Confirm';
+  btn.textContent = btnLabel || (danger ? 'Delete' : 'Confirm');
   openM('m-confirm');
   btn.onclick = () => { closeM('m-confirm'); onConfirm(); };
 }

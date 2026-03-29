@@ -1,15 +1,53 @@
 // ════════════════════════════════════════════════════════
 //  AUTH  —  login, logout, session management
-//           Passwords hashed with SHA-256 (CryptoJS)
+//           Passwords hashed with SHA-256 + username salt
 // ════════════════════════════════════════════════════════
 
 const Auth = (() => {
   let _sessionTimer = null;
   const TIMEOUT = C.SESSION.TIMEOUT_MS;
 
-  // ── Hash ──────────────────────────────────────────────
-  function hashPw(raw) {
-    return CryptoJS.SHA256(raw).toString();
+  // ── BroadcastChannel for cross-tab logout sync ────────
+  const _bc = typeof BroadcastChannel !== 'undefined'
+    ? new BroadcastChannel('acs_auth')
+    : null;
+  if (_bc) {
+    _bc.onmessage = e => {
+      if (e.data?.type === 'logout' && State.getUser()) doLogout();
+    };
+  }
+
+  // ── Hash (username is salt — same password → different hash per user) ─
+  function hashPw(raw, username) {
+    return CryptoJS.SHA256((username || '') + ':' + raw).toString();
+  }
+
+  // ── Rate limiting ─────────────────────────────────────
+  const _attempts  = {};   // username → { count, lockedUntil }
+  const MAX_FAILS  = 5;
+  const LOCK_MS    = 15 * 60 * 1000;  // 15 minutes
+
+  function _checkLock(u) {
+    const a = _attempts[u];
+    if (!a) return null;
+    if (a.lockedUntil && Date.now() < a.lockedUntil) {
+      const mins = Math.ceil((a.lockedUntil - Date.now()) / 60000);
+      return `Too many failed attempts. Try again in ${mins} minute${mins > 1 ? 's' : ''}.`;
+    }
+    return null;
+  }
+
+  function _recordFail(u) {
+    if (!_attempts[u]) _attempts[u] = { count: 0, lockedUntil: null };
+    _attempts[u].count++;
+    if (_attempts[u].count >= MAX_FAILS) {
+      _attempts[u].lockedUntil = Date.now() + LOCK_MS;
+      _attempts[u].count = 0;
+    }
+  }
+
+  function _clearFails(u) {
+    delete _attempts[u];
   }
 
   // ── Login ─────────────────────────────────────────────
@@ -26,13 +64,25 @@ const Auth = (() => {
       return;
     }
 
-    const hashed = hashPw(raw);
+    const lockMsg = _checkLock(u);
+    if (lockMsg) {
+      errEl.textContent = lockMsg;
+      errEl.style.display = 'block';
+      return;
+    }
+
+    const hashed = hashPw(raw, u);
     const users  = DB.g('users');
-    // Match by username + password only — role is stored, not selected at login
     const user   = users.find(x => x.u === u && x.p === hashed);
 
     if (!user) {
-      errEl.textContent = 'Incorrect username or password.';
+      _recordFail(u);
+      const a = _attempts[u];
+      const remaining = a ? Math.max(0, MAX_FAILS - a.count) : MAX_FAILS;
+      const hint = remaining > 0
+        ? ` (${remaining} attempt${remaining > 1 ? 's' : ''} remaining)`
+        : '';
+      errEl.textContent = 'Incorrect username or password.' + hint;
       errEl.style.display = 'block';
       $('lp').value = '';
       $('lp').focus();
@@ -40,7 +90,7 @@ const Auth = (() => {
       return;
     }
 
-    // Success
+    _clearFails(u);
     State.setUser(user);
     saveSession(user);
     _startSessionTimer();
@@ -51,7 +101,12 @@ const Auth = (() => {
   // ── Logout ────────────────────────────────────────────
   function doLogout() {
     const u = State.getUser();
+    if (!u) return; // already logged out (e.g. from another tab)
+
     if (u) addAudit('Logout', `${esc(u.name || u.u)} signed out`, u.u, 'var(--blue)');
+
+    // Notify other tabs before clearing state
+    if (_bc) _bc.postMessage({ type: 'logout' });
 
     clearSession();
     _clearSessionTimer();
@@ -62,7 +117,6 @@ const Auth = (() => {
     $('lu').value  = '';
     $('lp').value  = '';
     $('lerr').style.display = 'none';
-    // close auth modal and scroll landing page to top
     $('land-overlay')?.classList.remove('show');
     $('land-modal')?.classList.remove('show');
     const loginEl = $('login');
@@ -123,28 +177,27 @@ const Auth = (() => {
       DB.s('faculty', list);
     }
 
-    const newUser = { id:newId, u, p:hashPw(pass), role, lid, name };
+    const newUser = { id:newId, u, p:hashPw(pass, u), role, lid, name };
     users.push(newUser);
     DB.s('users', users);
 
     addAudit('Sign Up', `New ${role} account created: ${esc(name)} (${esc(u)})`, u, 'var(--green)');
 
-    // Auto-login
     State.setUser(newUser);
     saveSession(newUser);
     _startSessionTimer();
     _renderShell(newUser);
   }
 
-  // ── Session persistence ───────────────────────────────
+  // ── Session persistence (localStorage so all tabs share session) ───
   function saveSession(user) {
     const sess = { uid: user.id, role: user.role, ts: Date.now() };
-    sessionStorage.setItem(C.SESSION.KEY, JSON.stringify(sess));
+    localStorage.setItem(C.SESSION.KEY, JSON.stringify(sess));
   }
 
   function loadSession() {
     try {
-      const raw = sessionStorage.getItem(C.SESSION.KEY);
+      const raw = localStorage.getItem(C.SESSION.KEY);
       if (!raw) return null;
       const sess = JSON.parse(raw);
       if (Date.now() - sess.ts > TIMEOUT) { clearSession(); return null; }
@@ -154,7 +207,7 @@ const Auth = (() => {
   }
 
   function clearSession() {
-    sessionStorage.removeItem(C.SESSION.KEY);
+    localStorage.removeItem(C.SESSION.KEY);
   }
 
   // ── Inactivity timer ──────────────────────────────────
@@ -215,7 +268,6 @@ const Auth = (() => {
     $('sbname').textContent  = esc(user.name || user.u);
     $('sbrole').textContent  = { admin:'Administrator', faculty:'Faculty Member', student:'Student' }[user.role] || user.role;
 
-    // Show correct nav
     ['admin','faculty','student'].forEach(r => {
       const el = $('tnav-' + r);
       if (el) el.style.display = (user.role === r) ? 'flex' : 'none';
@@ -223,7 +275,6 @@ const Auth = (() => {
 
     updateNotifBadge();
 
-    // Navigate to default page
     const defaults = { admin:'dash', faculty:'fdash', student:'sdash' };
     go(defaults[user.role]);
   }
@@ -234,8 +285,9 @@ const Auth = (() => {
     const users = DB.g('users');
     const idx   = users.findIndex(u => u.id === userId);
     if (idx < 0) return 'User not found';
-    if (users[idx].p !== hashPw(oldRaw)) return 'Current password is incorrect';
-    users[idx].p = hashPw(newRaw);
+    const username = users[idx].u;
+    if (users[idx].p !== hashPw(oldRaw, username)) return 'Current password is incorrect';
+    users[idx].p = hashPw(newRaw, username);
     DB.s('users', users);
     addAudit('Password Changed', `Password updated for user ID ${userId}`, State.getUser()?.u || 'system');
     return null; // success

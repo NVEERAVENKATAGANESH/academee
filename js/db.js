@@ -26,7 +26,6 @@ const DB = (() => {
     try { return JSON.parse(localStorage.getItem(PFX + k)) ?? {}; }
     catch { return {}; }
   }
-  function so(k, v) { return s(k, v); }
 
   // ── Next ID ────────────────────────────────────────
   function nid(arr) {
@@ -42,6 +41,17 @@ const DB = (() => {
     return result;
   }
 
+  // ── Settings helpers ───────────────────────────────
+  function getSetting(key, fallback = undefined) {
+    const settings = go('settings');
+    return settings[key] !== undefined ? settings[key] : fallback;
+  }
+  function setSetting(key, val) {
+    const settings = go('settings');
+    settings[key] = val;
+    s('settings', settings);
+  }
+
   // ── Version / migration ────────────────────────────
   function isSeeded() {
     return g(C.DB.VERSION).length > 0;
@@ -51,13 +61,14 @@ const DB = (() => {
   }
 
   // ── Export all data ────────────────────────────────
+  const KEYS = [
+    'users','faculty','students','depts','courses','enrollments',
+    'grades','attendance','fees','scholarships','exams','announcements',
+    'assignments','submissions','leaves','appeals','events','messages',
+    'notifications','wishlist','waitlist','audit'
+  ];
+
   function exportAll() {
-    const KEYS = [
-      'users','faculty','students','depts','courses','enrollments',
-      'grades','attendance','fees','scholarships','exams','announcements',
-      'assignments','submissions','leaves','appeals','events','messages',
-      'notifications','wishlist','waitlist','audit'
-    ];
     const data = { version: C.DB.VERSION, exportedAt: new Date().toISOString() };
     KEYS.forEach(k => { data[k] = g(k); });
     return data;
@@ -65,13 +76,20 @@ const DB = (() => {
 
   // ── Import data ────────────────────────────────────
   function importAll(data) {
-    if (!data || !data.version) throw new Error('Invalid backup file');
-    const KEYS = [
-      'users','faculty','students','depts','courses','enrollments',
-      'grades','attendance','fees','scholarships','exams','announcements',
-      'assignments','submissions','leaves','appeals','events','messages',
-      'notifications','wishlist','waitlist','audit'
-    ];
+    if (!data || !data.version) throw new Error('Invalid backup file — missing version field');
+    // Validate that all present keys are arrays (not objects or primitives)
+    for (const k of KEYS) {
+      if (data[k] !== undefined && !Array.isArray(data[k])) {
+        throw new Error(`Invalid backup format: "${k}" must be an array`);
+      }
+    }
+    // Validate that records in key arrays are objects
+    const criticalKeys = ['users', 'students', 'faculty'];
+    for (const k of criticalKeys) {
+      if (Array.isArray(data[k]) && data[k].some(r => typeof r !== 'object' || r === null)) {
+        throw new Error(`Invalid backup format: "${k}" contains non-object entries`);
+      }
+    }
     KEYS.forEach(k => { if (data[k]) s(k, data[k]); });
     markSeeded();
   }
@@ -92,5 +110,5 @@ const DB = (() => {
     return Math.round(total / 1024);
   }
 
-  return { g, s, go, so, nid, update, isSeeded, markSeeded, exportAll, importAll, clearAll, usageKB };
+  return { g, s, go, nid, update, getSetting, setSetting, isSeeded, markSeeded, exportAll, importAll, clearAll, usageKB };
 })();

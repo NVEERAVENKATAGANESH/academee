@@ -72,8 +72,19 @@ function go(id) {
   // Update state
   State.set('page', id);
 
-  // Run render function
-  if (PAGES[id]) PAGES[id]();
+  // Run render function — error boundary prevents one bad page from crashing the whole app
+  if (PAGES[id]) {
+    try {
+      PAGES[id]();
+    } catch (err) {
+      const pgEl = $('pg-' + id);
+      if (pgEl) pgEl.innerHTML = `<div class="empty-state" style="padding:48px">
+        <div class="empty-ico">⚠</div>
+        <div class="empty-title">Page failed to load</div>
+        <div class="empty-sub">Try refreshing or resetting demo data (Admin → Export → Reset).<br><span style="font-size:10px;font-family:monospace;color:var(--text4)">${esc(err.message)}</span></div>
+      </div>`;
+    }
+  }
 
   // Update header breadcrumb
   const bc = $('hdr-breadcrumb');
@@ -90,9 +101,23 @@ function go(id) {
 // ═══════════════════════════════════════════
 //  INITIALIZATION
 // ═══════════════════════════════════════════
+function loadSemesterSettings() {
+  const sem   = DB.getSetting('semester');
+  const start = DB.getSetting('semStart');
+  const end   = DB.getSetting('semEnd');
+  const mid   = DB.getSetting('semMid');
+  if (sem)   C.SEMESTER.CURRENT = sem;
+  if (start) C.SEMESTER.START   = start;
+  if (end)   C.SEMESTER.END     = end;
+  if (mid)   C.SEMESTER.MID     = mid;
+}
+
 function init() {
   // Load saved theme
   State.loadTheme();
+
+  // Apply any admin-saved semester overrides before seeding
+  loadSemesterSettings();
 
   // Seed demo data if first run
   seed();
@@ -123,8 +148,8 @@ function init() {
     if (!$('hdr-user-wrap')?.contains(e.target)) closeUserMenu();
   });
 
-  // Cookie notice
-  initCookieNotice();
+  // Storage notice (informs users about localStorage usage)
+  initStorageNotice();
 
   // Register service worker for PWA
   if ('serviceWorker' in navigator) {
@@ -151,15 +176,15 @@ function init() {
 }
 
 // ═══════════════════════════════════════════
-//  COOKIE NOTICE
+//  STORAGE NOTICE
 // ═══════════════════════════════════════════
-function initCookieNotice() {
-  if (!localStorage.getItem('acs_cookie_ok')) {
+function initStorageNotice() {
+  if (!localStorage.getItem('acs_storage_ok')) {
     setTimeout(() => $('cookie-bar')?.classList.add('show'), 800);
   }
 }
 function acceptCookies() {
-  localStorage.setItem('acs_cookie_ok', '1');
+  localStorage.setItem('acs_storage_ok', '1');
   $('cookie-bar')?.classList.remove('show');
 }
 
@@ -474,12 +499,12 @@ function _profSecurityPane(username, roleLabel) {
       ${_profCard('Session & Sign Out', [
         _profField('Username', username, 'user'),
         _profField('Role', roleLabel, 'id'),
-        _profField('Session type', 'Browser tab (sessionStorage)', 'lock'),
+        _profField('Session type', 'Browser (localStorage)', 'lock'),
         _profField('Timeout', '30 min inactivity', 'cal'),
         _profField('Data storage', 'localStorage · this device only', 'check'),
       ].join('') + `
         <div style="margin-top:18px;padding-top:16px;border-top:1px solid var(--border)">
-          <button class="btn btn-danger" onclick="confirmDlg('Sign out of Academe?', doLogout, false)" style="width:100%;justify-content:center;gap:8px">
+          <button class="btn btn-danger" onclick="confirmDlg('Sign out of Academe?', doLogout, false, 'Sign out')" style="width:100%;justify-content:center;gap:8px">
             ${_PROF_ICONS.logout} Sign out of Academe
           </button>
         </div>
@@ -529,7 +554,7 @@ function _profStudent(root, user) {
     gs.forEach(g => { const cr = courses.find(c => c.id === g.cid)?.cr || 3; tp += gpa(g.marks)*cr; tc += cr; });
     gpaVal = tc ? (tp/tc).toFixed(2) : null;
   }
-  const attPct       = att.length ? Math.round(att.reduce((s,a) => s + pct(a.present,a.total),0)/att.length) : null;
+  const attPct       = att.length ? Math.round(att.reduce((s,a) => s + pct(a.pres, a.tot),0)/att.length) : null;
   const totalCredits = enrs.reduce((s,e) => s + (courses.find(c=>c.id===e.cid)?.cr||0), 0);
   const feesPending  = fees.filter(f => f.status !== 'Paid').length;
   const st           = standing(gpaVal ? parseFloat(gpaVal) : null);

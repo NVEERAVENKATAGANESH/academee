@@ -9,7 +9,11 @@
 function rFDash() {
   const user = State.getUser();
   const fac  = DB.g('faculty').find(f => f.id === user.lid);
-  if (fac) $('fdash-t').textContent = `Good morning, ${fac.fn}`;
+  if (fac) {
+    const hr = new Date().getHours();
+    const greeting = hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening';
+    $('fdash-t').textContent = `${greeting}, ${fac.fn}`;
+  }
 
   const mc = DB.g('courses').filter(c => c.fid === user.lid);
   const me = DB.g('enrollments').filter(e => mc.find(c => c.id === e.cid));
