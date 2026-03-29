@@ -117,11 +117,19 @@ function selfEnroll() {
   const cid  = parseInt(document.querySelector('input[name="sec"]:checked')?.value);
   if (!cid) { toast('Please select a course', false); return; }
 
-  const enrs = DB.g('enrollments');
-  if (enrs.find(e => e.sid === user.lid && e.cid === cid)) {
-    toast('Already enrolled in this course', false); return;
+  const err = validateEnrollment(user.lid, cid, C.SEMESTER.CURRENT);
+  if (err === 'WAITLIST') {
+    const wl = DB.g('waitlist');
+    wl.push({ id: DB.nid(wl), sid: user.lid, cid, sem: C.SEMESTER.CURRENT, ts: Date.now() });
+    DB.s('waitlist', wl);
+    toast('Course is full — added to waitlist');
+    closeM('m-self-enroll');
+    rMyEn();
+    return;
   }
+  if (err) { toast(err, false); return; }
 
+  const enrs = DB.g('enrollments');
   enrs.push({ id: DB.nid(enrs), sid: user.lid, cid, sem: C.SEMESTER.CURRENT, status: 'Active' });
   DB.s('enrollments', enrs);
   toast('Successfully registered!');

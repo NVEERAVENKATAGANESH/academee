@@ -306,13 +306,21 @@ function saveAssignment() {
     if (u) addNotif(u.id, 'New Assignment', `${d.title} — due ${d.due}`, 'assign');
   });
 
+  clearDraft('m-assign');
   closeM('m-assign');
   rAssignments();
 }
 
 function delAssign(id) {
-  confirmDlg('Delete this assignment?', () => {
+  const a = DB.g('assignments').find(x => x.id === id);
+  if (!a) return;
+  confirmDlg(`Delete "${a.title}"?`, () => {
     DB.s('assignments', DB.g('assignments').filter(x => x.id !== id));
+    addAudit('Assignment Deleted', a.title, State.getUser().u, 'var(--red)');
     rAssignments();
+    toastUndo(`"${a.title}" deleted`, () => {
+      DB.s('assignments', [...DB.g('assignments'), a]);
+      rAssignments();
+    });
   });
 }

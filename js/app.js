@@ -260,12 +260,12 @@ const _legalContent = {
         <li><strong>acs_grades, acs_attendance, acs_enrollments</strong> — academic data</li>
         <li><strong>acs_fees, acs_scholarships, acs_leaves</strong> — administrative records</li>
         <li><strong>acs_audit</strong> — action log for accountability</li>
-        <li><strong>acs_cookie_ok</strong> — records that you acknowledged this notice</li>
+        <li><strong>acs_storage_ok</strong> — records that you acknowledged this notice</li>
       </ul>
       <h3>Password Security</h3>
       <p>Passwords are never stored in plain text. They are hashed using SHA-256 via CryptoJS before being written to localStorage. The original password cannot be recovered from the stored hash.</p>
       <h3>Session Handling</h3>
-      <p>Login sessions are stored in <code>sessionStorage</code> (not localStorage), meaning they expire automatically when you close the browser tab. Sessions also expire after 30 minutes of inactivity.</p>
+      <p>Login sessions are stored in <code>localStorage</code> under the key <code>acs_session</code>. Sessions expire after 30 minutes of inactivity or when you sign out explicitly.</p>
       <h3>Data Export & Deletion</h3>
       <p>You can export a full JSON backup of all data from Admin → Export. To delete all data, clear your browser's localStorage for this site, or use the browser's "Clear site data" option in DevTools.</p>
       <h3>GDPR Note</h3>
@@ -334,9 +334,9 @@ function quickLogin(u, p) {
 // fallback if the m-confirm modal is missing
 (function patchConfirmDlg() {
   const orig = window.confirmDlg;
-  window.confirmDlg = function(msg, onConfirm, danger = true) {
+  window.confirmDlg = function(msg, onConfirm, danger = true, btnLabel = '') {
     const dlg = $('m-confirm');
-    if (dlg) { orig(msg, onConfirm, danger); }
+    if (dlg) { orig(msg, onConfirm, danger, btnLabel); }
     else { if (confirm(msg)) onConfirm(); }
   };
 })();

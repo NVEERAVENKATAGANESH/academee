@@ -14,7 +14,7 @@ let _activeConv    = null;
 function _deptOpts() {
   return DB.g('depts').map(d => `<option>${esc(d.name)}</option>`).join('');
 }
-function _facOpts(selId) {
+function _facOpts() {
   const facs = DB.g('faculty');
   return facs.map(f => `<option value="${f.id}">${esc(f.fn)} ${esc(f.ln)}</option>`).join('');
 }
@@ -117,7 +117,7 @@ function rStudents() {
     const satt   = att.filter(a => a.sid === s.id);
     const avgAtt = satt.length ? satt.reduce((t, a) => t + pct(a.pres, a.tot), 0) / satt.length : 100;
     const atRisk = (g !== null && g < 2) || avgAtt < 60;
-    return `<tr>
+    return `<tr data-id="${s.id}">
       <td><div style="display:flex;align-items:center;gap:8px">
         <div class="av ${avCls(i)}">${esc(s.fn[0])}${esc((s.ln || '')[0] || '')}</div>
         <div><div class="bold">${esc(s.fn)} ${esc(s.ln)}</div><div class="text4" style="font-size:11px">${esc(s.em)}</div></div>
@@ -161,34 +161,46 @@ function saveStudent() {
 
   const sts = DB.g('students');
   const user = State.getUser();
+  let savedId;
   if (id) {
     const i = sts.findIndex(x => x.id === id);
     sts[i] = { ...sts[i], ...d };
+    savedId = id;
     toast('Student updated');
     addAudit('Student Updated', `${d.fn} ${d.ln} record updated`, user.u, 'var(--blue)');
   } else {
-    const newStu = { id: DB.nid(sts), ...d };
-    sts.push(newStu);
+    savedId = DB.nid(sts);
+    sts.push({ id: savedId, ...d });
     toast('Student added');
     addAudit('Student Added', `${d.fn} ${d.ln} added to system`, user.u, 'var(--green)');
   }
   DB.s('students', sts);
+  clearDraft('m-student');
   closeM('m-student');
   rStudents();
+  flashRow('stbody', savedId);
 }
 
 function delStudent(id) {
   const s = DB.g('students').find(x => x.id === id);
   if (!s) return;
-  confirmDlg(`Delete ${s.fn} ${s.ln} and all their records?`, () => {
+  const relKeys = ['enrollments','grades','attendance','fees','leaves','submissions'];
+  const counts = { enrollments: DB.g('enrollments').filter(e => e.sid === id).length, grades: DB.g('grades').filter(g => g.sid === id).length, fees: DB.g('fees').filter(f => f.sid === id).length };
+  const cascade = Object.entries(counts).filter(([,n]) => n > 0).map(([k,n]) => `${n} ${k}`).join(', ');
+  const msg = `Delete ${s.fn} ${s.ln}?${cascade ? ` This will also remove ${cascade}.` : ''}`;
+  confirmDlg(msg, () => {
+    const snapshot = { student: s };
+    relKeys.forEach(k => { snapshot[k] = DB.g(k).filter(x => x.sid === id); });
     DB.s('students', DB.g('students').filter(x => x.id !== id));
-    ['enrollments','grades','attendance','fees','leaves','submissions'].forEach(k =>
-      DB.s(k, DB.g(k).filter(x => x.sid !== id))
-    );
-    const user = State.getUser();
-    addAudit('Student Deleted', `${s.fn} ${s.ln} removed`, user.u, 'var(--red)');
-    toast('Student deleted');
+    relKeys.forEach(k => DB.s(k, DB.g(k).filter(x => x.sid !== id)));
+    addAudit('Student Deleted', `${s.fn} ${s.ln} removed`, State.getUser().u, 'var(--red)');
     rStudents();
+    toastUndo(`${s.fn} ${s.ln} deleted`, () => {
+      DB.s('students', [...DB.g('students'), snapshot.student]);
+      relKeys.forEach(k => { if (snapshot[k].length) DB.s(k, [...DB.g(k), ...snapshot[k]]); });
+      addAudit('Student Restore', `${s.fn} ${s.ln} deletion undone`, State.getUser().u, 'var(--green)');
+      rStudents();
+    });
   });
 }
 
@@ -220,7 +232,7 @@ function rFaculty() {
   $('ftbody').innerHTML = facs.map((f, i) => {
     const cs = DB.g('courses').filter(c => c.fid === f.id);
     const ss = new Set(DB.g('enrollments').filter(e => cs.find(c => c.id === e.cid)).map(e => e.sid));
-    return `<tr>
+    return `<tr data-id="${f.id}">
       <td><div style="display:flex;align-items:center;gap:8px">
         <div class="av ${avCls(i)}">${esc(f.fn[0])}${esc((f.ln || '')[0] || '')}</div>
         <div><div class="bold">${esc(f.fn)} ${esc(f.ln)}</div><div class="text4" style="font-size:11px">${esc(f.em)}</div></div>
@@ -259,27 +271,40 @@ function saveFaculty() {
 
   const facs = DB.g('faculty');
   const user = State.getUser();
+  let savedId;
   if (id) {
     const i = facs.findIndex(x => x.id === id);
     facs[i] = { ...facs[i], ...d };
+    savedId = id;
     toast('Faculty updated');
+    addAudit('Faculty Updated', `${d.fn} ${d.ln} record updated`, user.u, 'var(--blue)');
   } else {
-    facs.push({ id: DB.nid(facs), ...d, join: new Date().getFullYear().toString() });
+    savedId = DB.nid(facs);
+    facs.push({ id: savedId, ...d, join: new Date().getFullYear().toString() });
     toast('Faculty added');
     addAudit('Faculty Added', `${d.fn} ${d.ln}`, user.u, 'var(--green)');
   }
   DB.s('faculty', facs);
+  clearDraft('m-faculty');
   closeM('m-faculty');
   rFaculty();
+  flashRow('ftbody', savedId);
 }
 
 function delFaculty(id) {
   const f = DB.g('faculty').find(x => x.id === id);
   if (!f) return;
-  confirmDlg(`Delete ${f.fn} ${f.ln}?`, () => {
+  const courseCount = DB.g('courses').filter(c => c.fid === id).length;
+  const suffix = courseCount ? ` They are assigned to ${courseCount} course${courseCount !== 1 ? 's' : ''}.` : '';
+  confirmDlg(`Delete ${f.fn} ${f.ln}?${suffix}`, () => {
     DB.s('faculty', DB.g('faculty').filter(x => x.id !== id));
-    toast('Faculty deleted');
+    addAudit('Faculty Deleted', `${f.fn} ${f.ln} removed`, State.getUser().u, 'var(--red)');
     rFaculty();
+    toastUndo(`${f.fn} ${f.ln} deleted`, () => {
+      DB.s('faculty', [...DB.g('faculty'), f]);
+      addAudit('Faculty Restore', `${f.fn} ${f.ln} deletion undone`, State.getUser().u, 'var(--green)');
+      rFaculty();
+    });
   });
 }
 
@@ -334,9 +359,16 @@ function saveDept() {
 }
 
 function delDept(id) {
-  confirmDlg('Delete this department?', () => {
+  const d = DB.g('depts').find(x => x.id === id);
+  if (!d) return;
+  confirmDlg(`Delete ${d.name} department?`, () => {
     DB.s('depts', DB.g('depts').filter(x => x.id !== id));
+    addAudit('Department Deleted', d.name, State.getUser().u, 'var(--red)');
     rDepts();
+    toastUndo(`${d.name} department deleted`, () => {
+      DB.s('depts', [...DB.g('depts'), d]);
+      rDepts();
+    });
   });
 }
 
@@ -352,7 +384,7 @@ function rCourses() {
   $('ctbody').innerHTML = cs.map(c => {
     const enr = DB.g('enrollments').filter(e => e.cid === c.id).length;
     const pf  = c.seats ? Math.round(enr / c.seats * 100) : 0;
-    return `<tr>
+    return `<tr data-id="${c.id}">
       <td class="mono" style="color:var(--blue);font-weight:500">${esc(c.code)}</td>
       <td><div class="bold">${esc(c.name)}</div><div class="text4" style="font-size:11px">${esc(c.desc)}</div></td>
       <td>${esc(c.dept)}</td>
@@ -400,26 +432,47 @@ function saveCourse() {
 
   const cs   = DB.g('courses');
   const user = State.getUser();
+  let savedId;
   if (id) {
     const i = cs.findIndex(x => x.id === id);
     cs[i] = { ...cs[i], ...d };
+    savedId = id;
     toast('Course updated');
+    addAudit('Course Updated', `${d.code} — ${d.name}`, user.u, 'var(--blue)');
   } else {
-    cs.push({ id: DB.nid(cs), ...d });
+    savedId = DB.nid(cs);
+    cs.push({ id: savedId, ...d });
     toast('Course added');
     addAudit('Course Added', `${d.code} — ${d.name}`, user.u, 'var(--purple)');
   }
   DB.s('courses', cs);
+  clearDraft('m-course');
   closeM('m-course');
   rCourses();
+  flashRow('ctbody', savedId);
 }
 
 function delCourse(id) {
   const c = DB.g('courses').find(x => x.id === id);
-  confirmDlg(`Delete ${c?.code || 'this course'}?`, () => {
+  if (!c) return;
+  const enrCount   = DB.g('enrollments').filter(e => e.cid === id).length;
+  const gradeCount = DB.g('grades').filter(g => g.cid === id).length;
+  const parts = [enrCount && `${enrCount} enrollment${enrCount !== 1 ? 's' : ''}`, gradeCount && `${gradeCount} grade${gradeCount !== 1 ? 's' : ''}`].filter(Boolean).join(', ');
+  const msg = `Delete ${c.code} — ${c.name}?${parts ? ` This will also remove ${parts}.` : ''}`;
+  confirmDlg(msg, () => {
+    const snapshot = { course: c, enrollments: DB.g('enrollments').filter(e => e.cid === id), grades: DB.g('grades').filter(g => g.cid === id) };
     DB.s('courses', DB.g('courses').filter(x => x.id !== id));
-    toast('Course deleted');
+    DB.s('enrollments', DB.g('enrollments').filter(e => e.cid !== id));
+    DB.s('grades', DB.g('grades').filter(g => g.cid !== id));
+    addAudit('Course Deleted', `${c.code} — ${c.name}`, State.getUser().u, 'var(--red)');
     rCourses();
+    toastUndo(`${c.code} deleted`, () => {
+      DB.s('courses', [...DB.g('courses'), snapshot.course]);
+      if (snapshot.enrollments.length) DB.s('enrollments', [...DB.g('enrollments'), ...snapshot.enrollments]);
+      if (snapshot.grades.length) DB.s('grades', [...DB.g('grades'), ...snapshot.grades]);
+      addAudit('Course Restore', `${c.code} deletion undone`, State.getUser().u, 'var(--green)');
+      rCourses();
+    });
   });
 }
 
@@ -473,9 +526,16 @@ function saveEnroll() {
 }
 
 function delEnr(id) {
-  confirmDlg('Remove this enrollment?', () => {
+  const e = DB.g('enrollments').find(x => x.id === id);
+  if (!e) return;
+  confirmDlg(`Remove ${sn(e.sid)} from ${cn(e.cid)}?`, () => {
     DB.s('enrollments', DB.g('enrollments').filter(x => x.id !== id));
+    addAudit('Enrollment Removed', `${sn(e.sid)} from ${cn(e.cid)}`, State.getUser().u, 'var(--red)');
     rEnroll();
+    toastUndo('Enrollment removed', () => {
+      DB.s('enrollments', [...DB.g('enrollments'), e]);
+      rEnroll();
+    });
   });
 }
 
@@ -566,9 +626,16 @@ function saveExam() {
 }
 
 function delExam(id) {
-  confirmDlg('Delete this exam?', () => {
+  const e = DB.g('exams').find(x => x.id === id);
+  if (!e) return;
+  confirmDlg(`Delete ${cc(e.cid)} exam on ${e.date}?`, () => {
     DB.s('exams', DB.g('exams').filter(x => x.id !== id));
+    addAudit('Exam Deleted', `${cc(e.cid)} exam on ${e.date}`, State.getUser().u, 'var(--red)');
     rExams();
+    toastUndo(`${cc(e.cid)} exam deleted`, () => {
+      DB.s('exams', [...DB.g('exams'), e]);
+      rExams();
+    });
   });
 }
 
@@ -667,9 +734,16 @@ function saveFee() {
 }
 
 function delFee(id) {
-  confirmDlg('Delete this fee record?', () => {
+  const f = DB.g('fees').find(x => x.id === id);
+  if (!f) return;
+  confirmDlg(`Delete ${esc(f.type)} fee (${usd(f.amt)}) for ${sn(f.sid)}?`, () => {
     DB.s('fees', DB.g('fees').filter(x => x.id !== id));
+    addAudit('Fee Deleted', `${f.type} ${usd(f.amt)} for ${sn(f.sid)}`, State.getUser().u, 'var(--red)');
     rFees();
+    toastUndo('Fee record deleted', () => {
+      DB.s('fees', [...DB.g('fees'), f]);
+      rFees();
+    });
   });
 }
 
@@ -717,9 +791,16 @@ function saveScholarship() {
 }
 
 function delSch(id) {
-  confirmDlg('Delete this scholarship?', () => {
+  const s = DB.g('scholarships').find(x => x.id === id);
+  if (!s) return;
+  confirmDlg(`Delete "${s.name}" scholarship?`, () => {
     DB.s('scholarships', DB.g('scholarships').filter(x => x.id !== id));
+    addAudit('Scholarship Deleted', s.name, State.getUser().u, 'var(--red)');
     rScholarships();
+    toastUndo(`"${s.name}" deleted`, () => {
+      DB.s('scholarships', [...DB.g('scholarships'), s]);
+      rScholarships();
+    });
   });
 }
 
@@ -773,9 +854,16 @@ function saveAnn() {
 }
 
 function delAnn(id) {
-  confirmDlg('Delete this announcement?', () => {
+  const a = DB.g('announcements').find(x => x.id === id);
+  if (!a) return;
+  confirmDlg(`Delete "${a.title}" announcement?`, () => {
     DB.s('announcements', DB.g('announcements').filter(x => x.id !== id));
+    addAudit('Announcement Deleted', a.title, State.getUser().u, 'var(--red)');
     rAnnouncements();
+    toastUndo(`"${a.title}" deleted`, () => {
+      DB.s('announcements', [...DB.g('announcements'), a]);
+      rAnnouncements();
+    });
   });
 }
 
@@ -823,8 +911,11 @@ function openConv(id, name) {
 
 function renderConv(pid) {
   const user = State.getUser();
+  const parts = (pid || '').split('_');
+  const peerUid = parseInt(parts[1]);
   const msgs = DB.g('messages').filter(m =>
-    m.fromUid === user.id || m.toUid === user.id
+    (m.fromUid === user.id && m.toUid === peerUid) ||
+    (m.toUid === user.id && m.fromUid === peerUid)
   );
   $('msg-msgs').innerHTML = msgs.map(m => `
     <div class="msg-bubble ${m.fromUid === user.id ? 'me' : 'them'}">

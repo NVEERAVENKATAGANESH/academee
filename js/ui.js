@@ -29,6 +29,25 @@ function openM(id) {
     const focusable = el.querySelector('input:not([type=hidden]),select,textarea,button:not(.mx)');
     if (focusable) focusable.focus();
     _trapFocus(el);
+
+    // Wire inline validation: clear error as soon as user starts typing
+    el.querySelectorAll('input:not([type=hidden]),select,textarea').forEach(inp => {
+      if (!inp._clearErrWired) {
+        inp.addEventListener('input', () => clearFieldError(inp.id), { passive: true });
+        inp._clearErrWired = true;
+      }
+      // Wire draft autosave
+      if (!inp._draftWired) {
+        inp.addEventListener('input',  debounce(() => autosaveDraft(id), 400), { passive: true });
+        inp.addEventListener('change', () => autosaveDraft(id), { passive: true });
+        inp._draftWired = true;
+      }
+    });
+
+    // Restore unsaved draft only when opening in add mode (hidden id field is empty)
+    const idField = el.querySelector('input[type=hidden]');
+    const isAddMode = !idField || !idField.value || parseInt(idField.value) === 0;
+    if (isAddMode) restoreDraft(id);
   }, 50);
 }
 function closeM(id) {
@@ -277,6 +296,73 @@ function addNotif(uid, title, body, tag) {
   notifs.push({ id: DB.nid(notifs), title, body, tag, read: false, uid, ts: Date.now() });
   DB.s('notifications', notifs);
   updateNotifBadge();
+}
+
+// ── Undo toast ────────────────────────────────────────
+// Shows an amber toast with a timed Undo button (5 s window)
+function toastUndo(msg, undoFn) {
+  const container = $('toasts');
+  if (!container) return;
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.setAttribute('role', 'status');
+  el.setAttribute('aria-live', 'polite');
+  let undone = false;
+  el.innerHTML = `<div class="tdot" style="background:var(--amber)"></div><span>${esc(msg)}</span><button class="toast-undo">Undo</button>`;
+  el.querySelector('.toast-undo').onclick = () => {
+    if (undone) return;
+    undone = true;
+    undoFn();
+    el.remove();
+    toast('Action undone');
+  };
+  container.appendChild(el);
+  setTimeout(() => { if (!undone) el.classList.add('toast-out'); }, 4700);
+  setTimeout(() => { if (!undone) el.remove(); }, 5200);
+}
+
+// ── Flash a table row green after a save ──────────────
+function flashRow(tbodyId, id) {
+  const tbody = $(tbodyId);
+  if (!tbody) return;
+  const row = tbody.querySelector(`[data-id="${id}"]`);
+  if (!row) return;
+  row.classList.remove('row-flash');
+  void row.offsetWidth; // force reflow to restart animation
+  row.classList.add('row-flash');
+}
+
+// ── Draft auto-save / restore / clear ─────────────────
+// Saves all visible form fields to sessionStorage while the user types
+function autosaveDraft(modalId) {
+  const el = $(modalId);
+  if (!el) return;
+  const data = {};
+  el.querySelectorAll('input:not([type=hidden]),select,textarea').forEach(inp => {
+    if (inp.id) data[inp.id] = inp.value;
+  });
+  try { sessionStorage.setItem('draft_' + modalId, JSON.stringify(data)); } catch {}
+}
+
+// Restores saved draft values into the form
+function restoreDraft(modalId) {
+  try {
+    const raw = sessionStorage.getItem('draft_' + modalId);
+    if (!raw) return false;
+    const data = JSON.parse(raw);
+    let restored = false;
+    Object.entries(data).forEach(([fid, val]) => {
+      const inp = $(fid);
+      if (inp) { inp.value = val; restored = true; }
+    });
+    if (restored) toast('Unsaved draft restored', true);
+    return restored;
+  } catch { return false; }
+}
+
+// Clears the draft after a successful save
+function clearDraft(modalId) {
+  try { sessionStorage.removeItem('draft_' + modalId); } catch {}
 }
 
 // ── Loading skeleton ──────────────────────────────────
