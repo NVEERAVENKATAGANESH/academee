@@ -91,13 +91,7 @@ Three role-based portals:
 
 ## Demo Accounts
 
-Sign in at the landing page using these credentials:
-
-| Role | Username | Password |
-|---|---|---|
-| Admin | `ganesh` | `admin123` |
-| Faculty | `priya` | `faculty123` |
-| Student | `arjun` | `student123` |
+Sign in at the landing page using demo credentials:
 
 You can also **Sign Up** to create your own account. Credentials are saved in `localStorage` and persist across sessions.
 
