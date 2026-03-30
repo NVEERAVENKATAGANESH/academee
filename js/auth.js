@@ -265,6 +265,7 @@ const Auth = (() => {
 
     const initials = (user.name || user.u).slice(0, 2).toUpperCase();
     $('sbav').textContent    = initials;
+    $('sbav').className      = 'sb-av role-' + user.role;
     $('sbname').textContent  = esc(user.name || user.u);
     $('sbrole').textContent  = { admin:'Administrator', faculty:'Faculty Member', student:'Student' }[user.role] || user.role;
 

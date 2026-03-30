@@ -6,16 +6,8 @@
 
 // ── Toast notifications ───────────────────────────────
 function toast(msg, ok = true) {
-  const container = $('toasts');
-  if (!container) return;
-  const el = document.createElement('div');
-  el.className = 'toast';
-  el.setAttribute('role', 'status');
-  el.setAttribute('aria-live', 'polite');
-  el.innerHTML = `<div class="tdot" style="background:${ok ? 'var(--green)' : 'var(--red)'}"></div><span>${esc(msg)}</span>`;
-  container.appendChild(el);
-  setTimeout(() => el.classList.add('toast-out'), 2700);
-  setTimeout(() => el.remove(), 3200);
+  // Show centered popup for all messages
+  successPopup(msg, '', ok ? 'ok' : 'err');
 }
 
 // ── Modal open/close ──────────────────────────────────
@@ -299,26 +291,42 @@ function addNotif(uid, title, body, tag) {
 }
 
 // ── Undo toast ────────────────────────────────────────
-// Shows an amber toast with a timed Undo button (5 s window)
+// Shows the popup with an Undo button (5 s window)
 function toastUndo(msg, undoFn) {
-  const container = $('toasts');
-  if (!container) return;
-  const el = document.createElement('div');
-  el.className = 'toast';
-  el.setAttribute('role', 'status');
-  el.setAttribute('aria-live', 'polite');
+  const overlay = $('success-overlay');
+  if (!overlay) return;
+
+  // Show as warning-type popup
+  $('success-msg').textContent = msg;
+  $('success-sub').innerHTML = `<button class="popup-undo-btn" id="popup-undo-btn">↩ Undo</button>`;
+
+  const check  = $('s-check');
+  const cross1 = $('s-cross-1');
+  const cross2 = $('s-cross-2');
+  if (check)  check.style.display  = 'none';
+  if (cross1) cross1.style.display = '';
+  if (cross2) cross2.style.display = '';
+
+  overlay.classList.remove('err', 'warn');
+  overlay.classList.add('warn');
+
+  clearTimeout(_successTimer);
+  overlay.classList.remove('show');
+  void overlay.offsetWidth;
+  overlay.classList.add('show');
+
   let undone = false;
-  el.innerHTML = `<div class="tdot" style="background:var(--amber)"></div><span>${esc(msg)}</span><button class="toast-undo">Undo</button>`;
-  el.querySelector('.toast-undo').onclick = () => {
+  const btn = $('popup-undo-btn');
+  if (btn) btn.onclick = (e) => {
+    e.stopPropagation();
     if (undone) return;
     undone = true;
+    closeSuccessPopup();
     undoFn();
-    el.remove();
-    toast('Action undone');
+    successPopup('Action undone', '', 'ok');
   };
-  container.appendChild(el);
-  setTimeout(() => { if (!undone) el.classList.add('toast-out'); }, 4700);
-  setTimeout(() => { if (!undone) el.remove(); }, 5200);
+
+  _successTimer = setTimeout(() => { if (!undone) overlay.classList.remove('show'); }, 5000);
 }
 
 // ── Flash a table row green after a save ──────────────
@@ -383,6 +391,44 @@ function emptyState(icon, title, subtitle = '') {
     <div class="empty-title">${esc(title)}</div>
     ${subtitle ? `<div class="empty-sub">${esc(subtitle)}</div>` : ''}
   </div>`;
+}
+
+// ── Success/Error/Warn popup ──────────────────────────
+let _successTimer = null;
+function successPopup(msg, sub = '', type = 'ok') {
+  const overlay = $('success-overlay');
+  if (!overlay) return;
+
+  // Set message text
+  $('success-msg').textContent = msg;
+  $('success-sub').textContent = sub;
+
+  // Swap icon: check for ok/warn, X for err
+  const check  = $('s-check');
+  const cross1 = $('s-cross-1');
+  const cross2 = $('s-cross-2');
+  const isErr  = type === 'err';
+  if (check)  check.style.display  = isErr ? 'none' : '';
+  if (cross1) cross1.style.display = isErr ? '' : 'none';
+  if (cross2) cross2.style.display = isErr ? '' : 'none';
+
+  // Apply colour class
+  overlay.classList.remove('err', 'warn');
+  if (type === 'err')  overlay.classList.add('err');
+  if (type === 'warn') overlay.classList.add('warn');
+
+  // Re-trigger animation
+  clearTimeout(_successTimer);
+  overlay.classList.remove('show');
+  void overlay.offsetWidth;
+  overlay.classList.add('show');
+
+  const duration = type === 'err' ? 3000 : 2200;
+  _successTimer = setTimeout(() => overlay.classList.remove('show'), duration);
+}
+function closeSuccessPopup() {
+  clearTimeout(_successTimer);
+  $('success-overlay')?.classList.remove('show');
 }
 
 // ── Search debounce helper ────────────────────────────

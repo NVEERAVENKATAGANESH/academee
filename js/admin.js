@@ -808,19 +808,62 @@ function delSch(id) {
 //  ANNOUNCEMENTS
 // ═══════════════════════════════════════════
 function rAnnouncements() {
-  const anns = DB.g('announcements').sort((a, b) => b.id - a.id);
-  const PRI_COLOR = { Normal:'var(--blue)', High:'var(--amber)', Urgent:'var(--red)' };
+  let anns = DB.g('announcements').sort((a, b) => {
+    const priOrder = { Urgent: 0, High: 1, Normal: 2 };
+    if (priOrder[a.pri] !== priOrder[b.pri]) return priOrder[a.pri] - priOrder[b.pri];
+    return b.id - a.id;
+  });
+
+  const q      = ($('ann-search')?.value || '').toLowerCase();
+  const audF   = $('ann-aud-f')?.value || '';
+  const priF   = $('ann-pri-f')?.value || '';
+  if (q)    anns = anns.filter(a => (a.title + ' ' + a.body).toLowerCase().includes(q));
+  if (audF) anns = anns.filter(a => a.aud === audF);
+  if (priF) anns = anns.filter(a => a.pri === priF);
+
+  const all = DB.g('announcements');
+  const urgCount  = all.filter(a => a.pri === 'Urgent').length;
+  const highCount = all.filter(a => a.pri === 'High').length;
+  const normCount = all.filter(a => a.pri === 'Normal').length;
+  const stats = $('ann-stats');
+  if (stats) stats.innerHTML = `
+    <div class="ann-stat-bar">
+      <div class="ann-stat ann-stat-u"><span class="ann-stat-ico">🚨</span><span class="ann-stat-n">${urgCount}</span><span class="ann-stat-l">Urgent</span></div>
+      <div class="ann-stat ann-stat-h"><span class="ann-stat-ico">⚠️</span><span class="ann-stat-n">${highCount}</span><span class="ann-stat-l">High</span></div>
+      <div class="ann-stat ann-stat-n2"><span class="ann-stat-ico">📢</span><span class="ann-stat-n">${normCount}</span><span class="ann-stat-l">Normal</span></div>
+      <div class="ann-stat ann-stat-tot"><span class="ann-stat-ico">📋</span><span class="ann-stat-n">${all.length}</span><span class="ann-stat-l">Total</span></div>
+    </div>`;
+
+  const AUD_ICON = { All:'👥', Students:'🎓', Faculty:'🏫' };
+  const PRI_CLS  = { Normal:'ann-pri-normal', High:'ann-pri-high', Urgent:'ann-pri-urgent' };
+  const PRI_ICON = { Normal:'📢', High:'⚠️', Urgent:'🚨' };
+
   $('ann-list').innerHTML = anns.map(a => `
-    <div class="ann-item">
-      <div class="ann-meta">
-        <span class="bx bx-gy">${esc(a.aud)}</span>
-        <span class="bx" style="background:${(PRI_COLOR[a.pri] || 'var(--blue)') + '22'};color:${PRI_COLOR[a.pri] || 'var(--blue)'};border-color:${(PRI_COLOR[a.pri] || 'var(--blue)') + '44'}">${esc(a.pri)}</span>
-        <span class="text4" style="font-size:11px">${esc(a.date)} · ${esc(a.author)}</span>
+    <div class="ann-item ${PRI_CLS[a.pri] || ''}${a.pri === 'Urgent' ? ' ann-urgent' : ''}">
+      <div class="ann-accent"></div>
+      <div class="ann-content">
+        <div class="ann-meta">
+          <span class="ann-pri-badge ann-pri-badge-${(a.pri||'Normal').toLowerCase()}">${PRI_ICON[a.pri] || '📢'} ${esc(a.pri)}</span>
+          <span class="ann-aud-badge"><span>${AUD_ICON[a.aud] || '👥'}</span> ${esc(a.aud)}</span>
+          <span class="ann-time">${timeAgo(new Date(a.date).getTime() || Date.now())}</span>
+          <span class="ann-author">by ${esc(a.author)}</span>
+        </div>
+        <div class="ann-title">${esc(a.title)}</div>
+        <div class="ann-body ann-body-clamp" id="ann-body-${a.id}">${esc(a.body)}</div>
+        ${a.body && a.body.length > 120 ? `<button class="ann-expand-btn" onclick="toggleAnnBody(${a.id}, this)">Show more ▾</button>` : ''}
+        <div class="ann-foot">
+          <span class="ann-date-full">${esc(a.date)}</span>
+          <button class="btn btn-dg ann-del-btn" onclick="delAnn(${a.id})">✕ Delete</button>
+        </div>
       </div>
-      <div class="ann-title">${esc(a.title)}</div>
-      <div class="ann-body">${esc(a.body)}</div>
-      <button class="bico del" style="margin-top:8px" onclick="delAnn(${a.id})">✕ Delete</button>
-    </div>`).join('') || '<div class="empty"><p>No announcements</p></div>';
+    </div>`).join('') || '<div class="empty-state"><div class="empty-ico">📭</div><div class="empty-title">No announcements</div><div class="empty-sub">Post one to notify students or faculty</div></div>';
+}
+
+function toggleAnnBody(id, btn) {
+  const el = $('ann-body-' + id);
+  if (!el) return;
+  const collapsed = el.classList.toggle('ann-body-clamp');
+  btn.textContent = collapsed ? 'Show more ▾' : 'Show less ▴';
 }
 
 function saveAnn() {
@@ -871,42 +914,95 @@ function delAnn(id) {
 //  MESSAGES  (admin + faculty + student)
 // ═══════════════════════════════════════════
 function rMessages() {
-  const user  = State.getUser();
-  const msgs  = DB.g('messages');
+  const user = State.getUser();
+  const msgs = DB.g('messages');
+  const q    = ($('msg-search')?.value || '').toLowerCase();
 
-  // Determine peer list based on role
   let peers;
   if (user.role === 'student') {
     peers = DB.g('faculty').map(f => ({ id: 'fac_' + f.id, name: f.fn + ' ' + f.ln, uid: f.id, role: 'faculty' }));
   } else if (user.role === 'faculty') {
     peers = DB.g('students').map(s => ({ id: 'stu_' + s.id, name: s.fn + ' ' + s.ln, uid: s.id, role: 'student' }));
   } else {
-    // admin sees all users
     const facPeers = DB.g('faculty').map(f => ({ id: 'fac_' + f.id, name: f.fn + ' ' + f.ln, uid: f.id, role: 'faculty' }));
     const stuPeers = DB.g('students').map(s => ({ id: 'stu_' + s.id, name: s.fn + ' ' + s.ln, uid: s.id, role: 'student' }));
     peers = [...facPeers, ...stuPeers];
   }
 
+  // Sort by most recent message, filter by search
+  peers = peers
+    .map(p => {
+      const thread = msgs.filter(m =>
+        (m.fromUid === user.id && m.toUid === p.uid) ||
+        (m.toUid === user.id && m.fromUid === p.uid)
+      );
+      const last = thread[thread.length - 1];
+      const unread = thread.filter(m => m.toUid === user.id && !m.read).length;
+      return { ...p, thread, last, unread, lastTs: last?.ts || 0 };
+    })
+    .sort((a, b) => b.lastTs - a.lastTs)
+    .filter(p => !q || p.name.toLowerCase().includes(q));
+
+  const ROLE_COLOR = { faculty: 'av-pu', student: 'av-gr', admin: 'av-bl' };
+
   $('msg-list').innerHTML = peers.map(p => {
-    const thread = msgs.filter(m =>
-      (m.fromUid === user.id && m.toUid === p.uid) ||
-      (m.toUid === user.id && m.fromUid === p.uid)
-    );
-    const last = thread[thread.length - 1];
-    return `<div class="msg-item${_activeConv === p.id ? ' on' : ''}" onclick="openConv('${p.id}','${esc(p.name)}')">
-      <div class="msg-name">${esc(p.name)}</div>
-      <div class="msg-preview">${last ? esc(last.text) : 'No messages yet'}</div>
+    const initials  = p.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+    const roleLabel = p.role === 'faculty' ? 'Faculty' : p.role === 'student' ? 'Student' : 'Admin';
+    const previewTxt = p.last ? (p.last.fromUid === user.id ? '↗ ' : '') + esc(p.last.text) : '<span style="font-style:italic;color:var(--text4)">No messages yet</span>';
+    return `<div class="msg-item${_activeConv === p.id ? ' on' : ''}" onclick="openConv('${p.id}','${esc(p.name)}','${p.role}')">
+      <div class="msg-item-av ${ROLE_COLOR[p.role] || 'av-bl'}">${initials}</div>
+      <div class="msg-item-body">
+        <div class="msg-item-row1">
+          <span class="msg-item-name">${esc(p.name)}</span>
+          ${p.last ? `<span class="msg-item-time">${timeAgo(p.last.ts)}</span>` : ''}
+        </div>
+        <div class="msg-item-row2">
+          <span class="msg-item-preview">${previewTxt}</span>
+          ${p.unread ? `<span class="msg-unread-badge">${p.unread}</span>` : (p.last && p.last.fromUid !== user.id ? '' : '')}
+        </div>
+        <div class="msg-item-role">${roleLabel}</div>
+      </div>
     </div>`;
-  }).join('');
+  }).join('') || `<div style="padding:32px;text-align:center;color:var(--text4);font-size:12px">No contacts found</div>`;
 
   if (_activeConv) renderConv(_activeConv);
 }
 
-function openConv(id, name) {
+function openConv(id, name, role) {
   _activeConv = id;
-  $('msg-chathead').textContent = name;
-  $$('.msg-item').forEach(m => m.classList.toggle('on', m.querySelector('.msg-name')?.textContent === name));
+  const ROLE_COLOR = { faculty: 'av-pu', student: 'av-gr', admin: 'av-bl' };
+  const initials = name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+  const roleLabel = role === 'faculty' ? 'Faculty Member' : role === 'student' ? 'Student' : 'Admin';
+
+  const av = $('msg-chat-av');
+  if (av) { av.className = 'msg-chat-av ' + (ROLE_COLOR[role] || 'av-bl'); av.textContent = initials; }
+  const nameEl = $('msg-chat-name'); if (nameEl) nameEl.textContent = name;
+  const roleEl = $('msg-chat-role'); if (roleEl) roleEl.textContent = roleLabel;
+  const foot = $('msg-foot'); if (foot) foot.style.display = 'flex';
+  const empty = $('msg-empty'); if (empty) empty.style.display = 'none';
+  const inp = $('msg-inp');
+  if (inp) { inp.disabled = false; inp.placeholder = 'Write a message…'; inp.focus(); }
+
+  // Mobile: show chat pane, hide sidebar
+  const shell = document.querySelector('.msg-shell');
+  if (shell) shell.classList.add('chat-open');
+
+  $$('.msg-item').forEach(m => m.classList.toggle('on', m.getAttribute('onclick')?.includes(`'${id}'`)));
+
+  // Mark messages as read
+  const user = State.getUser();
+  const peerUid = parseInt(id.split('_')[1]);
+  const allMsgs = DB.g('messages').map(m =>
+    (m.toUid === user.id && m.fromUid === peerUid) ? { ...m, read: true } : m
+  );
+  DB.s('messages', allMsgs);
+
   renderConv(id);
+}
+
+function closeMsgConv() {
+  const shell = document.querySelector('.msg-shell');
+  if (shell) shell.classList.remove('chat-open');
 }
 
 function renderConv(pid) {
@@ -917,29 +1013,56 @@ function renderConv(pid) {
     (m.fromUid === user.id && m.toUid === peerUid) ||
     (m.toUid === user.id && m.fromUid === peerUid)
   );
-  $('msg-msgs').innerHTML = msgs.map(m => `
-    <div class="msg-bubble ${m.fromUid === user.id ? 'me' : 'them'}">
-      ${esc(m.text)}
-      <div style="font-size:9px;opacity:.5;margin-top:3px;text-align:${m.fromUid === user.id ? 'right' : 'left'}">${timeAgo(m.ts)}</div>
-    </div>`).join('');
-  const mc = $('msg-msgs');
-  if (mc) mc.scrollTop = mc.scrollHeight;
+
+  const msgEl = $('msg-msgs');
+  if (!msgEl) return;
+
+  if (!msgs.length) {
+    msgEl.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:8px;color:var(--text4)">
+      <div style="font-size:36px">👋</div>
+      <div style="font-size:13px;font-weight:600;color:var(--text2)">No messages yet</div>
+      <div style="font-size:11px">Send the first message below</div>
+    </div>`;
+    return;
+  }
+
+  // Group messages by date
+  let lastDate = '';
+  msgEl.innerHTML = msgs.map(m => {
+    const d = new Date(m.ts).toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' });
+    const dateSep = d !== lastDate ? `<div class="msg-date-sep"><span>${d}</span></div>` : '';
+    lastDate = d;
+    const isMe = m.fromUid === user.id;
+    return `${dateSep}<div class="msg-bubble-wrap ${isMe ? 'me' : 'them'}">
+      <div class="msg-bubble ${isMe ? 'me' : 'them'}">${esc(m.text)}</div>
+      <div class="msg-ts">${timeAgo(m.ts)}</div>
+    </div>`;
+  }).join('');
+
+  msgEl.scrollTop = msgEl.scrollHeight;
 }
 
 function sendMsg() {
   const user = State.getUser();
-  const txt  = $('msg-inp')?.value.trim();
+  const inp  = $('msg-inp');
+  const txt  = inp?.value.trim();
   if (!txt || !_activeConv) return;
 
-  // Resolve peer UID from conv id (e.g. 'stu_3' or 'fac_2')
-  const parts  = _activeConv.split('_');
+  const parts   = _activeConv.split('_');
   const peerUid = parseInt(parts[1]);
 
   const msgs = DB.g('messages');
-  msgs.push({ id: DB.nid(msgs), fromUid: user.id, toUid: peerUid, from: user.u, text: txt, ts: Date.now() });
+  msgs.push({ id: DB.nid(msgs), fromUid: user.id, toUid: peerUid, from: user.u, text: txt, ts: Date.now(), read: false });
   DB.s('messages', msgs);
-  $('msg-inp').value = '';
+  inp.value = '';
+  inp.style.height = 'auto';
   renderConv(_activeConv);
+  rMessages();
+}
+
+function autoResizeMsgInp(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
 }
 
 // ═══════════════════════════════════════════

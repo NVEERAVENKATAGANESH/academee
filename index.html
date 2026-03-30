@@ -627,24 +627,69 @@
 
 <!-- ══ ANNOUNCEMENTS ══ -->
 <div class="page" id="pg-announcements">
-  <div class="topbar"><div><h1>Announcements</h1></div><div class="topbar-r"><button class="btn btn-p" onclick="openM('m-ann')">+ Post Announcement</button></div></div>
+  <div class="topbar"><div><h1>Announcements</h1><p>Broadcast messages to students and faculty</p></div><div class="topbar-r"><button class="btn btn-p" onclick="openM('m-ann')">+ Post Announcement</button></div></div>
+  <div class="ann-stats" id="ann-stats"></div>
+  <div class="fr" style="margin-bottom:16px;gap:8px">
+    <input class="inp" id="ann-search" placeholder="Search announcements…" style="flex:1;max-width:280px" oninput="rAnnouncements()">
+    <select class="inp sel" id="ann-aud-f" onchange="rAnnouncements()"><option value="">All Audiences</option><option>All</option><option>Students</option><option>Faculty</option></select>
+    <select class="inp sel" id="ann-pri-f" onchange="rAnnouncements()"><option value="">All Priorities</option><option>Normal</option><option>High</option><option>Urgent</option></select>
+  </div>
   <div id="ann-list"></div>
 </div>
 
 <!-- ══ MESSAGES ══ -->
-<div class="page" id="pg-messages">
-  <div class="topbar"><div><h1>Messages</h1></div></div>
-  <div class="card" style="padding:0">
-    <div class="msg-shell">
-      <div class="msg-list" id="msg-list"></div>
-      <div class="msg-chat">
-        <div class="msg-chat-head" id="msg-chathead">Select a conversation</div>
-        <div class="msg-messages" id="msg-msgs"></div>
-        <div class="msg-foot">
-          <input class="inp" id="msg-inp" placeholder="Type a message…" style="flex:1" onkeydown="if(event.key==='Enter')sendMsg()">
-          <button class="btn btn-p" onclick="sendMsg()">Send</button>
+<div class="page" id="pg-messages" style="padding:0;display:none;flex-direction:column">
+  <div class="msg-shell">
+
+    <!-- ── LEFT SIDEBAR ── -->
+    <div class="msg-sidebar">
+      <div class="msg-sidebar-head">
+        <div class="msg-sidebar-title">💬 Messages</div>
+        <div class="msg-search-wrap">
+          <span class="msg-search-icon">⌕</span>
+          <input class="msg-search-inp" id="msg-search" placeholder="Search people…" oninput="rMessages()">
         </div>
       </div>
+      <div class="msg-contacts" id="msg-list"></div>
+    </div>
+
+    <!-- ── CHAT AREA ── -->
+    <div class="msg-chat">
+
+      <!-- header -->
+      <div class="msg-chat-hdr" id="msg-chathead">
+        <div class="msg-chat-hdr-left" id="msg-chat-head-inner">
+          <button class="msg-back-btn" onclick="closeMsgConv()" title="Back">&#8592;</button>
+          <div class="msg-chat-av" id="msg-chat-av"></div>
+          <div class="msg-chat-info">
+            <div class="msg-chat-name" id="msg-chat-name">Select a conversation</div>
+            <div class="msg-chat-sub" id="msg-chat-role">Choose someone from the left to start messaging</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- messages area -->
+      <div class="msg-body" id="msg-msgs">
+        <div class="msg-welcome" id="msg-empty">
+          <div class="msg-welcome-ico">💬</div>
+          <div class="msg-welcome-title">Your Messages</div>
+          <div class="msg-welcome-sub">Select a contact from the left panel to start a conversation</div>
+        </div>
+      </div>
+
+      <!-- input bar -->
+      <div class="msg-input-bar" id="msg-foot" style="display:flex">
+        <textarea class="msg-textarea" id="msg-inp"
+          placeholder="Select a conversation to start messaging…"
+          rows="1"
+          disabled
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMsg()}"
+          oninput="autoResizeMsgInp(this)"></textarea>
+        <button class="msg-send-btn" onclick="sendMsg()" title="Send  (Enter)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+
     </div>
   </div>
 </div>
@@ -874,6 +919,21 @@
 <div class="mbg" id="m-assign"><div class="mbox"><div class="mh"><div class="mt">Create Assignment</div><button class="mx" onclick="closeM('m-assign')">×</button></div><div class="mb"><div class="ff"><label>Title <span class="req">*</span></label><input id="mas-t"></div><div class="ff"><label>Course</label><select id="mas-co" class="sel"></select></div><div class="frow"><div class="ff"><label>Due Date <span class="req">*</span></label><input id="mas-due" type="date"></div><div class="ff"><label>Max Marks</label><input id="mas-marks" type="number" value="100"></div></div><div class="ff"><label>Weightage (%)</label><input id="mas-wt" type="number" value="20" min="1" max="100"></div><div class="ff"><label>Instructions</label><textarea id="mas-inst" rows="3"></textarea></div></div><div class="mf"><button class="btn btn-g" onclick="closeM('m-assign')">Cancel</button><button class="btn btn-p" onclick="saveAssignment()">Create</button></div></div></div>
 
 <div class="mbg" id="m-self-enroll"><div class="mbox narrow"><div class="mh"><div class="mt">Register for a Course</div><button class="mx" onclick="closeM('m-self-enroll')">×</button></div><div class="mb"><div id="se-courses"></div></div><div class="mf"><button class="btn btn-g" onclick="closeM('m-self-enroll')">Cancel</button><button class="btn btn-p" onclick="selfEnroll()">Register</button></div></div></div>
+
+<!-- ══ SUCCESS POPUP ══ -->
+<div class="success-overlay" id="success-overlay" onclick="closeSuccessPopup()">
+  <div class="success-box" onclick="event.stopPropagation()">
+    <div class="success-icon" id="success-icon">
+      <svg id="success-svg" viewBox="0 0 24 24">
+        <polyline class="s-check" id="s-check" points="4,12 9,17 20,6"/>
+        <line class="s-cross" id="s-cross-1" x1="5" y1="5" x2="19" y2="19" style="display:none"/>
+        <line class="s-cross" id="s-cross-2" x1="19" y1="5" x2="5" y2="19" style="display:none"/>
+      </svg>
+    </div>
+    <div class="success-msg" id="success-msg"></div>
+    <div class="success-sub" id="success-sub"></div>
+  </div>
+</div>
 
 <!-- ══ CONFIRM DIALOG ══ -->
 <div class="mbg" id="m-confirm">
