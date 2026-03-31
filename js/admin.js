@@ -7,6 +7,7 @@
 let _clockInterval = null;
 let _calDate       = new Date();
 let _activeConv    = null;
+const ROLE_COLOR   = { faculty: 'av-pu', student: 'av-gr', admin: 'av-bl' };
 
 // ═══════════════════════════════════════════
 //  HELPERS (admin-local)
@@ -89,6 +90,91 @@ function rDash() {
 }
 
 // ═══════════════════════════════════════════
+//  VIEW FUNCTIONS
+// ═══════════════════════════════════════════
+function viewStudent(id) {
+  const s = DB.g('students').find(x => x.id === id); if (!s) return;
+  openViewModal(`${esc(s.fn)} ${esc(s.ln)}`, [
+    { l: 'Student ID',   v: stuId(id) },
+    { l: 'Status',       v: s.status },
+    { l: 'Email',        v: esc(s.em) },
+    { l: 'Phone',        v: esc(s.ph) },
+    { l: 'Department',   v: esc(s.dept) },
+    { l: 'Year',         v: s.yr ? `Year ${s.yr}` : '—' },
+    { l: 'Date of Birth',v: esc(s.dob) },
+    { l: 'Admitted',     v: esc(s.adm) },
+    { l: 'Address',      v: esc(s.addr), full: true },
+  ]);
+}
+function viewFaculty(id) {
+  const f = DB.g('faculty').find(x => x.id === id); if (!f) return;
+  openViewModal(`${esc(f.fn)} ${esc(f.ln)}`, [
+    { l: 'Faculty ID',     v: facId(id) },
+    { l: 'Department',     v: esc(f.dept) },
+    { l: 'Email',          v: esc(f.em) },
+    { l: 'Phone',          v: esc(f.ph) },
+    { l: 'Qualification',  v: esc(f.qual) },
+    { l: 'Specialization', v: esc(f.spec) },
+  ]);
+}
+function viewCourse(id) {
+  const c = DB.g('courses').find(x => x.id === id); if (!c) return;
+  const enr = DB.g('enrollments').filter(e => e.cid === id).length;
+  openViewModal(esc(c.name), [
+    { l: 'Course Code',  v: esc(c.code) },
+    { l: 'Credits',      v: c.cr },
+    { l: 'Department',   v: esc(c.dept) },
+    { l: 'Faculty',      v: fn(c.fid) },
+    { l: 'Seats',        v: `${enr} / ${c.seats} enrolled` },
+    { l: 'Semester',     v: esc(c.sem) },
+    { l: 'Description',  v: esc(c.desc), full: true },
+  ]);
+}
+function viewEnroll(id) {
+  const e = DB.g('enrollments').find(x => x.id === id); if (!e) return;
+  const c = DB.g('courses').find(x => x.id === e.cid);
+  openViewModal('Enrollment Details', [
+    { l: 'Student',  v: sn(e.sid) },
+    { l: 'Status',   v: esc(e.status) },
+    { l: 'Course',   v: `${cc(e.cid)} — ${cn(e.cid)}` },
+    { l: 'Faculty',  v: c ? fn(c.fid) : '—' },
+    { l: 'Semester', v: esc(e.sem) },
+  ]);
+}
+function viewExam(id) {
+  const e = DB.g('exams').find(x => x.id === id); if (!e) return;
+  const enr = DB.g('enrollments').filter(x => x.cid === e.cid).length;
+  openViewModal('Exam Details', [
+    { l: 'Course',   v: `${cc(e.cid)} — ${cn(e.cid)}` },
+    { l: 'Date',     v: esc(e.date) },
+    { l: 'Time',     v: esc(e.time) },
+    { l: 'Hall',     v: esc(e.hall) },
+    { l: 'Duration', v: `${e.dur} minutes` },
+    { l: 'Students', v: `${enr} enrolled` },
+  ]);
+}
+function viewFee(id) {
+  const f = DB.g('fees').find(x => x.id === id); if (!f) return;
+  openViewModal('Fee Details', [
+    { l: 'Student',   v: sn(f.sid) },
+    { l: 'Status',    v: esc(f.status) },
+    { l: 'Fee Type',  v: esc(f.type) },
+    { l: 'Amount',    v: usd(f.amt) },
+    { l: 'Due Date',  v: esc(f.due) },
+    { l: 'Paid Date', v: esc(f.paid) },
+  ]);
+}
+function viewSch(id) {
+  const s = DB.g('scholarships').find(x => x.id === id); if (!s) return;
+  openViewModal(esc(s.name), [
+    { l: 'Student',  v: sn(s.sid) },
+    { l: 'Status',   v: esc(s.status) },
+    { l: 'Amount',   v: usd(s.amt) },
+    { l: 'Criteria', v: esc(s.crit), full: true },
+  ]);
+}
+
+// ═══════════════════════════════════════════
 //  STUDENTS
 // ═══════════════════════════════════════════
 function rStudents() {
@@ -104,38 +190,41 @@ function rStudents() {
   if (ds) { const cv = ds.value; ds.innerHTML = '<option value="">All Departments</option>' + depts.map(d => `<option${d === cv ? ' selected' : ''}>${esc(d)}</option>`).join(''); }
 
   sts = sts.filter(s =>
-    (s.fn + ' ' + s.ln + ' ' + s.em).toLowerCase().includes(q) &&
+    (s.fn + ' ' + s.ln + ' ' + s.em + ' ' + stuId(s.id)).toLowerCase().includes(q) &&
     (!df || s.dept === df) && (!yf || s.yr === yf) && (!sf || s.status === sf)
   );
 
   const sc = $('sc'); if (sc) sc.textContent = sts.length + ' students';
   const enrolls = DB.g('enrollments'), att = DB.g('attendance');
 
-  $('stbody').innerHTML = sts.map((s, i) => {
-    const g      = stuGPA(s.id);
-    const enrCnt = enrolls.filter(e => e.sid === s.id).length;
-    const satt   = att.filter(a => a.sid === s.id);
-    const avgAtt = satt.length ? satt.reduce((t, a) => t + pct(a.pres, a.tot), 0) / satt.length : 100;
-    const atRisk = (g !== null && g < 2) || avgAtt < 60;
-    return `<tr data-id="${s.id}">
-      <td><div style="display:flex;align-items:center;gap:8px">
-        <div class="av ${avCls(i)}">${esc(s.fn[0])}${esc((s.ln || '')[0] || '')}</div>
-        <div><div class="bold">${esc(s.fn)} ${esc(s.ln)}</div><div class="text4" style="font-size:11px">${esc(s.em)}</div></div>
-      </div></td>
-      <td class="mono text3" style="font-size:11px">${stuId(s.id)}</td>
-      <td>${esc(s.dept)}</td>
-      <td>Yr ${esc(s.yr)}</td>
-      <td class="text2" style="font-size:11px">${esc(s.ph)}</td>
-      <td><span class="bx ${s.status === 'Active' ? 'bx-gr' : s.status === 'Alumni' ? 'bx-bl' : 'bx-gy'}">${esc(s.status)}</span></td>
-      <td class="mono">${enrCnt}</td>
-      <td class="mono">${g !== null ? g.toFixed(2) : '—'}</td>
-      <td>${atRisk ? '<span class="bx bx-rd">At risk</span>' : ''}</td>
-      <td><div style="display:flex;gap:3px">
-        <button class="bico" onclick="editStudent(${s.id})" title="Edit">✎</button>
-        <button class="bico del" onclick="delStudent(${s.id})" title="Delete">✕</button>
-      </div></td>
-    </tr>`;
-  }).join('') || `<tr><td colspan="10"><div class="empty"><p>No students found</p></div></td></tr>`;
+  paginate(sts, 'stbody', slice => {
+    $('stbody').innerHTML = slice.map((s, i) => {
+      const g      = stuGPA(s.id);
+      const enrCnt = enrolls.filter(e => e.sid === s.id).length;
+      const satt   = att.filter(a => a.sid === s.id);
+      const avgAtt = satt.length ? satt.reduce((t, a) => t + pct(a.pres, a.tot), 0) / satt.length : 100;
+      const atRisk = (g !== null && g < 2) || avgAtt < 60;
+      return `<tr data-id="${s.id}">
+        <td><div style="display:flex;align-items:center;gap:8px">
+          <div class="av ${avCls(i)}">${esc(s.fn[0])}${esc((s.ln || '')[0] || '')}</div>
+          <div><div class="bold">${esc(s.fn)} ${esc(s.ln)}</div><div class="text4" style="font-size:11px">${esc(s.em)}</div></div>
+        </div></td>
+        <td class="mono text3" style="font-size:11px">${stuId(s.id)}</td>
+        <td>${esc(s.dept)}</td>
+        <td>Yr ${esc(s.yr)}</td>
+        <td class="text2" style="font-size:11px">${esc(s.ph)}</td>
+        <td><span class="bx ${s.status === 'Active' ? 'bx-gr' : s.status === 'Alumni' ? 'bx-bl' : 'bx-gy'}">${esc(s.status)}</span></td>
+        <td class="mono">${enrCnt}</td>
+        <td class="mono">${g !== null ? g.toFixed(2) : '—'}</td>
+        <td>${atRisk ? '<span class="bx bx-rd">At risk</span>' : ''}</td>
+        <td><div class="act-btns">
+          <button class="bico view" onclick="viewStudent(${s.id})" title="View details">${_iEye}</button>
+          <button class="bico edit" onclick="editStudent(${s.id})" title="Edit student">${_iPen}</button>
+          <button class="bico del"  onclick="delStudent(${s.id})"  title="Delete student">${_iTrash}</button>
+        </div></td>
+      </tr>`;
+    }).join('') || `<tr><td colspan="10"><div class="empty"><p>No students found</p></div></td></tr>`;
+  });
 }
 
 function editStudent(id) {
@@ -188,7 +277,7 @@ function delStudent(id) {
   const counts = { enrollments: DB.g('enrollments').filter(e => e.sid === id).length, grades: DB.g('grades').filter(g => g.sid === id).length, fees: DB.g('fees').filter(f => f.sid === id).length };
   const cascade = Object.entries(counts).filter(([,n]) => n > 0).map(([k,n]) => `${n} ${k}`).join(', ');
   const msg = `Delete ${s.fn} ${s.ln}?${cascade ? ` This will also remove ${cascade}.` : ''}`;
-  confirmDlg(msg, () => {
+  confirmDlg(msg, () => fadeDeleteRow(id, () => {
     const snapshot = { student: s };
     relKeys.forEach(k => { snapshot[k] = DB.g(k).filter(x => x.sid === id); });
     DB.s('students', DB.g('students').filter(x => x.id !== id));
@@ -201,7 +290,7 @@ function delStudent(id) {
       addAudit('Student Restore', `${s.fn} ${s.ln} deletion undone`, State.getUser().u, 'var(--green)');
       rStudents();
     });
-  });
+  }));
 }
 
 function importStudentsCSV() {
@@ -229,25 +318,28 @@ function rFaculty() {
   const q    = ($('fs')?.value || '').toLowerCase();
   const facs = DB.g('faculty').filter(f => (f.fn + ' ' + f.ln).toLowerCase().includes(q));
 
-  $('ftbody').innerHTML = facs.map((f, i) => {
-    const cs = DB.g('courses').filter(c => c.fid === f.id);
-    const ss = new Set(DB.g('enrollments').filter(e => cs.find(c => c.id === e.cid)).map(e => e.sid));
-    return `<tr data-id="${f.id}">
-      <td><div style="display:flex;align-items:center;gap:8px">
-        <div class="av ${avCls(i)}">${esc(f.fn[0])}${esc((f.ln || '')[0] || '')}</div>
-        <div><div class="bold">${esc(f.fn)} ${esc(f.ln)}</div><div class="text4" style="font-size:11px">${esc(f.em)}</div></div>
-      </div></td>
-      <td class="mono text3" style="font-size:11px">${facId(f.id)}</td>
-      <td>${esc(f.dept)}</td>
-      <td><span class="bx bx-gy">${esc(f.qual)}</span></td>
-      <td class="mono">${cs.length}</td>
-      <td class="mono">${ss.size}</td>
-      <td><div style="display:flex;gap:3px">
-        <button class="bico" onclick="editFaculty(${f.id})" title="Edit">✎</button>
-        <button class="bico del" onclick="delFaculty(${f.id})" title="Delete">✕</button>
-      </div></td>
-    </tr>`;
-  }).join('') || `<tr><td colspan="7"><div class="empty"><p>No faculty found</p></div></td></tr>`;
+  paginate(facs, 'ftbody', slice => {
+    $('ftbody').innerHTML = slice.map((f, i) => {
+      const cs = DB.g('courses').filter(c => c.fid === f.id);
+      const ss = new Set(DB.g('enrollments').filter(e => cs.find(c => c.id === e.cid)).map(e => e.sid));
+      return `<tr data-id="${f.id}">
+        <td><div style="display:flex;align-items:center;gap:8px">
+          <div class="av ${avCls(i)}">${esc(f.fn[0])}${esc((f.ln || '')[0] || '')}</div>
+          <div><div class="bold">${esc(f.fn)} ${esc(f.ln)}</div><div class="text4" style="font-size:11px">${esc(f.em)}</div></div>
+        </div></td>
+        <td class="mono text3" style="font-size:11px">${facId(f.id)}</td>
+        <td>${esc(f.dept)}</td>
+        <td><span class="bx bx-gy">${esc(f.qual)}</span></td>
+        <td class="mono">${cs.length}</td>
+        <td class="mono">${ss.size}</td>
+        <td><div class="act-btns">
+          <button class="bico view" onclick="viewFaculty(${f.id})" title="View details">${_iEye}</button>
+          <button class="bico edit" onclick="editFaculty(${f.id})" title="Edit faculty">${_iPen}</button>
+          <button class="bico del"  onclick="delFaculty(${f.id})"  title="Delete faculty">${_iTrash}</button>
+        </div></td>
+      </tr>`;
+    }).join('') || `<tr><td colspan="7"><div class="empty"><p>No faculty found</p></div></td></tr>`;
+  });
 }
 
 function editFaculty(id) {
@@ -296,7 +388,7 @@ function delFaculty(id) {
   if (!f) return;
   const courseCount = DB.g('courses').filter(c => c.fid === id).length;
   const suffix = courseCount ? ` They are assigned to ${courseCount} course${courseCount !== 1 ? 's' : ''}.` : '';
-  confirmDlg(`Delete ${f.fn} ${f.ln}?${suffix}`, () => {
+  confirmDlg(`Delete ${f.fn} ${f.ln}?${suffix}`, () => fadeDeleteRow(id, () => {
     DB.s('faculty', DB.g('faculty').filter(x => x.id !== id));
     addAudit('Faculty Deleted', `${f.fn} ${f.ln} removed`, State.getUser().u, 'var(--red)');
     rFaculty();
@@ -305,7 +397,7 @@ function delFaculty(id) {
       addAudit('Faculty Restore', `${f.fn} ${f.ln} deletion undone`, State.getUser().u, 'var(--green)');
       rFaculty();
     });
-  });
+  }));
 }
 
 // ═══════════════════════════════════════════
@@ -322,7 +414,7 @@ function rDepts() {
 
   $('dept-grid').innerHTML = depts.map((d, i) => {
     const color = C.DEPT_COLORS[i % C.DEPT_COLORS.length];
-    return `<div class="dept-card" style="position:relative;overflow:hidden">
+    return `<div class="dept-card" data-id="${d.id}" style="position:relative;overflow:hidden">
       <div style="position:absolute;top:0;left:0;right:0;height:2px;background:${color}"></div>
       <div style="margin-bottom:12px"><span class="bx bx-gy mono">${esc(d.code)}</span></div>
       <div style="font-size:15px;font-weight:600;margin-bottom:4px">${esc(d.name)}</div>
@@ -338,30 +430,71 @@ function rDepts() {
         </div>
       </div>
       <div style="font-size:11px;color:var(--text3)">Budget: <span class="mono">${usd(d.budget)}</span></div>
-      <button class="bico del" style="position:absolute;top:12px;right:12px" onclick="delDept(${d.id})" title="Delete">✕</button>
+      <div class="act-btns" style="position:absolute;top:10px;right:10px">
+        <button class="bico view" onclick="viewDept(${d.id})" title="View">${_iEye}</button>
+        <button class="bico edit" onclick="editDept(${d.id})" title="Edit">${_iPen}</button>
+        <button class="bico del"  onclick="delDept(${d.id})"  title="Delete">${_iTrash}</button>
+      </div>
     </div>`;
   }).join('');
 }
 
+function viewDept(id) {
+  const d = DB.g('depts').find(x => x.id === id); if (!d) return;
+  const stu = DB.g('students').filter(s => s.dept === d.name).length;
+  const crs = DB.g('courses').filter(c => c.dept === d.name).length;
+  openViewModal(esc(d.name), [
+    { l: 'Code',     v: esc(d.code) },
+    { l: 'HOD',      v: fn(d.hod) },
+    { l: 'Budget',   v: usd(d.budget) },
+    { l: 'Students', v: stu },
+    { l: 'Courses',  v: crs },
+  ]);
+}
+function editDept(id) {
+  const d = DB.g('depts').find(x => x.id === id); if (!d) return;
+  $('mdept-title').textContent = 'Edit Department';
+  $('mdept-id').value   = id;
+  $('mdept-n').value    = d.name;
+  $('mdept-c').value    = d.code;
+  $('mdept-hod').innerHTML = _facOpts();
+  $('mdept-hod').value  = d.hod;
+  $('mdept-b').value    = d.budget;
+  openM('m-dept');
+}
 function saveDept() {
-  const depts = DB.g('depts');
-  depts.push({
-    id: DB.nid(depts),
-    name: $('mdept-n').value.trim(),
-    code: $('mdept-c').value.trim().toUpperCase(),
-    hod:  parseInt($('mdept-hod').value) || 1,
+  const id   = parseInt($('mdept-id').value) || 0;
+  const data = {
+    name:   $('mdept-n').value.trim(),
+    code:   $('mdept-c').value.trim().toUpperCase(),
+    hod:    parseInt($('mdept-hod').value) || 1,
     budget: parseFloat($('mdept-b').value) || 0,
-  });
-  DB.s('depts', depts);
+  };
+  if (!data.name) { toast('Department name required', false); return; }
+  const depts = DB.g('depts');
+  if (id) {
+    const i = depts.findIndex(x => x.id === id);
+    if (i >= 0) { depts[i] = { ...depts[i], ...data }; }
+    DB.s('depts', depts);
+    toast('Department updated');
+    addAudit('Department Updated', data.name, State.getUser().u, 'var(--blue)');
+  } else {
+    depts.push({ id: DB.nid(depts), ...data });
+    DB.s('depts', depts);
+    toast('Department added');
+    addAudit('Department Added', data.name, State.getUser().u, 'var(--green)');
+  }
+  $('mdept-id').value = '';
+  $('mdept-title').textContent = 'Add Department';
+  clearDraft('m-dept');
   closeM('m-dept');
-  toast('Department added');
   rDepts();
 }
 
 function delDept(id) {
   const d = DB.g('depts').find(x => x.id === id);
   if (!d) return;
-  confirmDlg(`Delete ${d.name} department?`, () => {
+  confirmDlg(`Delete ${d.name} department?`, () => fadeDeleteRow(id, () => {
     DB.s('depts', DB.g('depts').filter(x => x.id !== id));
     addAudit('Department Deleted', d.name, State.getUser().u, 'var(--red)');
     rDepts();
@@ -369,7 +502,7 @@ function delDept(id) {
       DB.s('depts', [...DB.g('depts'), d]);
       rDepts();
     });
-  });
+  }));
 }
 
 // ═══════════════════════════════════════════
@@ -381,25 +514,28 @@ function rCourses() {
   if (fac) fac.innerHTML = _facOpts();
 
   const cs = DB.g('courses').filter(c => (c.code + ' ' + c.name).toLowerCase().includes(q));
-  $('ctbody').innerHTML = cs.map(c => {
-    const enr = DB.g('enrollments').filter(e => e.cid === c.id).length;
-    const pf  = c.seats ? Math.round(enr / c.seats * 100) : 0;
-    return `<tr data-id="${c.id}">
-      <td class="mono" style="color:var(--blue);font-weight:500">${esc(c.code)}</td>
-      <td><div class="bold">${esc(c.name)}</div><div class="text4" style="font-size:11px">${esc(c.desc)}</div></td>
-      <td>${esc(c.dept)}</td>
-      <td class="text2">${fn(c.fid)}</td>
-      <td class="mono">${c.cr}</td>
-      <td><div style="display:flex;align-items:center;gap:6px">
-        <div class="prog"><div class="pf" style="width:${pf}%;background:${pf > 85 ? 'var(--red)' : pf > 60 ? 'var(--amber)' : 'var(--blue)'}"></div></div>
-        <span class="mono text2" style="font-size:11px">${enr}/${c.seats}</span>
-      </div></td>
-      <td><div style="display:flex;gap:3px">
-        <button class="bico" onclick="editCourse(${c.id})" title="Edit">✎</button>
-        <button class="bico del" onclick="delCourse(${c.id})" title="Delete">✕</button>
-      </div></td>
-    </tr>`;
-  }).join('') || `<tr><td colspan="7"><div class="empty"><p>No courses found</p></div></td></tr>`;
+  paginate(cs, 'ctbody', slice => {
+    $('ctbody').innerHTML = slice.map(c => {
+      const enr = DB.g('enrollments').filter(e => e.cid === c.id).length;
+      const pf  = c.seats ? Math.round(enr / c.seats * 100) : 0;
+      return `<tr data-id="${c.id}">
+        <td class="mono" style="color:var(--blue);font-weight:500">${esc(c.code)}</td>
+        <td><div class="bold">${esc(c.name)}</div><div class="text4" style="font-size:11px">${esc(c.desc)}</div></td>
+        <td>${esc(c.dept)}</td>
+        <td class="text2">${fn(c.fid)}</td>
+        <td class="mono">${c.cr}</td>
+        <td><div style="display:flex;align-items:center;gap:6px">
+          <div class="prog"><div class="pf" style="width:${pf}%;background:${pf > 85 ? 'var(--red)' : pf > 60 ? 'var(--amber)' : 'var(--blue)'}"></div></div>
+          <span class="mono text2" style="font-size:11px">${enr}/${c.seats}</span>
+        </div></td>
+        <td><div class="act-btns">
+          <button class="bico view" onclick="viewCourse(${c.id})" title="View details">${_iEye}</button>
+          <button class="bico edit" onclick="editCourse(${c.id})" title="Edit course">${_iPen}</button>
+          <button class="bico del"  onclick="delCourse(${c.id})"  title="Delete course">${_iTrash}</button>
+        </div></td>
+      </tr>`;
+    }).join('') || `<tr><td colspan="7"><div class="empty"><p>No courses found</p></div></td></tr>`;
+  });
 }
 
 function editCourse(id) {
@@ -459,7 +595,7 @@ function delCourse(id) {
   const gradeCount = DB.g('grades').filter(g => g.cid === id).length;
   const parts = [enrCount && `${enrCount} enrollment${enrCount !== 1 ? 's' : ''}`, gradeCount && `${gradeCount} grade${gradeCount !== 1 ? 's' : ''}`].filter(Boolean).join(', ');
   const msg = `Delete ${c.code} — ${c.name}?${parts ? ` This will also remove ${parts}.` : ''}`;
-  confirmDlg(msg, () => {
+  confirmDlg(msg, () => fadeDeleteRow(id, () => {
     const snapshot = { course: c, enrollments: DB.g('enrollments').filter(e => e.cid === id), grades: DB.g('grades').filter(g => g.cid === id) };
     DB.s('courses', DB.g('courses').filter(x => x.id !== id));
     DB.s('enrollments', DB.g('enrollments').filter(e => e.cid !== id));
@@ -473,7 +609,7 @@ function delCourse(id) {
       addAudit('Course Restore', `${c.code} deletion undone`, State.getUser().u, 'var(--green)');
       rCourses();
     });
-  });
+  }));
 }
 
 // ═══════════════════════════════════════════
@@ -492,35 +628,74 @@ function rEnroll() {
   if (esf) esf.innerHTML = '<option value="">All Semesters</option>' + sems.map(s => `<option${s === sf ? ' selected' : ''}>${esc(s)}</option>`).join('');
 
   const filtered = enrs.filter(e => (!cf || String(e.cid) === cf) && (!sf || e.sem === sf));
-  $('enbody').innerHTML = filtered.map(e => {
-    const c = cs.find(x => x.id === e.cid);
-    return `<tr>
-      <td>${sn(e.sid)}</td>
-      <td><span class="mono" style="color:var(--blue)">${cc(e.cid)}</span> ${cn(e.cid)}</td>
-      <td class="text2">${c ? fn(c.fid) : '—'}</td>
-      <td><span class="bx bx-gy">${esc(e.sem)}</span></td>
-      <td><span class="bx bx-gr">${esc(e.status)}</span></td>
-      <td><button class="bico del" onclick="delEnr(${e.id})" title="Remove">✕</button></td>
-    </tr>`;
-  }).join('') || `<tr><td colspan="6"><div class="empty"><p>No enrollments found</p></div></td></tr>`;
+  paginate(filtered, 'enbody', slice => {
+    $('enbody').innerHTML = slice.map(e => {
+      const c = cs.find(x => x.id === e.cid);
+      return `<tr data-id="${e.id}">
+        <td>${sn(e.sid)}</td>
+        <td><span class="mono" style="color:var(--blue)">${cc(e.cid)}</span> ${cn(e.cid)}</td>
+        <td class="text2">${c ? fn(c.fid) : '—'}</td>
+        <td><span class="bx bx-gy">${esc(e.sem)}</span></td>
+        <td><span class="bx bx-gr">${esc(e.status)}</span></td>
+        <td><div class="act-btns">
+          <button class="bico view" onclick="viewEnroll(${e.id})"  title="View details">${_iEye}</button>
+          <button class="bico edit" onclick="editEnroll(${e.id})"  title="Edit enrollment">${_iPen}</button>
+          <button class="bico del"  onclick="delEnr(${e.id})"      title="Remove enrollment">${_iTrash}</button>
+        </div></td>
+      </tr>`;
+    }).join('') || `<tr><td colspan="6"><div class="empty"><p>No enrollments found</p></div></td></tr>`;
+  });
+  rWaitlist();
 }
 
 function openEnrollModal() {
+  $('men-title').textContent   = 'Enroll Student';
+  $('men-id').value            = '';
+  $('men-save-btn').textContent = 'Enroll';
   $('men-stu').innerHTML = _stuOpts();
   $('men-co').innerHTML  = _courseOpts();
+  $('men-st').value      = 'Active';
+  openM('m-enroll');
+}
+
+function editEnroll(id) {
+  const e = DB.g('enrollments').find(x => x.id === id); if (!e) return;
+  $('men-title').textContent    = 'Edit Enrollment';
+  $('men-id').value             = id;
+  $('men-save-btn').textContent = 'Save';
+  $('men-stu').innerHTML = _stuOpts();
+  $('men-stu').value     = e.sid;
+  $('men-co').innerHTML  = _courseOpts();
+  $('men-co').value      = e.cid;
+  $('men-sem').value     = e.sem;
+  $('men-st').value      = e.status || 'Active';
   openM('m-enroll');
 }
 
 function saveEnroll() {
+  const id  = parseInt($('men-id')?.value) || 0;
   const sid = parseInt($('men-stu').value);
   const cid = parseInt($('men-co').value);
   const sem = $('men-sem').value;
+  const status = $('men-st').value;
   const enrs = DB.g('enrollments');
-  if (enrs.find(e => e.sid === sid && e.cid === cid)) { toast('Already enrolled', false); return; }
-  enrs.push({ id: DB.nid(enrs), sid, cid, sem, status: 'Active' });
-  DB.s('enrollments', enrs);
-  toast('Student enrolled');
-  addAudit('Enrollment Added', `${sn(sid)} → ${cn(cid)}`, State.getUser().u, 'var(--green)');
+  if (id) {
+    const i = enrs.findIndex(x => x.id === id);
+    if (i >= 0) { enrs[i].sid = sid; enrs[i].cid = cid; enrs[i].sem = sem; enrs[i].status = status; }
+    DB.s('enrollments', enrs);
+    toast('Enrollment updated');
+    addAudit('Enrollment Updated', `${sn(sid)} → ${cn(cid)}`, State.getUser().u, 'var(--blue)');
+  } else {
+    if (enrs.find(e => e.sid === sid && e.cid === cid)) { toast('Already enrolled', false); return; }
+    enrs.push({ id: DB.nid(enrs), sid, cid, sem, status: 'Active' });
+    DB.s('enrollments', enrs);
+    toast('Student enrolled');
+    addAudit('Enrollment Added', `${sn(sid)} → ${cn(cid)}`, State.getUser().u, 'var(--green)');
+  }
+  $('men-id').value = '';
+  $('men-title').textContent    = 'Enroll Student';
+  $('men-save-btn').textContent = 'Enroll';
+  clearDraft('m-enroll');
   closeM('m-enroll');
   rEnroll();
 }
@@ -528,7 +703,7 @@ function saveEnroll() {
 function delEnr(id) {
   const e = DB.g('enrollments').find(x => x.id === id);
   if (!e) return;
-  confirmDlg(`Remove ${sn(e.sid)} from ${cn(e.cid)}?`, () => {
+  confirmDlg(`Remove ${sn(e.sid)} from ${cn(e.cid)}?`, () => fadeDeleteRow(id, () => {
     DB.s('enrollments', DB.g('enrollments').filter(x => x.id !== id));
     addAudit('Enrollment Removed', `${sn(e.sid)} from ${cn(e.cid)}`, State.getUser().u, 'var(--red)');
     rEnroll();
@@ -536,7 +711,68 @@ function delEnr(id) {
       DB.s('enrollments', [...DB.g('enrollments'), e]);
       rEnroll();
     });
-  });
+  }));
+}
+
+// ═══════════════════════════════════════════
+//  WAITLIST
+// ═══════════════════════════════════════════
+function rWaitlist() {
+  const wl = DB.g('waitlist').sort((a, b) => a.ts - b.ts);
+  const count = $('wl-count');
+  if (count) count.textContent = wl.length ? `${wl.length} student${wl.length !== 1 ? 's' : ''} waiting` : '';
+  $('wlbody').innerHTML = wl.map(w => `<tr data-id="${w.id}">
+    <td>${sn(w.sid)}</td>
+    <td><span class="mono" style="color:var(--blue)">${cc(w.cid)}</span> ${cn(w.cid)}</td>
+    <td><span class="bx bx-gy">${esc(w.sem)}</span></td>
+    <td class="text3" style="font-size:11px">${timeAgo(w.ts)}</td>
+    <td><div class="act-btns">
+      <button class="bico view" onclick="viewWaitlist(${w.id})" title="View">${_iEye}</button>
+      <button class="bico pay"  onclick="enrollFromWaitlist(${w.id})" title="Enroll now">${_iPay}</button>
+      <button class="bico del"  onclick="removeFromWaitlist(${w.id})" title="Remove from waitlist">${_iTrash}</button>
+    </div></td>
+  </tr>`).join('') || `<tr><td colspan="5"><div class="empty"><p>No students on waitlist</p></div></td></tr>`;
+}
+
+function viewWaitlist(wid) {
+  const w = DB.g('waitlist').find(x => x.id === wid); if (!w) return;
+  const course = DB.g('courses').find(c => c.id === w.cid);
+  const enrolled = course ? DB.g('enrollments').filter(e => e.cid === w.cid && e.status === 'Active').length : 0;
+  openViewModal('Waitlist Entry', [
+    { l: 'Student',       v: sn(w.sid) },
+    { l: 'Course',        v: `${cc(w.cid)} — ${cn(w.cid)}` },
+    { l: 'Semester',      v: esc(w.sem) },
+    { l: 'Waiting Since', v: timeAgo(w.ts) },
+    { l: 'Seats Taken',   v: course ? `${enrolled}/${course.seats}` : '—' },
+  ]);
+}
+function enrollFromWaitlist(wid) {
+  const wl = DB.g('waitlist');
+  const w  = wl.find(x => x.id === wid);
+  if (!w) return;
+  const course = DB.g('courses').find(c => c.id === w.cid);
+  if (!course) { toast('Course not found', false); return; }
+  const enrolled = DB.g('enrollments').filter(e => e.cid === w.cid && e.sem === w.sem && e.status === 'Active').length;
+  if (enrolled >= course.seats) { toast('Course is still full', false); return; }
+  const enrs = DB.g('enrollments');
+  enrs.push({ id: DB.nid(enrs), sid: w.sid, cid: w.cid, sem: w.sem, status: 'Active' });
+  DB.s('enrollments', enrs);
+  DB.s('waitlist', wl.filter(x => x.id !== wid));
+  addAudit('Enrolled from Waitlist', `${sn(w.sid)} → ${cn(w.cid)}`, State.getUser().u, 'var(--green)');
+  const u = DB.g('users').find(x => x.role === 'student' && x.lid === w.sid);
+  if (u) addNotif(u.id, 'Enrolled from Waitlist', `You have been enrolled in ${cn(w.cid)}.`, 'attendance');
+  toast(`${sn(w.sid)} enrolled from waitlist`);
+  rEnroll();
+}
+
+function removeFromWaitlist(wid) {
+  const w = DB.g('waitlist').find(x => x.id === wid);
+  if (!w) return;
+  confirmDlg(`Remove ${sn(w.sid)} from waitlist for ${cn(w.cid)}?`, () => fadeDeleteRow(wid, () => {
+    DB.s('waitlist', DB.g('waitlist').filter(x => x.id !== wid));
+    addAudit('Removed from Waitlist', `${sn(w.sid)} from ${cn(w.cid)}`, State.getUser().u, 'var(--red)');
+    rWaitlist();
+  }));
 }
 
 // ═══════════════════════════════════════════
@@ -550,18 +786,74 @@ function rGradesA() {
   if (gaf) gaf.innerHTML = '<option value="">All Courses</option>' + cs.map(c => `<option value="${c.id}"${String(c.id) === cf ? ' selected' : ''}>${esc(c.name)}</option>`).join('');
 
   const gs = DB.g('grades').filter(g => (!cf || String(g.cid) === cf) && (!gf || grade(g.marks) === gf));
-  $('grabody').innerHTML = gs.map(g => {
-    const gr = grade(g.marks);
-    return `<tr>
-      <td>${sn(g.sid)}</td>
-      <td><span class="mono" style="color:var(--blue)">${cc(g.cid)}</span> ${cn(g.cid)}</td>
-      <td class="mono">${g.marks}<span class="text4">/100</span></td>
-      <td>${gChip(gr)}</td>
-      <td class="mono">${gpa(g.marks).toFixed(1)}</td>
-      <td><span class="bx bx-gy">${esc(g.sem)}</span></td>
-      <td><span class="bx ${gr === 'F' ? 'bx-rd' : 'bx-gr'}">${gr === 'F' ? 'Fail' : 'Pass'}</span></td>
-    </tr>`;
-  }).join('') || `<tr><td colspan="7"><div class="empty"><p>No grades found</p></div></td></tr>`;
+  paginate(gs, 'grabody', slice => {
+    $('grabody').innerHTML = slice.map(g => {
+      const gr = grade(g.marks);
+      return `<tr data-id="${g.id}">
+        <td>${sn(g.sid)}</td>
+        <td><span class="mono" style="color:var(--blue)">${cc(g.cid)}</span> ${cn(g.cid)}</td>
+        <td class="mono">${g.marks}<span class="text4">/100</span></td>
+        <td>${gChip(gr)}</td>
+        <td class="mono">${gpa(g.marks).toFixed(1)}</td>
+        <td><span class="bx bx-gy">${esc(g.sem)}</span></td>
+        <td><span class="bx ${gr === 'F' ? 'bx-rd' : 'bx-gr'}">${gr === 'F' ? 'Fail' : 'Pass'}</span></td>
+        <td><div class="act-btns">
+          <button class="bico view" onclick="viewGradeA(${g.id})" title="View">${_iEye}</button>
+          <button class="bico edit" onclick="editGradeA(${g.id})" title="Edit">${_iPen}</button>
+          <button class="bico del"  onclick="delGradeA(${g.id})"  title="Delete">${_iTrash}</button>
+        </div></td>
+      </tr>`;
+    }).join('') || `<tr><td colspan="8"><div class="empty"><p>No grades found</p></div></td></tr>`;
+  });
+}
+
+function viewGradeA(id) {
+  const g = DB.g('grades').find(x => x.id === id); if (!g) return;
+  const gr = grade(g.marks);
+  openViewModal('Grade Details', [
+    { l: 'Student',   v: sn(g.sid) },
+    { l: 'Course',    v: `${cc(g.cid)} — ${cn(g.cid)}` },
+    { l: 'Marks',     v: `${g.marks}/100` },
+    { l: 'Grade',     v: gr },
+    { l: 'GPA Pts',   v: gpa(g.marks).toFixed(1) },
+    { l: 'Semester',  v: esc(g.sem) },
+    { l: 'Result',    v: gr === 'F' ? 'Fail' : 'Pass' },
+  ]);
+}
+function editGradeA(id) {
+  const g = DB.g('grades').find(x => x.id === id); if (!g) return;
+  $('mge-id').value    = id;
+  $('mge-stu').textContent = sn(g.sid);
+  $('mge-co').textContent  = `${cc(g.cid)} — ${cn(g.cid)}`;
+  $('mge-marks').value = g.marks;
+  $('mge-sem').value   = g.sem || '';
+  openM('m-grade-edit');
+}
+function saveGradeEdit() {
+  const id    = parseInt($('mge-id').value);
+  const marks = parseInt($('mge-marks').value);
+  const sem   = $('mge-sem').value.trim();
+  if (isNaN(marks) || marks < 0 || marks > 100) { toast('Marks must be 0–100', false); return; }
+  const gs = DB.g('grades');
+  const i  = gs.findIndex(x => x.id === id);
+  if (i < 0) return;
+  gs[i].marks = marks;
+  if (sem) gs[i].sem = sem;
+  DB.s('grades', gs);
+  addAudit('Grade Updated', `${sn(gs[i].sid)} — ${cc(gs[i].cid)}: ${marks}`, State.getUser().u, 'var(--blue)');
+  toast('Grade updated');
+  clearDraft('m-grade-edit');
+  closeM('m-grade-edit');
+  if ($('grabody')) rGradesA(); else if (typeof rGradeRows === 'function') rGradeRows();
+}
+function delGradeA(id) {
+  const g = DB.g('grades').find(x => x.id === id); if (!g) return;
+  confirmDlg(`Delete grade for ${sn(g.sid)} in ${cc(g.cid)}?`, () => fadeDeleteRow(id, () => {
+    DB.s('grades', DB.g('grades').filter(x => x.id !== id));
+    addAudit('Grade Deleted', `${sn(g.sid)} — ${cc(g.cid)}`, State.getUser().u, 'var(--red)');
+    toast('Grade deleted');
+    rGradesA();
+  }), true, 'Delete');
 }
 
 // ═══════════════════════════════════════════
@@ -576,14 +868,82 @@ function rAttA() {
   const att = DB.g('attendance').filter(a => !cf || String(a.cid) === cf);
   $('attabody').innerHTML = att.map(a => {
     const p = pct(a.pres, a.tot);
-    return `<tr>
+    return `<tr data-id="${a.id}">
       <td>${sn(a.sid)}</td>
       <td class="mono" style="color:var(--blue)">${cc(a.cid)}</td>
       <td class="mono">${a.pres}/${a.tot}</td>
       <td>${progBar(p)}</td>
       <td><span class="bx ${p >= 75 ? 'bx-gr' : p >= 60 ? 'bx-am' : 'bx-rd'}">${p >= 75 ? 'Good' : p >= 60 ? 'Warning' : 'Low'}</span></td>
+      <td><div class="act-btns">
+        <button class="bico view" onclick="viewAttA(${a.id})" title="View">${_iEye}</button>
+        <button class="bico edit" onclick="editAttA(${a.id})" title="Edit">${_iPen}</button>
+        <button class="bico del"  onclick="delAttA(${a.id})"  title="Delete">${_iTrash}</button>
+      </div></td>
     </tr>`;
-  }).join('') || `<tr><td colspan="5"><div class="empty"><p>No attendance data</p></div></td></tr>`;
+  }).join('') || `<tr><td colspan="6"><div class="empty"><p>No attendance data</p></div></td></tr>`;
+}
+
+function viewAttA(id) {
+  const a = DB.g('attendance').find(x => x.id === id); if (!a) return;
+  const p = pct(a.pres, a.tot);
+  openViewModal('Attendance Details', [
+    { l: 'Student',       v: sn(a.sid) },
+    { l: 'Course',        v: `${cc(a.cid)} — ${cn(a.cid)}` },
+    { l: 'Present',       v: a.pres },
+    { l: 'Total Classes', v: a.tot },
+    { l: 'Percentage',    v: `${p}%` },
+    { l: 'Status',        v: p >= 75 ? 'Good' : p >= 60 ? 'Warning' : 'Low' },
+  ]);
+}
+function editAttA(id) {
+  const a = DB.g('attendance').find(x => x.id === id); if (!a) return;
+  $('mae-id').value  = id;
+  $('mae-stu').textContent = sn(a.sid);
+  $('mae-co').textContent  = `${cc(a.cid)} — ${cn(a.cid)}`;
+  $('mae-pres').value = a.pres;
+  $('mae-tot').value  = a.tot;
+  openM('m-att-edit');
+}
+function saveAttEdit() {
+  const id   = parseInt($('mae-id').value);
+  const pres = parseInt($('mae-pres').value);
+  const tot  = parseInt($('mae-tot').value);
+  if (isNaN(pres) || isNaN(tot) || pres < 0 || tot < 1 || pres > tot) {
+    toast('Present must be ≤ Total and both non-negative', false); return;
+  }
+  const att = DB.g('attendance');
+  const i   = att.findIndex(x => x.id === id);
+  if (i < 0) return;
+  att[i].pres = pres; att[i].tot = tot;
+  DB.s('attendance', att);
+  addAudit('Attendance Updated', `${sn(att[i].sid)} — ${cc(att[i].cid)}: ${pres}/${tot}`, State.getUser().u, 'var(--teal)');
+  toast('Attendance updated');
+  clearDraft('m-att-edit');
+  closeM('m-att-edit');
+  if ($('attabody')) rAttA(); else if (typeof rAttEntry === 'function') rAttEntry();
+}
+function delAttA(id) {
+  const a = DB.g('attendance').find(x => x.id === id); if (!a) return;
+  confirmDlg(`Delete attendance record for ${sn(a.sid)} in ${cc(a.cid)}?`, () => fadeDeleteRow(id, () => {
+    DB.s('attendance', DB.g('attendance').filter(x => x.id !== id));
+    addAudit('Attendance Deleted', `${sn(a.sid)} — ${cc(a.cid)}`, State.getUser().u, 'var(--red)');
+    toast('Attendance record deleted');
+    rAttA();
+  }), true, 'Delete');
+}
+
+function exportAttCSV() {
+  const att = DB.g('attendance');
+  if (!att.length) { toast('No attendance data to export', false); return; }
+  const rows = [
+    ['Student Name', 'Student ID', 'Course Code', 'Course Name', 'Present', 'Total', 'Percentage', 'Status'],
+    ...att.map(a => {
+      const p = pct(a.pres, a.tot);
+      return [sn(a.sid), stuId(a.sid), cc(a.cid), cn(a.cid), a.pres, a.tot, p + '%', p >= 75 ? 'Good' : p >= 60 ? 'Warning' : 'Low'];
+    }),
+  ];
+  downloadCSV(rows, 'attendance_export.csv');
+  toast('Attendance exported');
 }
 
 // ═══════════════════════════════════════════
@@ -596,19 +956,37 @@ function rExams() {
   const exams = DB.g('exams').sort((a, b) => a.date.localeCompare(b.date));
   $('examtbl').innerHTML = exams.map(e => {
     const enr = DB.g('enrollments').filter(x => x.cid === e.cid).length;
-    return `<tr>
+    return `<tr data-id="${e.id}">
       <td><span class="mono" style="color:var(--blue)">${cc(e.cid)}</span> ${cn(e.cid)}</td>
       <td>${esc(e.date)}</td>
       <td>${esc(e.time)}</td>
       <td><span class="bx bx-gy">${esc(e.hall)}</span></td>
       <td class="mono">${e.dur} min</td>
       <td class="mono">${enr}</td>
-      <td><button class="bico del" onclick="delExam(${e.id})" title="Delete">✕</button></td>
+      <td><div class="act-btns">
+        <button class="bico view" onclick="viewExam(${e.id})"  title="View details">${_iEye}</button>
+        <button class="bico edit" onclick="editExam(${e.id})"  title="Edit exam">${_iPen}</button>
+        <button class="bico del"  onclick="delExam(${e.id})"   title="Delete exam">${_iTrash}</button>
+      </div></td>
     </tr>`;
   }).join('') || `<tr><td colspan="7"><div class="empty"><p>No exams scheduled</p></div></td></tr>`;
 }
 
+function editExam(id) {
+  const e = DB.g('exams').find(x => x.id === id); if (!e) return;
+  const mex = $('mex-co');
+  if (mex) mex.innerHTML = _courseOpts();
+  $('mex-title').textContent = 'Edit Exam';
+  $('mex-id').value   = id;
+  $('mex-co').value   = e.cid;
+  $('mex-date').value = e.date;
+  $('mex-time').value = e.time;
+  $('mex-hall').value = e.hall;
+  $('mex-dur').value  = e.dur;
+  openM('m-exam');
+}
 function saveExam() {
+  const id   = parseInt($('mex-id')?.value) || 0;
   const cid  = parseInt($('mex-co').value);
   const date = $('mex-date').value;
   const time = $('mex-time').value;
@@ -617,10 +995,21 @@ function saveExam() {
   if (!date || !hall) { toast('Date and hall required', false); return; }
 
   const exams = DB.g('exams');
-  exams.push({ id: DB.nid(exams), cid, date, time, hall, dur });
-  DB.s('exams', exams);
-  toast('Exam scheduled');
-  addAudit('Exam Scheduled', `${cc(cid)} on ${date}`, State.getUser().u, 'var(--teal)');
+  if (id) {
+    const i = exams.findIndex(x => x.id === id);
+    if (i >= 0) exams[i] = { ...exams[i], cid, date, time, hall, dur };
+    DB.s('exams', exams);
+    toast('Exam updated');
+    addAudit('Exam Updated', `${cc(cid)} on ${date}`, State.getUser().u, 'var(--teal)');
+  } else {
+    exams.push({ id: DB.nid(exams), cid, date, time, hall, dur });
+    DB.s('exams', exams);
+    toast('Exam scheduled');
+    addAudit('Exam Scheduled', `${cc(cid)} on ${date}`, State.getUser().u, 'var(--teal)');
+  }
+  $('mex-id').value = '';
+  $('mex-title').textContent = 'Schedule Exam';
+  clearDraft('m-exam');
   closeM('m-exam');
   rExams();
 }
@@ -628,7 +1017,7 @@ function saveExam() {
 function delExam(id) {
   const e = DB.g('exams').find(x => x.id === id);
   if (!e) return;
-  confirmDlg(`Delete ${cc(e.cid)} exam on ${e.date}?`, () => {
+  confirmDlg(`Delete ${cc(e.cid)} exam on ${e.date}?`, () => fadeDeleteRow(id, () => {
     DB.s('exams', DB.g('exams').filter(x => x.id !== id));
     addAudit('Exam Deleted', `${cc(e.cid)} exam on ${e.date}`, State.getUser().u, 'var(--red)');
     rExams();
@@ -636,7 +1025,7 @@ function delExam(id) {
       DB.s('exams', [...DB.g('exams'), e]);
       rExams();
     });
-  });
+  }));
 }
 
 // ═══════════════════════════════════════════
@@ -649,17 +1038,24 @@ function rLeaves() {
   const decided = leaves.filter(l => l.status !== 'Pending');
   const isAdmin = user.role !== 'student';
 
-  const card = (l, actions) => `<div class="leave-item">
+  const card = (l, actions) => `<div class="leave-item" data-id="${l.id}">
     <div class="leave-top">
       <div><span class="bold">${sn(l.sid)}</span> <span class="text3">— ${cc(l.cid)}</span></div>
-      <span class="bx ${l.status === 'Approved' ? 'bx-gr' : l.status === 'Rejected' ? 'bx-rd' : 'bx-am'}">${esc(l.status)}</span>
+      <div style="display:flex;align-items:center;gap:6px">
+        <span class="bx ${l.status === 'Approved' ? 'bx-gr' : l.status === 'Rejected' ? 'bx-rd' : 'bx-am'}">${esc(l.status)}</span>
+        <div class="act-btns">
+          <button class="bico view" onclick="viewLeave(${l.id})" title="View details">${_iEye}</button>
+          ${actions
+            ? `<button class="bico pay" onclick="decideLeave(${l.id},'Approved')" title="Approve">${_iPay}</button>
+               <button class="bico del" onclick="decideLeave(${l.id},'Rejected')" title="Reject">${_iTrash}</button>`
+            : `<button class="bico edit" onclick="reopenLeave(${l.id})" title="Change decision">${_iPen}</button>
+               <button class="bico del"  onclick="deleteLeave(${l.id})" title="Delete">${_iTrash}</button>`
+          }
+        </div>
+      </div>
     </div>
     <div class="text2" style="font-size:12px;margin-bottom:4px">${esc(l.from)} to ${esc(l.to)}</div>
-    <div class="text3" style="font-size:11px;margin-bottom:${actions ? '10px' : '0'}">${esc(l.reason)}</div>
-    ${actions ? `<div style="display:flex;gap:6px">
-      <button class="btn btn-g" style="font-size:11px;padding:4px 10px" onclick="decideLeave(${l.id},'Approved')">Approve</button>
-      <button class="btn btn-dg" style="font-size:11px;padding:4px 10px" onclick="decideLeave(${l.id},'Rejected')">Reject</button>
-    </div>` : ''}
+    <div class="text3" style="font-size:11px">${esc(l.reason)}</div>
   </div>`;
 
   $('leaves-pending').innerHTML = pending.map(l => card(l, isAdmin)).join('')
@@ -668,6 +1064,17 @@ function rLeaves() {
     || '<div class="text3" style="font-size:12px;padding:12px">No decisions yet</div>';
 }
 
+function viewLeave(id) {
+  const l = DB.g('leaves').find(x => x.id === id); if (!l) return;
+  openViewModal('Leave Request', [
+    { l: 'Student',  v: sn(l.sid) },
+    { l: 'Course',   v: `${cc(l.cid)} — ${cn(l.cid)}` },
+    { l: 'From',     v: esc(l.from) },
+    { l: 'To',       v: esc(l.to) },
+    { l: 'Status',   v: esc(l.status) },
+    { l: 'Reason',   v: esc(l.reason), full: true },
+  ]);
+}
 function decideLeave(id, status) {
   const leaves = DB.g('leaves');
   const i = leaves.findIndex(x => x.id === id);
@@ -675,6 +1082,28 @@ function decideLeave(id, status) {
   toast(`Leave ${status.toLowerCase()}`);
   addAudit('Leave ' + status, `Leave #${id} ${status.toLowerCase()}`, State.getUser().u, status === 'Approved' ? 'var(--green)' : 'var(--red)');
   rLeaves();
+}
+function reopenLeave(id) {
+  const leaves = DB.g('leaves');
+  const l = leaves.find(x => x.id === id); if (!l) return;
+  const opposite = l.status === 'Approved' ? 'Rejected' : 'Approved';
+  confirmDlg(`Change decision to "${opposite}" for ${sn(l.sid)}'s leave request?`, () => {
+    const i = leaves.findIndex(x => x.id === id);
+    leaves[i].status = opposite;
+    DB.s('leaves', leaves);
+    toast(`Leave changed to ${opposite.toLowerCase()}`);
+    addAudit('Leave Revised', `Leave #${id} changed to ${opposite}`, State.getUser().u, 'var(--blue)');
+    rLeaves();
+  }, false, `Set ${opposite}`);
+}
+function deleteLeave(id) {
+  const l = DB.g('leaves').find(x => x.id === id); if (!l) return;
+  confirmDlg(`Delete leave request for ${sn(l.sid)}?`, () => fadeDeleteRow(id, () => {
+    DB.s('leaves', DB.g('leaves').filter(x => x.id !== id));
+    addAudit('Leave Deleted', `Leave #${id} for ${sn(l.sid)}`, State.getUser().u, 'var(--red)');
+    toast('Leave request deleted');
+    rLeaves();
+  }), true, 'Delete');
 }
 
 // ═══════════════════════════════════════════
@@ -703,18 +1132,39 @@ function rFees() {
   const sf = $('fest')?.value || '';
   const filtered = fs.filter(f => sn(f.sid).toLowerCase().includes(q) && (!sf || f.status === sf));
 
-  $('feebody').innerHTML = filtered.map(f => `<tr>
-    <td>${sn(f.sid)}</td>
-    <td>${esc(f.type)}</td>
-    <td class="mono bold">${usd(f.amt)}</td>
-    <td class="text3" style="font-size:11px">${esc(f.due)}</td>
-    <td class="text3" style="font-size:11px">${esc(f.paid) || '—'}</td>
-    <td><span class="bx ${f.status === 'Paid' ? 'bx-gr' : f.status === 'Pending' ? 'bx-am' : 'bx-rd'}">${esc(f.status)}</span></td>
-    <td><button class="bico del" onclick="delFee(${f.id})" title="Delete">✕</button></td>
-  </tr>`).join('') || `<tr><td colspan="7"><div class="empty"><p>No fee records</p></div></td></tr>`;
+  paginate(filtered, 'feebody', slice => {
+    $('feebody').innerHTML = slice.map(f => `<tr data-id="${f.id}">
+      <td>${sn(f.sid)}</td>
+      <td>${esc(f.type)}</td>
+      <td class="mono bold">${usd(f.amt)}</td>
+      <td class="text3" style="font-size:11px">${esc(f.due)}</td>
+      <td class="text3" style="font-size:11px">${esc(f.paid) || '—'}</td>
+      <td><span class="bx ${f.status === 'Paid' ? 'bx-gr' : f.status === 'Pending' ? 'bx-am' : 'bx-rd'}">${esc(f.status)}</span></td>
+      <td><div class="act-btns">
+        <button class="bico view" onclick="viewFee(${f.id})"  title="View details">${_iEye}</button>
+        <button class="bico edit" onclick="editFee(${f.id})"  title="Edit fee">${_iPen}</button>
+        ${f.status !== 'Paid' ? `<button class="bico pay" onclick="markFeePaid(${f.id})" title="Mark as paid">${_iPay}</button>` : ''}
+        <button class="bico del"  onclick="delFee(${f.id})"   title="Delete fee">${_iTrash}</button>
+      </div></td>
+    </tr>`).join('') || `<tr><td colspan="7"><div class="empty"><p>No fee records</p></div></td></tr>`;
+  });
 }
 
+function editFee(id) {
+  const f = DB.g('fees').find(x => x.id === id); if (!f) return;
+  $('mfe-title').textContent = 'Edit Fee';
+  $('mfe-id').value   = id;
+  $('mfe-stu').innerHTML = _stuOpts();
+  $('mfe-stu').value  = f.sid;
+  $('mfe-type').value = f.type;
+  $('mfe-amt').value  = f.amt;
+  $('mfe-due').value  = f.due;
+  $('mfe-st').value   = f.status;
+  $('mfe-paid').value = f.paid || '';
+  openM('m-fee');
+}
 function saveFee() {
+  const id = parseInt($('mfe-id')?.value) || 0;
   const d = {
     sid:    parseInt($('mfe-stu').value),
     type:   $('mfe-type').value,
@@ -725,10 +1175,21 @@ function saveFee() {
   };
   if (!d.amt || isNaN(d.amt)) { toast('Amount required', false); return; }
   const fs = DB.g('fees');
-  fs.push({ id: DB.nid(fs), ...d });
-  DB.s('fees', fs);
-  toast('Fee recorded');
-  addAudit('Fee Recorded', `${usd(d.amt)} for ${sn(d.sid)}`, State.getUser().u, 'var(--amber)');
+  if (id) {
+    const i = fs.findIndex(x => x.id === id);
+    if (i >= 0) fs[i] = { ...fs[i], ...d };
+    DB.s('fees', fs);
+    toast('Fee updated');
+    addAudit('Fee Updated', `${usd(d.amt)} for ${sn(d.sid)}`, State.getUser().u, 'var(--amber)');
+  } else {
+    fs.push({ id: DB.nid(fs), ...d });
+    DB.s('fees', fs);
+    toast('Fee recorded');
+    addAudit('Fee Recorded', `${usd(d.amt)} for ${sn(d.sid)}`, State.getUser().u, 'var(--amber)');
+  }
+  $('mfe-id').value = '';
+  $('mfe-title').textContent = 'Record Fee';
+  clearDraft('m-fee');
   closeM('m-fee');
   rFees();
 }
@@ -736,7 +1197,7 @@ function saveFee() {
 function delFee(id) {
   const f = DB.g('fees').find(x => x.id === id);
   if (!f) return;
-  confirmDlg(`Delete ${esc(f.type)} fee (${usd(f.amt)}) for ${sn(f.sid)}?`, () => {
+  confirmDlg(`Delete ${esc(f.type)} fee (${usd(f.amt)}) for ${sn(f.sid)}?`, () => fadeDeleteRow(id, () => {
     DB.s('fees', DB.g('fees').filter(x => x.id !== id));
     addAudit('Fee Deleted', `${f.type} ${usd(f.amt)} for ${sn(f.sid)}`, State.getUser().u, 'var(--red)');
     rFees();
@@ -744,7 +1205,20 @@ function delFee(id) {
       DB.s('fees', [...DB.g('fees'), f]);
       rFees();
     });
-  });
+  }));
+}
+
+function markFeePaid(id) {
+  const fs = DB.g('fees');
+  const i  = fs.findIndex(x => x.id === id);
+  if (i < 0 || fs[i].status === 'Paid') return;
+  const prev = fs[i].status;
+  fs[i].status = 'Paid';
+  fs[i].paid   = today();
+  DB.s('fees', fs);
+  addAudit('Fee Marked Paid', `${esc(fs[i].type)} ${usd(fs[i].amt)} for ${sn(fs[i].sid)}`, State.getUser().u, 'var(--green)');
+  toast('Fee marked as paid');
+  rFees();
 }
 
 // ═══════════════════════════════════════════
@@ -763,17 +1237,34 @@ function rScholarships() {
   const msc = $('msc-stu');
   if (msc) msc.innerHTML = _stuOpts();
 
-  $('schtbl').innerHTML = sc.map(s => `<tr>
+  $('schtbl').innerHTML = sc.map(s => `<tr data-id="${s.id}">
     <td>${sn(s.sid)}</td>
     <td class="bold">${esc(s.name)}</td>
     <td class="mono">${usd(s.amt)}</td>
     <td class="text2" style="font-size:12px">${esc(s.crit)}</td>
     <td><span class="bx ${s.status === 'Active' ? 'bx-gr' : s.status === 'Pending' ? 'bx-am' : 'bx-gy'}">${esc(s.status)}</span></td>
-    <td><button class="bico del" onclick="delSch(${s.id})" title="Delete">✕</button></td>
+    <td><div class="act-btns">
+      <button class="bico view" onclick="viewSch(${s.id})"  title="View details">${_iEye}</button>
+      <button class="bico edit" onclick="editSch(${s.id})"  title="Edit scholarship">${_iPen}</button>
+      <button class="bico del"  onclick="delSch(${s.id})"   title="Delete scholarship">${_iTrash}</button>
+    </div></td>
   </tr>`).join('') || `<tr><td colspan="6"><div class="empty"><p>No scholarships</p></div></td></tr>`;
 }
 
+function editSch(id) {
+  const s = DB.g('scholarships').find(x => x.id === id); if (!s) return;
+  $('msc-title').textContent = 'Edit Scholarship';
+  $('msc-id').value    = id;
+  $('msc-stu').innerHTML = _stuOpts();
+  $('msc-stu').value   = s.sid;
+  $('msc-name').value  = s.name;
+  $('msc-amt').value   = s.amt;
+  $('msc-st').value    = s.status;
+  $('msc-crit').value  = s.crit;
+  openM('m-scholarship');
+}
 function saveScholarship() {
+  const id = parseInt($('msc-id')?.value) || 0;
   const d = {
     sid:    parseInt($('msc-stu').value),
     name:   $('msc-name').value.trim(),
@@ -783,9 +1274,21 @@ function saveScholarship() {
   };
   if (!d.name) { toast('Scholarship name required', false); return; }
   const sc = DB.g('scholarships');
-  sc.push({ id: DB.nid(sc), ...d });
-  DB.s('scholarships', sc);
-  toast('Scholarship added');
+  if (id) {
+    const i = sc.findIndex(x => x.id === id);
+    if (i >= 0) sc[i] = { ...sc[i], ...d };
+    DB.s('scholarships', sc);
+    toast('Scholarship updated');
+    addAudit('Scholarship Updated', d.name, State.getUser().u, 'var(--blue)');
+  } else {
+    sc.push({ id: DB.nid(sc), ...d });
+    DB.s('scholarships', sc);
+    toast('Scholarship added');
+    addAudit('Scholarship Added', d.name, State.getUser().u, 'var(--green)');
+  }
+  $('msc-id').value = '';
+  $('msc-title').textContent = 'Add Scholarship';
+  clearDraft('m-scholarship');
   closeM('m-scholarship');
   rScholarships();
 }
@@ -793,7 +1296,7 @@ function saveScholarship() {
 function delSch(id) {
   const s = DB.g('scholarships').find(x => x.id === id);
   if (!s) return;
-  confirmDlg(`Delete "${s.name}" scholarship?`, () => {
+  confirmDlg(`Delete "${s.name}" scholarship?`, () => fadeDeleteRow(id, () => {
     DB.s('scholarships', DB.g('scholarships').filter(x => x.id !== id));
     addAudit('Scholarship Deleted', s.name, State.getUser().u, 'var(--red)');
     rScholarships();
@@ -801,7 +1304,7 @@ function delSch(id) {
       DB.s('scholarships', [...DB.g('scholarships'), s]);
       rScholarships();
     });
-  });
+  }));
 }
 
 // ═══════════════════════════════════════════
@@ -839,7 +1342,7 @@ function rAnnouncements() {
   const PRI_ICON = { Normal:'📢', High:'⚠️', Urgent:'🚨' };
 
   $('ann-list').innerHTML = anns.map(a => `
-    <div class="ann-item ${PRI_CLS[a.pri] || ''}${a.pri === 'Urgent' ? ' ann-urgent' : ''}">
+    <div class="ann-item ${PRI_CLS[a.pri] || ''}${a.pri === 'Urgent' ? ' ann-urgent' : ''}" data-id="${a.id}">
       <div class="ann-accent"></div>
       <div class="ann-content">
         <div class="ann-meta">
@@ -892,6 +1395,7 @@ function saveAnn() {
 
   toast('Announcement posted');
   addAudit('Announcement Posted', d.title, user.u, 'var(--blue)');
+  clearDraft('m-ann');
   closeM('m-ann');
   rAnnouncements();
 }
@@ -899,7 +1403,7 @@ function saveAnn() {
 function delAnn(id) {
   const a = DB.g('announcements').find(x => x.id === id);
   if (!a) return;
-  confirmDlg(`Delete "${a.title}" announcement?`, () => {
+  confirmDlg(`Delete "${a.title}" announcement?`, () => fadeDeleteRow(id, () => {
     DB.s('announcements', DB.g('announcements').filter(x => x.id !== id));
     addAudit('Announcement Deleted', a.title, State.getUser().u, 'var(--red)');
     rAnnouncements();
@@ -907,7 +1411,7 @@ function delAnn(id) {
       DB.s('announcements', [...DB.g('announcements'), a]);
       rAnnouncements();
     });
-  });
+  }));
 }
 
 // ═══════════════════════════════════════════
@@ -943,8 +1447,6 @@ function rMessages() {
     .sort((a, b) => b.lastTs - a.lastTs)
     .filter(p => !q || p.name.toLowerCase().includes(q));
 
-  const ROLE_COLOR = { faculty: 'av-pu', student: 'av-gr', admin: 'av-bl' };
-
   $('msg-list').innerHTML = peers.map(p => {
     const initials  = p.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
     const roleLabel = p.role === 'faculty' ? 'Faculty' : p.role === 'student' ? 'Student' : 'Admin';
@@ -970,7 +1472,6 @@ function rMessages() {
 
 function openConv(id, name, role) {
   _activeConv = id;
-  const ROLE_COLOR = { faculty: 'av-pu', student: 'av-gr', admin: 'av-bl' };
   const initials = name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
   const roleLabel = role === 'faculty' ? 'Faculty Member' : role === 'student' ? 'Student' : 'Admin';
 
@@ -1118,6 +1619,7 @@ function saveEvent() {
   evs.push(d);
   DB.s('events', evs);
   toast('Event added');
+  clearDraft('m-event');
   closeM('m-event');
   _renderCal();
 }
@@ -1177,11 +1679,56 @@ function rReports() {
 //  USER ACCOUNTS
 // ═══════════════════════════════════════════
 function rUsers() {
-  $('usertbl').innerHTML = DB.g('users').map(u => `<tr>
+  $('usertbl').innerHTML = DB.g('users').map(u => `<tr data-id="${u.id}">
     <td class="mono">${esc(u.u)}</td>
     <td><span class="bx ${u.role === 'admin' ? 'bx-pu' : u.role === 'faculty' ? 'bx-bl' : 'bx-gr'}">${esc(u.role)}</span></td>
     <td class="text2">${u.lid ? (u.role === 'faculty' ? fn(u.lid) : sn(u.lid)) : 'System Admin'}</td>
+    <td><div class="act-btns">
+      <button class="bico view" onclick="viewUser(${u.id})" title="View">${_iEye}</button>
+      <button class="bico edit" onclick="editUser(${u.id})" title="Edit">${_iPen}</button>
+      <button class="bico del"  onclick="delUser(${u.id})"  title="Delete">${_iTrash}</button>
+    </div></td>
   </tr>`).join('');
+}
+function viewUser(id) {
+  const u = DB.g('users').find(x => x.id === id); if (!u) return;
+  openViewModal('User Account', [
+    { l: 'Username', v: esc(u.u) },
+    { l: 'Role',     v: esc(u.role) },
+    { l: 'Linked To',v: u.lid ? (u.role === 'faculty' ? fn(u.lid) : sn(u.lid)) : 'System Admin' },
+  ]);
+}
+function editUser(id) {
+  const u = DB.g('users').find(x => x.id === id); if (!u) return;
+  $('mue-id').value        = id;
+  $('mue-u').textContent   = esc(u.u);
+  $('mue-role').value      = u.role;
+  openM('m-user-edit');
+}
+function saveUserEdit() {
+  const id   = parseInt($('mue-id').value);
+  const role = $('mue-role').value;
+  const us   = DB.g('users');
+  const i    = us.findIndex(x => x.id === id);
+  if (i < 0) return;
+  us[i].role = role;
+  DB.s('users', us);
+  addAudit('User Updated', `${us[i].u} role → ${role}`, State.getUser().u, 'var(--blue)');
+  toast('User updated');
+  clearDraft('m-user-edit');
+  closeM('m-user-edit');
+  rUsers();
+}
+function delUser(id) {
+  const u = DB.g('users').find(x => x.id === id); if (!u) return;
+  const curr = State.getUser();
+  if (u.u === curr.u) { toast('Cannot delete your own account', false); return; }
+  confirmDlg(`Delete user "${u.u}"? This cannot be undone.`, () => fadeDeleteRow(id, () => {
+    DB.s('users', DB.g('users').filter(x => x.id !== id));
+    addAudit('User Deleted', u.u, curr.u, 'var(--red)');
+    toast('User deleted');
+    rUsers();
+  }), true, 'Delete');
 }
 
 // ═══════════════════════════════════════════

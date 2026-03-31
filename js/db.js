@@ -6,13 +6,50 @@
 const DB = (() => {
   const PFX = C.DB.PREFIX;
 
+  // ── Demo user detection ────────────────────────────
+  // Returns true if the currently logged-in user is a seeded demo account.
+  // Demo user IDs are 1–16 (set by seed.js). Using IDs avoids a circular
+  // dependency — we can't call g('users') here without infinite recursion.
+  const DEMO_USER_IDS = new Set([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]);
+  function _isDemoSession() {
+    try {
+      const raw = localStorage.getItem('acs_session');
+      if (!raw) return true; // not logged in yet — no filtering on landing page
+      const sess = JSON.parse(raw);
+      return DEMO_USER_IDS.has(sess?.uid);
+    } catch { return true; }
+  }
+
+  // Keys that must always return ALL records regardless of demo status
+  // Note: 'users' is intentionally NOT here — demo users are _demo-stamped and
+  // should be hidden from non-demo admins. Auth reads happen before any session
+  // exists (so _isDemoSession()===true anyway) and don't need the bypass.
+  const _NO_FILTER_KEYS = new Set(['settings']);
+
   // ── Core read/write ────────────────────────────────
   function g(k) {
-    try { return JSON.parse(localStorage.getItem(PFX + k)) ?? []; }
-    catch { return []; }
+    try {
+      const arr = JSON.parse(localStorage.getItem(PFX + k)) ?? [];
+      // Non-demo users never see demo-only records (except auth-critical keys)
+      if (!_isDemoSession() && !_NO_FILTER_KEYS.has(k) && Array.isArray(arr)) {
+        return arr.filter(x => !x._demo);
+      }
+      return arr;
+    } catch { return []; }
   }
   function s(k, v) {
     try {
+      // Non-demo users only see/operate on their own records. When they write back
+      // a table, we must re-merge any _demo records they never saw, so demo data
+      // is never silently wiped by a non-demo write.
+      if (!_isDemoSession() && Array.isArray(v)) {
+        const stored = JSON.parse(localStorage.getItem(PFX + k)) ?? [];
+        const demoRecs = stored.filter(x => x && x._demo);
+        if (demoRecs.length) {
+          const writtenIds = new Set(v.map(x => x.id));
+          v = [...v, ...demoRecs.filter(x => !writtenIds.has(x.id))];
+        }
+      }
       localStorage.setItem(PFX + k, JSON.stringify(v));
       return true;
     } catch (e) {

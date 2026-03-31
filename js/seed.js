@@ -220,5 +220,17 @@ function seed() {
     {id:7, action:'Scholarship Added',detail:'Merit Scholarship awarded to Mrunal Thakur',   user:'admin', ts:Date.now()-900000,     color:'var(--amber)'},
   ]);
 
+  // Stamp all seeded records so non-demo users don't see them
+  const _SEED_KEYS = [
+    'users','faculty','students','depts','courses','enrollments',
+    'grades','attendance','fees','scholarships','exams','announcements',
+    'assignments','submissions','leaves','appeals','events','messages',
+    'notifications','wishlist','waitlist','audit'
+  ];
+  _SEED_KEYS.forEach(k => {
+    const arr = DB.g(k);
+    if (arr.length) DB.s(k, arr.map(x => ({ ...x, _demo: true })));
+  });
+
   DB.markSeeded();
 }

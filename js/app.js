@@ -68,29 +68,74 @@ function go(id) {
     }
   });
   tnClose();
+  closeMobNav();
 
   // Update state
   State.set('page', id);
 
   // Run render function — error boundary prevents one bad page from crashing the whole app
   if (PAGES[id]) {
-    try {
-      PAGES[id]();
-    } catch (err) {
-      const pgEl = $('pg-' + id);
-      if (pgEl) pgEl.innerHTML = `<div class="empty-state" style="padding:48px">
-        <div class="empty-ico">⚠</div>
-        <div class="empty-title">Page failed to load</div>
-        <div class="empty-sub">Try refreshing or resetting demo data (Admin → Export → Reset).<br><span style="font-size:10px;font-family:monospace;color:var(--text4)">${esc(err.message)}</span></div>
-      </div>`;
+    // Show skeleton placeholders in table bodies before rendering real data
+    const _SKEL_MAP = {
+      students:     [['stbody', 7]],
+      faculty:      [['ftbody', 7]],
+      courses:      [['ctbody', 7]],
+      enrollment:   [['enbody', 6], ['wlbody', 5]],
+      exams:        [['examtbl', 7]],
+      fees:         [['feebody', 7]],
+      scholarships: [['schtbl', 6]],
+      grades:       [['grabody', 7]],
+      assignments:  [['assigntbl', 7]],
+      myen:         [['myenbody', 8]],
+      mygrades:     [['mygradesbody', 6]],
+      myassign:     [['myassigntbl', 6]],
+      myfees:       [['myfeebody', 6]],
+    };
+    const skelTargets = _SKEL_MAP[id];
+    const _runPage = () => {
+      try {
+        PAGES[id]();
+      } catch (err) {
+        const pgEl = $('pg-' + id);
+        if (pgEl) pgEl.innerHTML = `<div class="empty-state" style="padding:48px">
+          <div class="empty-ico">⚠</div>
+          <div class="empty-title">Page failed to load</div>
+          <div class="empty-sub">Try refreshing or resetting demo data (Admin → Export → Reset).<br><span style="font-size:10px;font-family:monospace;color:var(--text4)">${esc(err.message)}</span></div>
+        </div>`;
+      }
+    };
+    if (skelTargets) {
+      skelTargets.forEach(([tId, cols]) => {
+        const el = $(tId);
+        if (el) el.innerHTML = skeleton(4, cols);
+      });
+      requestAnimationFrame(_runPage);
+    } else {
+      _runPage();
     }
   }
 
-  // Update header breadcrumb
+  // Update header breadcrumb with section context
   const bc = $('hdr-breadcrumb');
   if (bc) {
-    const h1 = pg && pg.querySelector('h1');
-    if (h1) bc.textContent = h1.textContent;
+    const BREADCRUMB_MAP = {
+      dash:'Dashboard', students:'People › Students', faculty:'People › Faculty',
+      departments:'People › Departments', courses:'Academics › Courses',
+      enrollments:'Academics › Enrollments', grades:'Academics › Grades',
+      attendance:'Academics › Attendance', exams:'Academics › Exams',
+      fees:'Finance › Fees', scholarships:'Finance › Scholarships',
+      announcements:'Communication › Announcements', messages:'Communication › Messages',
+      calendar:'Calendar', reports:'Reports', export:'Export',
+      users:'System › Users', auditlog:'System › Audit Log', settings:'System › Settings',
+      myprofile:'My Profile', mycourses:'My Courses', mygrades:'My Grades',
+      myatt:'My Attendance', myassign:'My Assignments', myfees:'My Fees',
+      gcalc:'Grade Calculator', transcript:'Transcript', hallticket:'Hall Ticket',
+      wishlist:'Course Wishlist', achievements:'Achievements', applyleave:'Apply Leave',
+      gradeentry:'Teaching › Grade Entry', markatt:'Teaching › Attendance',
+      assignments:'Teaching › Assignments', fleaves:'Teaching › Leave Requests',
+      fmessages:'Teaching › Messages', fdash:'Dashboard',
+    };
+    bc.textContent = BREADCRUMB_MAP[id] || (pg?.querySelector('h1')?.textContent || '');
   }
 
   // Scroll main area to top on page change
@@ -112,7 +157,55 @@ function loadSemesterSettings() {
   if (mid)   C.SEMESTER.MID     = mid;
 }
 
+// ── One-time migration: stamp legacy unseeded demo records ──
+// Before this migration was introduced, seed.js wrote records without _demo:true.
+// This runs once per browser (guarded by 'acs_mg1' flag) and stamps only the
+// known demo record IDs so that non-demo users don't see them.
+function _migrateDemoStamps() {
+  try {
+    if (localStorage.getItem('acs_mg1')) return;
+    const PFX = 'acs_';
+    const DEMO_IDS = {
+      users:         new Set([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]),
+      faculty:       new Set([1,2,3,4]),
+      students:      new Set([1,2,3,4,5,6,7,8,9,10,11]),
+      depts:         new Set([1,2,3,4,5]),
+      courses:       new Set([1,2,3,4,5,6,7,8]),
+      enrollments:   new Set([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]),
+      grades:        new Set([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]),
+      attendance:    new Set([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]),
+      fees:          new Set([1,2,3,4,5,6,7,8,9,10,11]),
+      scholarships:  new Set([1,2,3]),
+      exams:         new Set([1,2,3,4,5,6]),
+      announcements: new Set([1,2,3,4,5]),
+      assignments:   new Set([1,2,3,4,5,6]),
+      events:        new Set([1,2,3,4,5,6,7,8]),
+      messages:      new Set([1,2,3,4,5]),
+      notifications: new Set([1,2,3,4,5,6,7]),
+      leaves:        new Set([1,2,3]),
+    };
+    Object.entries(DEMO_IDS).forEach(([k, ids]) => {
+      const raw = localStorage.getItem(PFX + k);
+      if (!raw) return;
+      const arr = JSON.parse(raw);
+      if (!Array.isArray(arr) || !arr.length) return;
+      // Only patch if at least one demo-ID record is missing the _demo flag
+      if (arr.some(x => ids.has(x.id) && !x._demo)) {
+        localStorage.setItem(PFX + k, JSON.stringify(
+          arr.map(x => (ids.has(x.id) && !x._demo) ? { ...x, _demo: true } : x)
+        ));
+      }
+    });
+    localStorage.setItem('acs_mg1', '1');
+  } catch {}
+}
+
 function init() {
+  // Clear any stale drafts from previous sessions
+  try {
+    Object.keys(sessionStorage).filter(k => k.startsWith('draft_')).forEach(k => sessionStorage.removeItem(k));
+  } catch {}
+
   // Load saved theme
   State.loadTheme();
 
@@ -121,6 +214,23 @@ function init() {
 
   // Seed demo data if first run
   seed();
+
+  // One-time migration: stamp demo records that were seeded before _demo flag existed.
+  // Runs once per browser; safe because user-created records always get IDs > max demo ID.
+  _migrateDemoStamps();
+
+  // Update landing hero stats from real DB data
+  try {
+    const stuCount  = DB.g('students').length;
+    const facCount  = DB.g('faculty').length;
+    const crsCount  = DB.g('courses').length;
+    const att       = DB.g('attendance');
+    const avgAtt    = att.length ? Math.round(att.reduce((t,a) => t + pct(a.pres, a.tot), 0) / att.length) : 0;
+    const psEls     = document.querySelectorAll('.land-ps-n');
+    if (psEls[0]) psEls[0].textContent = stuCount;
+    if (psEls[1]) psEls[1].textContent = crsCount;
+    if (psEls[2]) psEls[2].textContent = avgAtt + '%';
+  } catch(_) {}
 
   // Wire sign-in keyboard shortcuts
   const lu = $('lu'), lp = $('lp');
@@ -169,10 +279,16 @@ function init() {
     });
   }
 
-  // Close topnav dropdowns on outside click
+  // Close topnav dropdowns on outside click; close mob nav on outside click
   document.addEventListener('click', e => {
     if (!e.target.closest('.tn-grp')) tnClose();
+    if (!e.target.closest('#topnav') && !e.target.closest('#mob-nav-btn')) closeMobNav();
   });
+
+  // Close mobile nav when resizing to desktop
+  window.addEventListener('resize', () => {
+    if (window.innerWidth > 768) closeMobNav();
+  }, { passive: true });
 }
 
 // ═══════════════════════════════════════════
@@ -818,6 +934,30 @@ function tnClose() {
 }
 
 // ═══════════════════════════════════════
+//  MOBILE HAMBURGER NAV
+// ═══════════════════════════════════════
+function toggleMobNav() {
+  const nav = $('topnav');
+  const btn = $('mob-nav-btn');
+  const ov  = $('mob-nav-overlay');
+  if (!nav) return;
+  const open = nav.classList.toggle('nav-open');
+  btn?.classList.toggle('open', open);
+  btn?.setAttribute('aria-expanded', open ? 'true' : 'false');
+  ov?.classList.toggle('show', open);
+}
+function closeMobNav() {
+  const nav = $('topnav');
+  const btn = $('mob-nav-btn');
+  const ov  = $('mob-nav-overlay');
+  nav?.classList.remove('nav-open');
+  btn?.classList.remove('open');
+  btn?.setAttribute('aria-expanded', 'false');
+  ov?.classList.remove('show');
+  tnClose();
+}
+
+// ═══════════════════════════════════════
 //  SIDEBAR TOGGLE (legacy, no-op)
 // ═══════════════════════════════════════
 function toggleSidebar() {
@@ -870,6 +1010,7 @@ function doChangePw() {
   const err = Auth.changePassword(user.id, oldPw, newPw);
   if (err) { toast(err, false); return; }
   toast('Password updated successfully.');
+  clearDraft('m-changepw');
   closeM('m-changepw');
   $('cpw-old').value = $('cpw-new').value = $('cpw-conf').value = '';
   $('cpw-bar').style.width = '0%';

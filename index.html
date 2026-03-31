@@ -14,21 +14,21 @@
 
 <!-- Open Graph -->
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://nveeravenkataganesh.github.io/academe/">
+<meta property="og:url" content="https://nveeravenkataganesh.github.io/academee/">
 <meta property="og:title" content="Academe — Academic Management Platform">
 <meta property="og:description" content="A complete academic management platform for modern educational institutions. Manage students, faculty, courses, grades, attendance, and more.">
-<meta property="og:image" content="https://nveeravenkataganesh.github.io/academe/icons/icon-512.png">
+<meta property="og:image" content="https://nveeravenkataganesh.github.io/academee/icons/icon-512.png">
 <meta property="og:site_name" content="Academe">
 
 <!-- Twitter Card -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:url" content="https://nveeravenkataganesh.github.io/academe/">
+<meta name="twitter:url" content="https://nveeravenkataganesh.github.io/academee/">
 <meta name="twitter:title" content="Academe — Academic Management Platform">
 <meta name="twitter:description" content="A complete academic management platform for modern educational institutions.">
-<meta name="twitter:image" content="https://nveeravenkataganesh.github.io/academe/icons/icon-512.png">
+<meta name="twitter:image" content="https://nveeravenkataganesh.github.io/academee/icons/icon-512.png">
 
 <!-- Canonical -->
-<link rel="canonical" href="https://nveeravenkataganesh.github.io/academe/">
+<link rel="canonical" href="https://nveeravenkataganesh.github.io/academee/">
 
 <!-- Favicon (inline SVG) -->
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%233b82f6'/><text x='16' y='22' text-anchor='middle' font-family='system-ui,sans-serif' font-size='18' font-weight='700' fill='white'>A</text></svg>">
@@ -357,8 +357,15 @@
 <!-- GLOBAL HEADER -->
 <header class="app-hdr">
   <div class="app-hdr-l">
+    <button class="mob-nav-btn" id="mob-nav-btn" onclick="toggleMobNav()" aria-label="Toggle navigation" aria-expanded="false" aria-controls="topnav">
+      <span class="mob-nav-bar"></span>
+      <span class="mob-nav-bar"></span>
+      <span class="mob-nav-bar"></span>
+    </button>
     <div class="app-hdr-logo">A</div>
     <div class="app-hdr-name">Academe</div>
+    <div class="hdr-divider-v"></div>
+    <div class="hdr-breadcrumb" id="hdr-breadcrumb"></div>
   </div>
   <div class="app-hdr-c">
     <span class="app-hdr-title">Academic Management System</span>
@@ -414,6 +421,7 @@
 </header>
 
 <!-- TOP NAV -->
+<div class="mob-nav-overlay" id="mob-nav-overlay" onclick="closeMobNav()"></div>
 <nav class="topnav" id="topnav">
 
   <!-- ADMIN -->
@@ -549,21 +557,22 @@
   <div class="card">
     <div class="card-h">
       <div class="fr">
-        <input class="inp" id="ss" placeholder="Search name, email, ID…" style="width:200px" oninput="rStudents()">
-        <select class="inp sel" id="sd" style="width:150px" onchange="rStudents()"><option value="">All Departments</option></select>
-        <select class="inp sel" id="sy" style="width:100px" onchange="rStudents()"><option value="">All Years</option><option>1</option><option>2</option><option>3</option><option>4</option></select>
-        <select class="inp sel" id="sst" style="width:110px" onchange="rStudents()"><option value="">All Status</option><option>Active</option><option>Inactive</option><option>Alumni</option></select>
+        <input class="inp" id="ss" placeholder="Search name, email, ID…" style="width:200px" oninput="State.resetPage('stbody');rStudents()">
+        <select class="inp sel" id="sd" style="width:150px" onchange="State.resetPage('stbody');rStudents()"><option value="">All Departments</option></select>
+        <select class="inp sel" id="sy" style="width:100px" onchange="State.resetPage('stbody');rStudents()"><option value="">All Years</option><option>1</option><option>2</option><option>3</option><option>4</option></select>
+        <select class="inp sel" id="sst" style="width:110px" onchange="State.resetPage('stbody');rStudents()"><option value="">All Status</option><option>Active</option><option>Inactive</option><option>Alumni</option></select>
       </div>
       <div class="card-acts"><span class="text4 mono" style="font-size:11px" id="sc"></span></div>
     </div>
     <div class="tw"><table class="t"><thead><tr><th>Student</th><th>ID</th><th>Department</th><th>Year</th><th>Contact</th><th>Status</th><th>Courses</th><th>GPA</th><th>Risk</th><th></th></tr></thead><tbody id="stbody"></tbody></table></div>
+    <div id="stbody-pg" class="pg"></div>
   </div>
 </div>
 
 <!-- ══ FACULTY ══ -->
 <div class="page" id="pg-faculty">
   <div class="topbar"><div><h1>Faculty</h1><p>Teaching staff</p></div><div class="topbar-r"><button class="btn btn-p" onclick="openM('m-faculty')">+ Add Faculty</button></div></div>
-  <div class="card"><div class="card-h"><input class="inp" id="fs" placeholder="Search…" style="width:200px" oninput="rFaculty()"></div><div class="tw"><table class="t"><thead><tr><th>Faculty</th><th>ID</th><th>Department</th><th>Qualification</th><th>Courses</th><th>Students</th><th></th></tr></thead><tbody id="ftbody"></tbody></table></div></div>
+  <div class="card"><div class="card-h"><input class="inp" id="fs" placeholder="Search…" style="width:200px" oninput="State.resetPage('ftbody');rFaculty()"></div><div class="tw"><table class="t"><thead><tr><th>Faculty</th><th>ID</th><th>Department</th><th>Qualification</th><th>Courses</th><th>Students</th><th></th></tr></thead><tbody id="ftbody"></tbody></table></div><div id="ftbody-pg" class="pg"></div></div>
 </div>
 
 <!-- ══ DEPARTMENTS ══ -->
@@ -575,25 +584,26 @@
 <!-- ══ COURSES ══ -->
 <div class="page" id="pg-courses">
   <div class="topbar"><div><h1>Courses</h1></div><div class="topbar-r"><button class="btn btn-p" onclick="openM('m-course')">+ Add Course</button></div></div>
-  <div class="card"><div class="card-h"><input class="inp" id="cs" placeholder="Search…" style="width:200px" oninput="rCourses()"></div><div class="tw"><table class="t"><thead><tr><th>Code</th><th>Course</th><th>Department</th><th>Faculty</th><th>Credits</th><th>Enrolled/Seats</th><th></th></tr></thead><tbody id="ctbody"></tbody></table></div></div>
+  <div class="card"><div class="card-h"><input class="inp" id="cs" placeholder="Search…" style="width:200px" oninput="State.resetPage('ctbody');rCourses()"></div><div class="tw"><table class="t"><thead><tr><th>Code</th><th>Course</th><th>Department</th><th>Faculty</th><th>Credits</th><th>Enrolled/Seats</th><th></th></tr></thead><tbody id="ctbody"></tbody></table></div><div id="ctbody-pg" class="pg"></div></div>
 </div>
 
 <!-- ══ ENROLLMENT ══ -->
 <div class="page" id="pg-enrollment">
   <div class="topbar"><div><h1>Enrollment</h1></div><div class="topbar-r"><button class="btn btn-p" onclick="openEnrollModal()">+ Enroll Student</button></div></div>
-  <div class="card"><div class="card-h"><div class="fr"><select class="inp sel" id="ef" style="width:200px" onchange="rEnroll()"><option value="">All Courses</option></select><select class="inp sel" id="esf" style="width:140px" onchange="rEnroll()"><option value="">All Semesters</option></select></div></div><div class="tw"><table class="t"><thead><tr><th>Student</th><th>Course</th><th>Faculty</th><th>Semester</th><th>Status</th><th></th></tr></thead><tbody id="enbody"></tbody></table></div></div>
+  <div class="card"><div class="card-h"><div class="fr"><select class="inp sel" id="ef" style="width:200px" onchange="State.resetPage('enbody');rEnroll()"><option value="">All Courses</option></select><select class="inp sel" id="esf" style="width:140px" onchange="State.resetPage('enbody');rEnroll()"><option value="">All Semesters</option></select></div></div><div class="tw"><table class="t"><thead><tr><th>Student</th><th>Course</th><th>Faculty</th><th>Semester</th><th>Status</th><th></th></tr></thead><tbody id="enbody"></tbody></table></div><div id="enbody-pg" class="pg"></div></div>
+  <div class="card" style="margin-top:14px"><div class="card-h"><div class="card-t">Waitlist</div><div id="wl-count" class="text4" style="font-size:12px"></div></div><div class="tw"><table class="t"><thead><tr><th>Student</th><th>Course</th><th>Semester</th><th>Waiting Since</th><th></th></tr></thead><tbody id="wlbody"></tbody></table></div></div>
 </div>
 
 <!-- ══ GRADES (admin) ══ -->
 <div class="page" id="pg-grades">
   <div class="topbar"><div><h1>Grades</h1></div></div>
-  <div class="card"><div class="card-h"><div class="fr"><select class="inp sel" id="gaf" style="width:200px" onchange="rGradesA()"><option value="">All Courses</option></select><select class="inp sel" id="ggf" style="width:100px" onchange="rGradesA()"><option value="">All Grades</option><option>A</option><option>B</option><option>C</option><option>D</option><option>F</option></select></div></div><div class="tw"><table class="t"><thead><tr><th>Student</th><th>Course</th><th>Marks</th><th>Grade</th><th>GPA Pts</th><th>Semester</th><th>Result</th></tr></thead><tbody id="grabody"></tbody></table></div></div>
+  <div class="card"><div class="card-h"><div class="fr"><select class="inp sel" id="gaf" style="width:200px" onchange="State.resetPage('grabody');rGradesA()"><option value="">All Courses</option></select><select class="inp sel" id="ggf" style="width:100px" onchange="State.resetPage('grabody');rGradesA()"><option value="">All Grades</option><option>A</option><option>B</option><option>C</option><option>D</option><option>F</option></select></div></div><div class="tw"><table class="t"><thead><tr><th>Student</th><th>Course</th><th>Marks</th><th>Grade</th><th>GPA Pts</th><th>Semester</th><th>Result</th><th></th></tr></thead><tbody id="grabody"></tbody></table></div><div id="grabody-pg" class="pg"></div></div>
 </div>
 
 <!-- ══ ATTENDANCE (admin) ══ -->
 <div class="page" id="pg-attendance">
-  <div class="topbar"><div><h1>Attendance</h1></div></div>
-  <div class="card"><div class="card-h"><select class="inp sel" id="aaf" style="width:200px" onchange="rAttA()"><option value="">All Courses</option></select></div><div class="tw"><table class="t"><thead><tr><th>Student</th><th>Course</th><th>Present/Total</th><th>Percentage</th><th>Status</th></tr></thead><tbody id="attabody"></tbody></table></div></div>
+  <div class="topbar"><div><h1>Attendance</h1></div><div class="topbar-r"><button class="btn btn-g" onclick="exportAttCSV()">↓ Export CSV</button></div></div>
+  <div class="card"><div class="card-h"><select class="inp sel" id="aaf" style="width:200px" onchange="rAttA()"><option value="">All Courses</option></select></div><div class="tw"><table class="t"><thead><tr><th>Student</th><th>Course</th><th>Present/Total</th><th>Percentage</th><th>Status</th><th></th></tr></thead><tbody id="attabody"></tbody></table></div></div>
 </div>
 
 <!-- ══ EXAMS ══ -->
@@ -615,7 +625,7 @@
 <div class="page" id="pg-fees">
   <div class="topbar"><div><h1>Fee Management</h1></div><div class="topbar-r"><button class="btn btn-p" onclick="openM('m-fee')">+ Record Payment</button></div></div>
   <div class="stats" id="feestats"></div>
-  <div class="card"><div class="card-h"><div class="fr"><input class="inp" id="fes" placeholder="Search student…" style="width:180px" oninput="rFees()"><select class="inp sel" id="fest" style="width:120px" onchange="rFees()"><option value="">All Status</option><option>Paid</option><option>Pending</option><option>Overdue</option></select></div></div><div class="tw"><table class="t"><thead><tr><th>Student</th><th>Type</th><th>Amount</th><th>Due</th><th>Paid On</th><th>Status</th><th></th></tr></thead><tbody id="feebody"></tbody></table></div></div>
+  <div class="card"><div class="card-h"><div class="fr"><input class="inp" id="fes" placeholder="Search student…" style="width:180px" oninput="State.resetPage('feebody');rFees()"><select class="inp sel" id="fest" style="width:120px" onchange="State.resetPage('feebody');rFees()"><option value="">All Status</option><option>Paid</option><option>Pending</option><option>Overdue</option></select></div></div><div class="tw"><table class="t"><thead><tr><th>Student</th><th>Type</th><th>Amount</th><th>Due</th><th>Paid On</th><th>Status</th><th></th></tr></thead><tbody id="feebody"></tbody></table></div><div id="feebody-pg" class="pg"></div></div>
 </div>
 
 <!-- ══ SCHOLARSHIPS ══ -->
@@ -720,7 +730,7 @@
 <!-- ══ USERS ══ -->
 <div class="page" id="pg-users">
   <div class="topbar"><div><h1>User Accounts</h1></div></div>
-  <div class="card"><div class="tw"><table class="t"><thead><tr><th>Username</th><th>Role</th><th>Linked To</th></tr></thead><tbody id="usertbl"></tbody></table></div></div>
+  <div class="card"><div class="tw"><table class="t"><thead><tr><th>Username</th><th>Role</th><th>Linked To</th><th></th></tr></thead><tbody id="usertbl"></tbody></table></div></div>
 </div>
 
 <!-- ══ AUDIT LOG ══ -->
@@ -749,19 +759,87 @@
 <!-- ══ MY COURSES (faculty) ══ -->
 <div class="page" id="pg-mycourses">
   <div class="topbar"><div><h1>My Courses</h1></div></div>
-  <div class="card"><div class="card-h"><select class="inp sel" id="mcsel" style="width:280px" onchange="rMyCourseStudents()"></select></div><div class="tw"><table class="t"><thead><tr><th>Student</th><th>ID</th><th>Dept</th><th>Year</th><th>Grade</th><th>Attendance</th></tr></thead><tbody id="mcbody"></tbody></table></div></div>
+  <div class="card"><div class="card-h"><select class="inp sel" id="mcsel" style="width:280px" onchange="rMyCourseStudents()"></select></div><div class="tw"><table class="t"><thead><tr><th>Student</th><th>ID</th><th>Dept</th><th>Year</th><th>Grade</th><th>Attendance</th><th></th></tr></thead><tbody id="mcbody"></tbody></table></div></div>
 </div>
 
 <!-- ══ GRADE ENTRY (faculty) ══ -->
 <div class="page" id="pg-gradeentry">
-  <div class="topbar"><div><h1>Enter Grades</h1></div></div>
-  <div class="card"><div class="card-h"><select class="inp sel" id="gesel" style="width:280px" onchange="rGradeRows()"></select><div class="card-acts"><button class="btn btn-g" onclick="importGradesCSV()">⬆ CSV</button><button class="btn btn-p" onclick="saveAllGrades()">Save All</button></div></div><div class="tw"><table class="t"><thead><tr><th>Student</th><th>Marks /100</th><th>Grade</th><th>GPA Pts</th><th>Bell Curve</th></tr></thead><tbody id="gebdy"></tbody></table></div></div>
+  <div class="topbar">
+    <div><h1>Grade Entry</h1><p>Type marks inline and Save All, or click ✏️ per student to open the grade editor</p></div>
+    <div class="topbar-r">
+      <button class="btn btn-g" onclick="importGradesCSV()">⬆ Import CSV</button>
+      <button class="btn btn-p" onclick="saveAllGrades()">Save All</button>
+    </div>
+  </div>
+
+  <!-- Course picker -->
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-b" style="padding:12px 18px">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <div style="flex:1;min-width:220px">
+          <label class="lbl" style="font-size:10px;margin-bottom:4px;display:block">SELECT COURSE</label>
+          <select class="inp sel" id="gesel" style="width:100%" onchange="rGradeRows()"></select>
+        </div>
+        <div style="display:flex;gap:8px;align-items:flex-end;padding-bottom:1px">
+          <div class="ge-filter-tabs" id="ge-filter-tabs">
+            <button class="ge-tab active" data-f="all"     onclick="setGeFilter('all',this)">All</button>
+            <button class="ge-tab"        data-f="graded"  onclick="setGeFilter('graded',this)">Graded</button>
+            <button class="ge-tab"        data-f="ungraded" onclick="setGeFilter('ungraded',this)">Ungraded</button>
+          </div>
+          <input class="inp" id="ge-search" placeholder="Search..." oninput="rGradeRows()" style="width:160px;font-size:12px">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="ge-stats" id="ge-stats"></div>
+
+  <!-- Distribution -->
+  <div class="card" id="ge-dist-card" style="margin-bottom:14px;display:none">
+    <div class="card-b" style="padding:14px 18px">
+      <div style="font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Grade Distribution</div>
+      <div class="ge-dist-bar" id="ge-dist-bar"></div>
+      <div class="ge-dist-legend" id="ge-dist-legend"></div>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="card">
+    <div class="tw">
+      <table class="t">
+        <thead>
+          <tr>
+            <th style="width:36px">#</th>
+            <th>Student</th>
+            <th>Attendance</th>
+            <th style="width:110px">Marks /100</th>
+            <th>Grade</th>
+            <th>GPA Pts</th>
+            <th>Bell Curve</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="gebdy"></tbody>
+      </table>
+    </div>
+    <div id="ge-progress-wrap" style="padding:10px 18px;border-top:1px solid var(--border);display:none">
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text4);margin-bottom:4px">
+        <span id="ge-progress-lbl">0 of 0 graded</span>
+        <span id="ge-progress-pct">0%</span>
+      </div>
+      <div style="height:4px;background:var(--bg3);border-radius:2px;overflow:hidden">
+        <div id="ge-progress-fill" style="height:100%;background:var(--green);border-radius:2px;transition:width .3s;width:0%"></div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- ══ MARK ATTENDANCE (faculty) ══ -->
 <div class="page" id="pg-markatt">
   <div class="topbar"><div><h1>Mark Attendance</h1></div></div>
-  <div class="card"><div class="card-h"><div class="fr"><select class="inp sel" id="masel" style="width:280px" onchange="rAttEntry()"></select><input type="date" class="inp" id="madate" style="width:140px"></div><div class="card-acts"><button class="btn btn-p" onclick="saveAtt()">Save</button></div></div><div class="tw"><table class="t"><thead><tr><th>Student</th><th>Overall</th><th>Today</th></tr></thead><tbody id="mabdy"></tbody></table></div></div>
+  <div class="card"><div class="card-h"><div class="fr"><select class="inp sel" id="masel" style="width:280px" onchange="rAttEntry()"></select><input type="date" class="inp" id="madate" style="width:140px"></div><div class="card-acts"><button class="btn btn-p" onclick="saveAtt()">Save</button></div></div><div class="tw"><table class="t"><thead><tr><th>Student</th><th>Overall</th><th>Today</th><th></th></tr></thead><tbody id="mabdy"></tbody></table></div></div>
 </div>
 
 <!-- ══ ASSIGNMENTS ══ -->
@@ -787,7 +865,7 @@
 <!-- ══ MY ENROLLMENT (student) ══ -->
 <div class="page" id="pg-myen">
   <div class="topbar"><div><h1>My Courses</h1></div><div class="topbar-r"><button class="btn btn-p" onclick="openM('m-self-enroll')">+ Register Course</button></div></div>
-  <div class="card"><div class="tw"><table class="t"><thead><tr><th>Code</th><th>Course</th><th>Faculty</th><th>Credits</th><th>Semester</th><th>Grade</th></tr></thead><tbody id="myenbody"></tbody></table></div></div>
+  <div class="card"><div class="tw"><table class="t"><thead><tr><th>Code</th><th>Course</th><th>Faculty</th><th>Credits</th><th>Semester</th><th>Grade</th><th>Status</th><th></th></tr></thead><tbody id="myenbody"></tbody></table></div></div>
 </div>
 
 <!-- ══ MY GRADES ══ -->
@@ -801,7 +879,7 @@
         <div style="font-size:11px;color:var(--text3);margin-top:3px" id="gpa-sub">—</div>
       </div></div>
     </div>
-    <div class="card"><div class="tw"><table class="t"><thead><tr><th>Course</th><th>Marks</th><th>Grade</th><th>GPA Pts</th><th>Semester</th></tr></thead><tbody id="mygradesbody"></tbody></table></div></div>
+    <div class="card"><div class="tw"><table class="t"><thead><tr><th>Course</th><th>Marks</th><th>Grade</th><th>GPA Pts</th><th>Semester</th><th></th></tr></thead><tbody id="mygradesbody"></tbody></table></div></div>
   </div>
 </div>
 
@@ -811,7 +889,7 @@
 <!-- ══ MY ASSIGNMENTS (student) ══ -->
 <div class="page" id="pg-myassign">
   <div class="topbar"><div><h1>My Assignments</h1></div></div>
-  <div class="card"><div class="tw"><table class="t"><thead><tr><th>Title</th><th>Course</th><th>Due Date</th><th>Max Marks</th><th>Status</th></tr></thead><tbody id="myassigntbl"></tbody></table></div></div>
+  <div class="card"><div class="tw"><table class="t"><thead><tr><th>Title</th><th>Course</th><th>Due Date</th><th>Max Marks</th><th>Status</th><th></th></tr></thead><tbody id="myassigntbl"></tbody></table></div></div>
 </div>
 
 <!-- ══ GRADE CALCULATOR ══ -->
@@ -849,7 +927,7 @@
   <div class="topbar"><div><h1>My Fees</h1></div></div>
   <div class="stats" id="myfstats"></div>
   <div class="card" style="margin-bottom:14px"><div class="card-h"><div class="card-t">Payment timeline</div></div><div class="card-b" id="fee-timeline"></div></div>
-  <div class="card"><div class="tw"><table class="t"><thead><tr><th>Type</th><th>Amount</th><th>Due</th><th>Status</th><th>Paid On</th></tr></thead><tbody id="myfeebody"></tbody></table></div></div>
+  <div class="card"><div class="tw"><table class="t"><thead><tr><th>Type</th><th>Amount</th><th>Due</th><th>Status</th><th>Paid On</th><th></th></tr></thead><tbody id="myfeebody"></tbody></table></div></div>
 </div>
 
 <!-- ══ ACHIEVEMENTS ══ -->
@@ -896,29 +974,105 @@
 <div class="toasts" id="toasts"></div>
 
 <!-- ══ MODALS ══ -->
+
+<!-- view detail modal (reused for all entities) -->
+<div class="mbg" id="m-view">
+  <div class="mbox narrow">
+    <div class="mh"><div class="mt" id="view-title">Details</div><button class="mx" onclick="closeM('m-view')">×</button></div>
+    <div class="mb"><div class="vf-grid" id="view-body"></div></div>
+    <div class="mf"><button class="btn btn-g" onclick="closeM('m-view')">Close</button></div>
+  </div>
+</div>
+
 <div class="mbg" id="m-student"><div class="mbox"><div class="mh"><div class="mt" id="mst-title">Add Student</div><button class="mx" onclick="closeM('m-student')">×</button></div><div class="mb"><input type="hidden" id="mst-id"><div class="frow"><div class="ff"><label>First Name <span class="req">*</span></label><input id="mst-fn"></div><div class="ff"><label>Last Name <span class="req">*</span></label><input id="mst-ln"></div></div><div class="ff"><label>Email <span class="req">*</span></label><input id="mst-em" type="email"></div><div class="frow"><div class="ff"><label>Phone</label><input id="mst-ph"></div><div class="ff"><label>Date of Birth</label><input id="mst-dob" type="date"></div></div><div class="frow"><div class="ff"><label>Department</label><select id="mst-dept" class="sel"><option>Computer Science</option><option>Mathematics</option><option>Physics</option><option>Chemistry</option><option>Business</option><option>Arts & Humanities</option><option>Engineering</option></select></div><div class="ff"><label>Year</label><select id="mst-yr" class="sel"><option>1</option><option>2</option><option>3</option><option>4</option></select></div></div><div class="frow"><div class="ff"><label>Status</label><select id="mst-st" class="sel"><option>Active</option><option>Inactive</option><option>Alumni</option></select></div><div class="ff"><label>Admission Year</label><input id="mst-adm" type="number" placeholder="2024"></div></div><div class="ff"><label>Address</label><textarea id="mst-addr"></textarea></div></div><div class="mf"><button class="btn btn-g" onclick="closeM('m-student')">Cancel</button><button class="btn btn-p" onclick="saveStudent()">Save</button></div></div></div>
 
 <div class="mbg" id="m-faculty"><div class="mbox"><div class="mh"><div class="mt" id="mf-title">Add Faculty</div><button class="mx" onclick="closeM('m-faculty')">×</button></div><div class="mb"><input type="hidden" id="mf-id"><div class="frow"><div class="ff"><label>First Name <span class="req">*</span></label><input id="mf-fn"></div><div class="ff"><label>Last Name <span class="req">*</span></label><input id="mf-ln"></div></div><div class="ff"><label>Email <span class="req">*</span></label><input id="mf-em" type="email"></div><div class="ff"><label>Department</label><select id="mf-dept" class="sel"><option>Computer Science</option><option>Mathematics</option><option>Physics</option><option>Chemistry</option><option>Business</option><option>Arts & Humanities</option><option>Engineering</option></select></div><div class="frow"><div class="ff"><label>Qualification</label><input id="mf-qual"></div><div class="ff"><label>Specialization</label><input id="mf-spec"></div></div><div class="ff"><label>Phone</label><input id="mf-ph"></div></div><div class="mf"><button class="btn btn-g" onclick="closeM('m-faculty')">Cancel</button><button class="btn btn-p" onclick="saveFaculty()">Save</button></div></div></div>
 
-<div class="mbg" id="m-dept"><div class="mbox narrow"><div class="mh"><div class="mt">Add Department</div><button class="mx" onclick="closeM('m-dept')">×</button></div><div class="mb"><div class="ff"><label>Department Name</label><input id="mdept-n"></div><div class="ff"><label>Code</label><input id="mdept-c" placeholder="CS"></div><div class="ff"><label>Head of Department</label><select id="mdept-hod" class="sel"></select></div><div class="ff"><label>Budget ($)</label><input id="mdept-b" type="number"></div></div><div class="mf"><button class="btn btn-g" onclick="closeM('m-dept')">Cancel</button><button class="btn btn-p" onclick="saveDept()">Save</button></div></div></div>
+<div class="mbg" id="m-dept"><div class="mbox narrow"><div class="mh"><div class="mt" id="mdept-title">Add Department</div><button class="mx" onclick="closeM('m-dept')">×</button></div><div class="mb"><input type="hidden" id="mdept-id"><div class="ff"><label>Department Name</label><input id="mdept-n"></div><div class="ff"><label>Code</label><input id="mdept-c" placeholder="CS"></div><div class="ff"><label>Head of Department</label><select id="mdept-hod" class="sel"></select></div><div class="ff"><label>Budget ($)</label><input id="mdept-b" type="number"></div></div><div class="mf"><button class="btn btn-g" onclick="closeM('m-dept')">Cancel</button><button class="btn btn-p" onclick="saveDept()">Save</button></div></div></div>
 
 <div class="mbg" id="m-course"><div class="mbox"><div class="mh"><div class="mt" id="mc-title">Add Course</div><button class="mx" onclick="closeM('m-course')">×</button></div><div class="mb"><input type="hidden" id="mco-id"><div class="frow"><div class="ff"><label>Course Code <span class="req">*</span></label><input id="mco-code"></div><div class="ff"><label>Credits</label><input id="mco-cr" type="number" value="3"></div></div><div class="ff"><label>Course Name <span class="req">*</span></label><input id="mco-name"></div><div class="frow"><div class="ff"><label>Department</label><select id="mco-dept" class="sel"><option>Computer Science</option><option>Mathematics</option><option>Physics</option><option>Chemistry</option><option>Business</option><option>Arts & Humanities</option><option>Engineering</option></select></div><div class="ff"><label>Semester</label><select id="mco-sem" class="sel"><option>Fall 2024</option><option>Spring 2025</option><option>Summer 2025</option></select></div></div><div class="frow"><div class="ff"><label>Faculty</label><select id="mco-fac" class="sel"></select></div><div class="ff"><label>Seats</label><input id="mco-seats" type="number" value="40"></div></div><div class="ff"><label>Description</label><textarea id="mco-desc"></textarea></div></div><div class="mf"><button class="btn btn-g" onclick="closeM('m-course')">Cancel</button><button class="btn btn-p" onclick="saveCourse()">Save</button></div></div></div>
 
-<div class="mbg" id="m-enroll"><div class="mbox narrow"><div class="mh"><div class="mt">Enroll Student</div><button class="mx" onclick="closeM('m-enroll')">×</button></div><div class="mb"><div class="ff"><label>Student</label><select id="men-stu" class="sel"></select></div><div class="ff"><label>Course</label><select id="men-co" class="sel"></select></div><div class="ff"><label>Semester</label><select id="men-sem" class="sel"><option>Fall 2024</option><option>Spring 2025</option><option>Summer 2025</option></select></div></div><div class="mf"><button class="btn btn-g" onclick="closeM('m-enroll')">Cancel</button><button class="btn btn-p" onclick="saveEnroll()">Enroll</button></div></div></div>
+<div class="mbg" id="m-enroll"><div class="mbox narrow"><div class="mh"><div class="mt" id="men-title">Enroll Student</div><button class="mx" onclick="closeM('m-enroll')">×</button></div><div class="mb"><input type="hidden" id="men-id"><div class="ff"><label>Student</label><select id="men-stu" class="sel"></select></div><div class="ff"><label>Course</label><select id="men-co" class="sel"></select></div><div class="ff"><label>Semester</label><select id="men-sem" class="sel"><option>Fall 2024</option><option>Spring 2025</option><option>Summer 2025</option></select></div><div class="ff"><label>Status</label><select id="men-st" class="sel"><option>Active</option><option>Dropped</option><option>Completed</option></select></div></div><div class="mf"><button class="btn btn-g" onclick="closeM('m-enroll')">Cancel</button><button class="btn btn-p" id="men-save-btn" onclick="saveEnroll()">Enroll</button></div></div></div>
 
-<div class="mbg" id="m-exam"><div class="mbox"><div class="mh"><div class="mt">Schedule Exam</div><button class="mx" onclick="closeM('m-exam')">×</button></div><div class="mb"><div class="ff"><label>Course</label><select id="mex-co" class="sel"></select></div><div class="frow"><div class="ff"><label>Date <span class="req">*</span></label><input id="mex-date" type="date"></div><div class="ff"><label>Time</label><input id="mex-time" type="time" value="09:00"></div></div><div class="frow"><div class="ff"><label>Hall / Room <span class="req">*</span></label><input id="mex-hall" placeholder="Hall A"></div><div class="ff"><label>Duration (mins)</label><input id="mex-dur" type="number" value="120"></div></div></div><div class="mf"><button class="btn btn-g" onclick="closeM('m-exam')">Cancel</button><button class="btn btn-p" onclick="saveExam()">Save</button></div></div></div>
+<div class="mbg" id="m-exam"><div class="mbox"><div class="mh"><div class="mt" id="mex-title">Schedule Exam</div><button class="mx" onclick="closeM('m-exam')">×</button></div><div class="mb"><input type="hidden" id="mex-id"><div class="ff"><label>Course</label><select id="mex-co" class="sel"></select></div><div class="frow"><div class="ff"><label>Date <span class="req">*</span></label><input id="mex-date" type="date"></div><div class="ff"><label>Time</label><input id="mex-time" type="time" value="09:00"></div></div><div class="frow"><div class="ff"><label>Hall / Room <span class="req">*</span></label><input id="mex-hall" placeholder="Hall A"></div><div class="ff"><label>Duration (mins)</label><input id="mex-dur" type="number" value="120"></div></div></div><div class="mf"><button class="btn btn-g" onclick="closeM('m-exam')">Cancel</button><button class="btn btn-p" onclick="saveExam()">Save</button></div></div></div>
 
-<div class="mbg" id="m-fee"><div class="mbox narrow"><div class="mh"><div class="mt">Record Fee</div><button class="mx" onclick="closeM('m-fee')">×</button></div><div class="mb"><div class="ff"><label>Student</label><select id="mfe-stu" class="sel"></select></div><div class="ff"><label>Fee Type</label><select id="mfe-type" class="sel"><option>Tuition</option><option>Library</option><option>Lab</option><option>Exam</option><option>Hostel</option><option>Transport</option></select></div><div class="frow"><div class="ff"><label>Amount ($) <span class="req">*</span></label><input id="mfe-amt" type="number"></div><div class="ff"><label>Due Date <span class="req">*</span></label><input id="mfe-due" type="date"></div></div><div class="frow"><div class="ff"><label>Status</label><select id="mfe-st" class="sel"><option>Paid</option><option>Pending</option><option>Overdue</option></select></div><div class="ff"><label>Paid Date</label><input id="mfe-paid" type="date"></div></div></div><div class="mf"><button class="btn btn-g" onclick="closeM('m-fee')">Cancel</button><button class="btn btn-p" onclick="saveFee()">Save</button></div></div></div>
+<div class="mbg" id="m-fee"><div class="mbox narrow"><div class="mh"><div class="mt" id="mfe-title">Record Fee</div><button class="mx" onclick="closeM('m-fee')">×</button></div><div class="mb"><input type="hidden" id="mfe-id"><div class="ff"><label>Student</label><select id="mfe-stu" class="sel"></select></div><div class="ff"><label>Fee Type</label><select id="mfe-type" class="sel"><option>Tuition</option><option>Library</option><option>Lab</option><option>Exam</option><option>Hostel</option><option>Transport</option></select></div><div class="frow"><div class="ff"><label>Amount ($) <span class="req">*</span></label><input id="mfe-amt" type="number"></div><div class="ff"><label>Due Date <span class="req">*</span></label><input id="mfe-due" type="date"></div></div><div class="frow"><div class="ff"><label>Status</label><select id="mfe-st" class="sel"><option>Paid</option><option>Pending</option><option>Overdue</option></select></div><div class="ff"><label>Paid Date</label><input id="mfe-paid" type="date"></div></div></div><div class="mf"><button class="btn btn-g" onclick="closeM('m-fee')">Cancel</button><button class="btn btn-p" onclick="saveFee()">Save</button></div></div></div>
 
-<div class="mbg" id="m-scholarship"><div class="mbox narrow"><div class="mh"><div class="mt">Add Scholarship</div><button class="mx" onclick="closeM('m-scholarship')">×</button></div><div class="mb"><div class="ff"><label>Student</label><select id="msc-stu" class="sel"></select></div><div class="ff"><label>Scholarship Name</label><input id="msc-name" placeholder="Merit Scholarship"></div><div class="frow"><div class="ff"><label>Amount ($)</label><input id="msc-amt" type="number"></div><div class="ff"><label>Status</label><select id="msc-st" class="sel"><option>Active</option><option>Pending</option><option>Expired</option></select></div></div><div class="ff"><label>Criteria</label><input id="msc-crit" placeholder="GPA ≥ 3.5"></div></div><div class="mf"><button class="btn btn-g" onclick="closeM('m-scholarship')">Cancel</button><button class="btn btn-p" onclick="saveScholarship()">Save</button></div></div></div>
+<div class="mbg" id="m-scholarship"><div class="mbox narrow"><div class="mh"><div class="mt" id="msc-title">Add Scholarship</div><button class="mx" onclick="closeM('m-scholarship')">×</button></div><div class="mb"><input type="hidden" id="msc-id"><div class="ff"><label>Student</label><select id="msc-stu" class="sel"></select></div><div class="ff"><label>Scholarship Name</label><input id="msc-name" placeholder="Merit Scholarship"></div><div class="frow"><div class="ff"><label>Amount ($)</label><input id="msc-amt" type="number"></div><div class="ff"><label>Status</label><select id="msc-st" class="sel"><option>Active</option><option>Pending</option><option>Expired</option></select></div></div><div class="ff"><label>Criteria</label><input id="msc-crit" placeholder="GPA ≥ 3.5"></div></div><div class="mf"><button class="btn btn-g" onclick="closeM('m-scholarship')">Cancel</button><button class="btn btn-p" onclick="saveScholarship()">Save</button></div></div></div>
 
 <div class="mbg" id="m-ann"><div class="mbox"><div class="mh"><div class="mt">Post Announcement</div><button class="mx" onclick="closeM('m-ann')">×</button></div><div class="mb"><div class="ff"><label>Title <span class="req">*</span></label><input id="mann-t"></div><div class="ff"><label>Content</label><textarea id="mann-b" rows="4"></textarea></div><div class="frow"><div class="ff"><label>Audience</label><select id="mann-aud" class="sel"><option>All</option><option>Students</option><option>Faculty</option></select></div><div class="ff"><label>Priority</label><select id="mann-pri" class="sel"><option>Normal</option><option>High</option><option>Urgent</option></select></div></div></div><div class="mf"><button class="btn btn-g" onclick="closeM('m-ann')">Cancel</button><button class="btn btn-p" onclick="saveAnn()">Post</button></div></div></div>
 
 <div class="mbg" id="m-event"><div class="mbox narrow"><div class="mh"><div class="mt">Add Calendar Event</div><button class="mx" onclick="closeM('m-event')">×</button></div><div class="mb"><div class="ff"><label>Event Title</label><input id="mev-t"></div><div class="frow"><div class="ff"><label>Date</label><input id="mev-d" type="date"></div><div class="ff"><label>Type</label><select id="mev-type" class="sel"><option>Holiday</option><option>Exam</option><option>Event</option><option>Deadline</option></select></div></div></div><div class="mf"><button class="btn btn-g" onclick="closeM('m-event')">Cancel</button><button class="btn btn-p" onclick="saveEvent()">Save</button></div></div></div>
 
-<div class="mbg" id="m-assign"><div class="mbox"><div class="mh"><div class="mt">Create Assignment</div><button class="mx" onclick="closeM('m-assign')">×</button></div><div class="mb"><div class="ff"><label>Title <span class="req">*</span></label><input id="mas-t"></div><div class="ff"><label>Course</label><select id="mas-co" class="sel"></select></div><div class="frow"><div class="ff"><label>Due Date <span class="req">*</span></label><input id="mas-due" type="date"></div><div class="ff"><label>Max Marks</label><input id="mas-marks" type="number" value="100"></div></div><div class="ff"><label>Weightage (%)</label><input id="mas-wt" type="number" value="20" min="1" max="100"></div><div class="ff"><label>Instructions</label><textarea id="mas-inst" rows="3"></textarea></div></div><div class="mf"><button class="btn btn-g" onclick="closeM('m-assign')">Cancel</button><button class="btn btn-p" onclick="saveAssignment()">Create</button></div></div></div>
+<div class="mbg" id="m-assign"><div class="mbox"><div class="mh"><div class="mt" id="mas-title">Create Assignment</div><button class="mx" onclick="closeM('m-assign')">×</button></div><div class="mb"><input type="hidden" id="mas-id"><div class="ff"><label>Title <span class="req">*</span></label><input id="mas-t"></div><div class="ff"><label>Course</label><select id="mas-co" class="sel"></select></div><div class="frow"><div class="ff"><label>Due Date <span class="req">*</span></label><input id="mas-due" type="date"></div><div class="ff"><label>Max Marks</label><input id="mas-marks" type="number" value="100"></div></div><div class="ff"><label>Weightage (%)</label><input id="mas-wt" type="number" value="20" min="1" max="100"></div><div class="ff"><label>Instructions</label><textarea id="mas-inst" rows="3"></textarea></div></div><div class="mf"><button class="btn btn-g" onclick="closeM('m-assign')">Cancel</button><button class="btn btn-p" id="mas-save-btn" onclick="saveAssignment()">Create</button></div></div></div>
 
 <div class="mbg" id="m-self-enroll"><div class="mbox narrow"><div class="mh"><div class="mt">Register for a Course</div><button class="mx" onclick="closeM('m-self-enroll')">×</button></div><div class="mb"><div id="se-courses"></div></div><div class="mf"><button class="btn btn-g" onclick="closeM('m-self-enroll')">Cancel</button><button class="btn btn-p" onclick="selfEnroll()">Register</button></div></div></div>
+
+<!-- CSV import preview modal -->
+<div class="mbg" id="m-csv-import">
+  <div class="mbox">
+    <div class="mh"><div class="mt">Import Grades — CSV Preview</div><button class="mx" onclick="closeM('m-csv-import')">×</button></div>
+    <div class="mb">
+      <div class="ff"><label>Paste CSV <span style="color:var(--text4);font-weight:400">(format: student_id,marks — one per line)</span></label>
+        <textarea id="csv-inp" rows="6" placeholder="1,88&#10;2,74&#10;3,91" style="font-family:var(--mono);font-size:12px"></textarea></div>
+      <div id="csv-preview" style="margin-top:10px"></div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-g" onclick="closeM('m-csv-import')">Cancel</button>
+      <button class="btn btn-g" onclick="previewCSV()">Preview</button>
+      <button class="btn btn-p" id="csv-import-btn" onclick="confirmCSVImport()" style="display:none">Import <span id="csv-count"></span> Grades</button>
+    </div>
+  </div>
+</div>
+
+<div class="mbg" id="m-grade-edit"><div class="mbox narrow"><div class="mh"><div class="mt">Edit Grade</div><button class="mx" onclick="closeM('m-grade-edit')">×</button></div><div class="mb"><input type="hidden" id="mge-id"><div class="ff"><label>Student</label><div id="mge-stu" class="text2" style="font-size:13px;padding:4px 0"></div></div><div class="ff"><label>Course</label><div id="mge-co" class="text2" style="font-size:13px;padding:4px 0"></div></div><div class="ff"><label>Marks (0–100) <span class="req">*</span></label><input id="mge-marks" type="number" min="0" max="100"></div><div class="ff"><label>Semester</label><input id="mge-sem" class="inp"></div></div><div class="mf"><button class="btn btn-g" onclick="closeM('m-grade-edit')">Cancel</button><button class="btn btn-p" onclick="saveGradeEdit()">Save</button></div></div></div>
+
+<!-- ══ GRADE ENTRY MODAL (faculty per-student) ══ -->
+<div class="mbg" id="m-ge-modal">
+  <div class="mbox narrow">
+    <div class="mh">
+      <div class="mt" id="mgem-title">Enter Grade</div>
+      <button class="mx" onclick="closeM('m-ge-modal')">×</button>
+    </div>
+    <div class="mb">
+      <!-- Student card -->
+      <div style="display:flex;align-items:center;gap:14px;padding:14px;background:var(--bg2);border-radius:12px;margin-bottom:18px">
+        <div class="ge-av" id="mgem-av" style="width:46px;height:46px;font-size:15px;flex-shrink:0"></div>
+        <div>
+          <div class="bold" id="mgem-name" style="font-size:15px"></div>
+          <div class="mono text4" id="mgem-meta" style="font-size:11px;margin-top:3px"></div>
+        </div>
+      </div>
+      <div class="ff">
+        <label>Course</label>
+        <div id="mgem-course" class="text2 mono" style="font-size:13px;padding:4px 0"></div>
+      </div>
+      <div class="ff" id="mgem-current-wrap">
+        <label>Current Grade</label>
+        <div id="mgem-current" style="padding:6px 0;display:flex;align-items:center;gap:10px"></div>
+      </div>
+      <div class="ff">
+        <label>New Marks (0–100) <span class="req">*</span></label>
+        <input id="mgem-marks" class="ge-inp" type="number" min="0" max="100" placeholder="Enter marks" oninput="updGemPreview()" style="width:100%;box-sizing:border-box;font-size:22px;padding:10px 14px;height:auto;border-radius:10px">
+      </div>
+      <div id="mgem-preview-wrap" style="display:none;padding:10px 14px;background:var(--bg2);border-radius:8px;align-items:center;gap:12px;margin-top:2px">
+        <span class="text4" style="font-size:11px">Preview:</span>
+        <span id="mgem-grade-chip"></span>
+        <span class="text4" style="font-size:11px">GPA</span>
+        <span id="mgem-gpa" class="mono bold" style="font-size:14px"></span>
+        <span id="mgem-pf-badge"></span>
+      </div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-g" onclick="closeM('m-ge-modal')">Cancel</button>
+      <button class="btn btn-p" onclick="saveGemGrade()">Save Grade</button>
+    </div>
+  </div>
+</div>
+
+<div class="mbg" id="m-att-edit"><div class="mbox narrow"><div class="mh"><div class="mt">Edit Attendance</div><button class="mx" onclick="closeM('m-att-edit')">×</button></div><div class="mb"><input type="hidden" id="mae-id"><div class="ff"><label>Student</label><div id="mae-stu" class="text2" style="font-size:13px;padding:4px 0"></div></div><div class="ff"><label>Course</label><div id="mae-co" class="text2" style="font-size:13px;padding:4px 0"></div></div><div class="frow"><div class="ff"><label>Present <span class="req">*</span></label><input id="mae-pres" type="number" min="0"></div><div class="ff"><label>Total Classes <span class="req">*</span></label><input id="mae-tot" type="number" min="1"></div></div></div><div class="mf"><button class="btn btn-g" onclick="closeM('m-att-edit')">Cancel</button><button class="btn btn-p" onclick="saveAttEdit()">Save</button></div></div></div>
+
+<div class="mbg" id="m-user-edit"><div class="mbox narrow"><div class="mh"><div class="mt">Edit User</div><button class="mx" onclick="closeM('m-user-edit')">×</button></div><div class="mb"><input type="hidden" id="mue-id"><div class="ff"><label>Username</label><div id="mue-u" class="mono text2" style="font-size:13px;padding:4px 0"></div></div><div class="ff"><label>Role</label><select id="mue-role" class="sel"><option value="admin">admin</option><option value="faculty">faculty</option><option value="student">student</option></select></div></div><div class="mf"><button class="btn btn-g" onclick="closeM('m-user-edit')">Cancel</button><button class="btn btn-p" onclick="saveUserEdit()">Save</button></div></div></div>
 
 <!-- ══ SUCCESS POPUP ══ -->
 <div class="success-overlay" id="success-overlay" onclick="closeSuccessPopup()">

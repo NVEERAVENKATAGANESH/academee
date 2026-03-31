@@ -10,6 +10,19 @@ function toast(msg, ok = true) {
   successPopup(msg, '', ok ? 'ok' : 'err');
 }
 
+// ── View detail modal ─────────────────────────────────
+// rows: [{l:'Label', v:'Value', full:bool}]
+function openViewModal(title, rows) {
+  $('view-title').textContent = title;
+  $('view-body').innerHTML = rows.map(r =>
+    `<div class="vf-row${r.full ? ' full' : ''}">
+       <span class="vf-lbl">${r.l}</span>
+       <span class="vf-val">${r.v !== undefined && r.v !== null && r.v !== '' ? r.v : '—'}</span>
+     </div>`
+  ).join('');
+  openM('m-view');
+}
+
 // ── Modal open/close ──────────────────────────────────
 function openM(id) {
   const el = $(id);
@@ -338,6 +351,16 @@ function flashRow(tbodyId, id) {
   row.classList.remove('row-flash');
   void row.offsetWidth; // force reflow to restart animation
   row.classList.add('row-flash');
+}
+
+// ── Fade-out an element then execute delete callback ──
+// Finds any [data-id="id"] element in the document, animates it out,
+// then calls deleteFn() once the animation completes.
+function fadeDeleteRow(id, deleteFn) {
+  const el = document.querySelector(`[data-id="${id}"]`);
+  if (!el) { deleteFn(); return; }
+  el.classList.add('row-delete');
+  el.addEventListener('animationend', deleteFn, { once: true });
 }
 
 // ── Draft auto-save / restore / clear ─────────────────

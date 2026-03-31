@@ -101,15 +101,21 @@ function rMyEn() {
     const c = DB.g('courses').find(x => x.id === e.cid);
     if (!c) return '';
     const g = DB.g('grades').find(x => x.sid === user.lid && x.cid === e.cid);
-    return `<tr>
+    const statusCls = e.status === 'Active' ? 'bx-gr' : e.status === 'Dropped' ? 'bx-rd' : 'bx-am';
+    return `<tr data-id="${e.id}">
       <td class="mono" style="color:var(--blue)">${esc(c.code)}</td>
       <td><div class="bold">${esc(c.name)}</div><div class="text4" style="font-size:11px">${esc(c.desc)}</div></td>
       <td class="text2">${fn(c.fid)}</td>
       <td class="mono">${c.cr}</td>
       <td><span class="bx bx-gy">${esc(e.sem)}</span></td>
       <td>${g ? gChip(grade(g.marks)) : '<span class="text4">—</span>'}</td>
+      <td><span class="bx ${statusCls}">${esc(e.status || 'Active')}</span></td>
+      <td><div class="act-btns">
+        <button class="bico view" onclick="viewMyEnroll(${e.id})" title="View">${_iEye}</button>
+        ${e.status !== 'Dropped' ? `<button class="bico del" onclick="dropCourse(${e.id})" title="Drop Course">${_iTrash}</button>` : ''}
+      </div></td>
     </tr>`;
-  }).join('') || `<tr><td colspan="6"><div class="empty"><p>Not enrolled in any courses</p></div></td></tr>`;
+  }).join('') || `<tr><td colspan="8"><div class="empty"><p>Not enrolled in any courses</p></div></td></tr>`;
 }
 
 function selfEnroll() {
@@ -123,6 +129,7 @@ function selfEnroll() {
     wl.push({ id: DB.nid(wl), sid: user.lid, cid, sem: C.SEMESTER.CURRENT, ts: Date.now() });
     DB.s('waitlist', wl);
     toast('Course is full — added to waitlist');
+    clearDraft('m-self-enroll');
     closeM('m-self-enroll');
     rMyEn();
     return;
@@ -133,8 +140,41 @@ function selfEnroll() {
   enrs.push({ id: DB.nid(enrs), sid: user.lid, cid, sem: C.SEMESTER.CURRENT, status: 'Active' });
   DB.s('enrollments', enrs);
   toast('Successfully registered!');
+  clearDraft('m-self-enroll');
   closeM('m-self-enroll');
   rMyEn();
+}
+
+function viewMyEnroll(id) {
+  const user = State.getUser();
+  const e = DB.g('enrollments').find(x => x.id === id);
+  if (!e) return;
+  const c = DB.g('courses').find(x => x.id === e.cid);
+  const g = DB.g('grades').find(x => x.sid === user.lid && x.cid === e.cid);
+  openViewModal('Enrollment Details', [
+    { l: 'Course Code', v: c ? esc(c.code) : '—' },
+    { l: 'Course Name', v: c ? esc(c.name) : '—' },
+    { l: 'Faculty',     v: fn(c?.fid) },
+    { l: 'Credits',     v: c ? c.cr : '—' },
+    { l: 'Semester',    v: esc(e.sem) },
+    { l: 'Status',      v: esc(e.status || 'Active') },
+    { l: 'Grade',       v: g ? grade(g.marks) : '—' },
+    { l: 'Marks',       v: g ? g.marks + '/100' : '—' },
+  ]);
+}
+
+function dropCourse(enrId) {
+  const enrs = DB.g('enrollments');
+  const e    = enrs.find(x => x.id === enrId);
+  if (!e || e.status === 'Dropped') return;
+  const c = DB.g('courses').find(x => x.id === e.cid);
+  confirmDlg(`Drop ${c ? esc(c.name) : 'this course'}? Your enrollment will be marked as Dropped.`, () => {
+    const i = enrs.findIndex(x => x.id === enrId);
+    enrs[i].status = 'Dropped';
+    DB.s('enrollments', enrs);
+    toast('Course dropped');
+    rMyEn();
+  }, true, 'Drop Course');
 }
 
 // ═══════════════════════════════════════════
@@ -152,19 +192,19 @@ function rMyGrades() {
     totalPoints  += gpa(g.marks) * cr;
     totalCredits += cr;
   });
-  const gpaVal = totalCredits ? round2(totalPoints / totalCredits) : 0;
+  const gpaVal = totalCredits ? round2(totalPoints / totalCredits) : null;
 
   const circ   = 2 * Math.PI * 76;
-  const filled = circ * (gpaVal / 4);
+  const filled = circ * ((gpaVal ?? 0) / 4);
   const ring = $('gpa-ring');
   if (ring) ring.setAttribute('stroke-dasharray', `${filled} ${circ}`);
-  const gpaNum = $('gpa-num'); if (gpaNum) gpaNum.textContent = gpaVal.toFixed(2);
+  const gpaNum = $('gpa-num'); if (gpaNum) gpaNum.textContent = gpaVal !== null ? gpaVal.toFixed(2) : '—';
 
   const st = standing(gpaVal);
   const gpaLabel = $('gpa-label'); if (gpaLabel) gpaLabel.textContent = st.label;
   const gpaSub   = $('gpa-sub');   if (gpaSub)   gpaSub.textContent = `${gs.length} grade${gs.length !== 1 ? 's' : ''} · ${C.SEMESTER.CURRENT}`;
 
-  $('mygradesbody').innerHTML = gs.map(g => `<tr>
+  $('mygradesbody').innerHTML = gs.map(g => `<tr data-id="${g.id}">
     <td>
       <div class="bold">${cn(g.cid)}</div>
       <div class="mono" style="font-size:11px;color:var(--blue)">${cc(g.cid)}</div>
@@ -173,7 +213,23 @@ function rMyGrades() {
     <td>${gChip(grade(g.marks))}</td>
     <td class="mono">${gpa(g.marks).toFixed(1)}</td>
     <td><span class="bx bx-gy">${esc(g.sem)}</span></td>
-  </tr>`).join('') || `<tr><td colspan="5"><div class="empty"><p>No grades yet</p></div></td></tr>`;
+    <td><div class="act-btns"><button class="bico view" onclick="viewMyGrade(${g.id})" title="View">${_iEye}</button></div></td>
+  </tr>`).join('') || `<tr><td colspan="6"><div class="empty"><p>No grades yet</p></div></td></tr>`;
+}
+
+function viewMyGrade(id) {
+  const g = DB.g('grades').find(x => x.id === id);
+  if (!g) return;
+  const c = DB.g('courses').find(x => x.id === g.cid);
+  openViewModal('Grade Details', [
+    { l: 'Course',      v: c ? esc(c.name) : '—' },
+    { l: 'Course Code', v: c ? esc(c.code) : '—' },
+    { l: 'Marks',       v: g.marks + '/100' },
+    { l: 'Grade',       v: grade(g.marks) },
+    { l: 'GPA Points',  v: gpa(g.marks).toFixed(1) },
+    { l: 'Semester',    v: esc(g.sem) },
+    { l: 'Credits',     v: c ? c.cr : '—' },
+  ]);
 }
 
 // ═══════════════════════════════════════════
@@ -228,14 +284,31 @@ function rMyAssign() {
 
   $('myassigntbl').innerHTML = assigns.map(a => {
     const overdue = a.due < tod;
-    return `<tr>
+    return `<tr data-id="${a.id}">
       <td class="bold">${esc(a.title)}</td>
       <td class="mono" style="color:var(--blue)">${cc(a.cid)}</td>
       <td style="color:${overdue ? 'var(--red)' : ''}">${esc(a.due)}</td>
       <td class="mono">${a.marks}</td>
       <td><span class="bx ${overdue ? 'bx-rd' : 'bx-am'}">${overdue ? 'Overdue' : 'Pending'}</span></td>
+      <td><div class="act-btns"><button class="bico view" onclick="viewMyAssign(${a.id})" title="View">${_iEye}</button></div></td>
     </tr>`;
-  }).join('') || `<tr><td colspan="5"><div class="empty"><p>No assignments</p></div></td></tr>`;
+  }).join('') || `<tr><td colspan="6"><div class="empty"><p>No assignments</p></div></td></tr>`;
+}
+
+function viewMyAssign(id) {
+  const a = DB.g('assignments').find(x => x.id === id);
+  if (!a) return;
+  const c = DB.g('courses').find(x => x.id === a.cid);
+  const tod = today();
+  openViewModal('Assignment Details', [
+    { l: 'Title',       v: esc(a.title) },
+    { l: 'Course',      v: c ? esc(c.name) : '—' },
+    { l: 'Course Code', v: c ? esc(c.code) : '—' },
+    { l: 'Due Date',    v: esc(a.due) },
+    { l: 'Max Marks',   v: a.marks },
+    { l: 'Status',      v: a.due < tod ? 'Overdue' : 'Pending' },
+    ...(a.inst ? [{ l: 'Instructions', v: esc(a.inst), full: true }] : []),
+  ]);
 }
 
 // ═══════════════════════════════════════════
@@ -432,7 +505,7 @@ function rWishlist() {
         if (!c) return '';
         return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
           <div><div class="bold">${esc(c.code)}</div><div class="text3" style="font-size:11px">${esc(c.name)}</div></div>
-          <button class="bico del" onclick="toggleWish(${c.id})" title="Remove">✕</button>
+          <button class="bico del" onclick="toggleWish(${c.id})" title="Remove">${_iTrash}</button>
         </div>`;
       }).join('')
     : '<div class="empty"><p>No saved courses yet</p></div>';
@@ -443,7 +516,7 @@ function toggleWish(cid) {
   const wl   = DB.g('wishlist');
   const i    = wl.findIndex(w => w.sid === user.lid && w.cid === cid);
   if (i >= 0) wl.splice(i, 1);
-  else wl.push({ sid: user.lid, cid });
+  else wl.push({ id: DB.nid(wl), sid: user.lid, cid });
   DB.s('wishlist', wl);
   rWishlist();
 }
@@ -473,13 +546,45 @@ function rMyFees() {
         </div>`).join('')}</div>`
     : '<div class="empty" style="padding:16px"><p>No payments recorded</p></div>';
 
-  $('myfeebody').innerHTML = fs.map(f => `<tr>
+  $('myfeebody').innerHTML = fs.map(f => `<tr data-id="${f.id}">
     <td>${esc(f.type)}</td>
     <td class="mono bold">${usd(f.amt)}</td>
     <td class="text3" style="font-size:11px">${esc(f.due)}</td>
     <td><span class="bx ${f.status === 'Paid' ? 'bx-gr' : f.status === 'Pending' ? 'bx-am' : 'bx-rd'}">${esc(f.status)}</span></td>
     <td class="text3" style="font-size:11px">${esc(f.paid) || '—'}</td>
-  </tr>`).join('') || `<tr><td colspan="5"><div class="empty"><p>No fees</p></div></td></tr>`;
+    <td><div class="act-btns">
+      <button class="bico view" onclick="viewMyFee(${f.id})" title="View">${_iEye}</button>
+      ${f.status !== 'Paid' ? `<button class="bico pay" onclick="markStudentFeePaid(${f.id})" title="Mark Paid">${_iPay}</button>` : ''}
+    </div></td>
+  </tr>`).join('') || `<tr><td colspan="6"><div class="empty"><p>No fees</p></div></td></tr>`;
+}
+
+function viewMyFee(id) {
+  const user = State.getUser();
+  const f = DB.g('fees').find(x => x.id === id && x.sid === user.lid);
+  if (!f) return;
+  openViewModal('Fee Details', [
+    { l: 'Fee Type', v: esc(f.type) },
+    { l: 'Amount',   v: usd(f.amt) },
+    { l: 'Due Date', v: esc(f.due) },
+    { l: 'Status',   v: esc(f.status) },
+    { l: 'Paid On',  v: f.paid ? esc(f.paid) : '—' },
+    ...(f.sem ? [{ l: 'Semester', v: esc(f.sem) }] : []),
+  ]);
+}
+
+function markStudentFeePaid(id) {
+  const user = State.getUser();
+  const fs   = DB.g('fees');
+  const i    = fs.findIndex(x => x.id === id && x.sid === user.lid);
+  if (i < 0 || fs[i].status === 'Paid') return;
+  confirmDlg(`Mark ${esc(fs[i].type)} (${usd(fs[i].amt)}) as paid?`, () => {
+    fs[i].status = 'Paid';
+    fs[i].paid   = today();
+    DB.s('fees', fs);
+    toast('Payment recorded');
+    rMyFees();
+  }, false, 'Mark Paid');
 }
 
 // ═══════════════════════════════════════════

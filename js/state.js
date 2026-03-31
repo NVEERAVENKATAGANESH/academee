@@ -10,7 +10,7 @@ const State = (() => {
     sort:        {},        // { tableId: { key, dir } }
     pagination:  {},        // { tableId: { page, size } }
     sessionTimer: null,     // inactivity timeout handle
-    theme:       'dark',    // 'dark' | 'light'
+    theme:       'light',   // 'dark' | 'light'
   };
 
   // ── Getters ──────────────────────────────────────────
@@ -66,7 +66,7 @@ const State = (() => {
     localStorage.setItem('acs_theme', t);
   }
   function loadTheme() {
-    const saved = localStorage.getItem('acs_theme') || 'dark';
+    const saved = localStorage.getItem('acs_theme') || 'light';
     setTheme(saved);
   }
 

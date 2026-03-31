@@ -27,7 +27,6 @@ function grade(marks) {
   return 'F';
 }
 function gpa(marks)   { return C.GRADE.GPA[grade(marks)]; }
-function gpaPts(g)    { return C.GRADE.GPA[g] ?? 0; }
 
 // ── Academic standing from GPA value ──────────────────
 function standing(gpaVal) {
@@ -88,7 +87,6 @@ function stuCredits(sid, sem) {
 // ── Avatar colour class (cycles through 5) ────────────
 const AV_CLASSES = ['av-bl', 'av-gr', 'av-pu', 'av-am', 'av-te'];
 function avCls(i)  { return AV_CLASSES[i % 5]; }
-function bxCls(i)  { return ['bx-bl','bx-gr','bx-pu','bx-am','bx-te'][i % 5]; }
 
 // ── Time helpers ───────────────────────────────────────
 function timeAgo(ts) {
@@ -142,9 +140,6 @@ function sparkline(vals) {
 function stuId(id) { return 'STU' + String(id).padStart(4, '0'); }
 function facId(id) { return 'FAC' + String(id).padStart(3, '0'); }
 
-// ── Deep clone ────────────────────────────────────────
-function clone(obj) { return JSON.parse(JSON.stringify(obj)); }
-
 // ── Debounce ──────────────────────────────────────────
 function debounce(fn, ms = 200) {
   let t;
@@ -173,14 +168,8 @@ function downloadCSV(rows, filename) {
   downloadText(rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n'), filename, 'text/csv');
 }
 
-// ── Sort helper for tables ────────────────────────────
-function sortArr(arr, key, dir = 'asc') {
-  return [...arr].sort((a, b) => {
-    let av = a[key], bv = b[key];
-    if (typeof av === 'string') av = av.toLowerCase();
-    if (typeof bv === 'string') bv = bv.toLowerCase();
-    if (av < bv) return dir === 'asc' ? -1 : 1;
-    if (av > bv) return dir === 'asc' ? 1 : -1;
-    return 0;
-  });
-}
+// ── Shared icon SVGs ──────────────────────────────────
+const _iEye   = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
+const _iPen   = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
+const _iTrash = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>`;
+const _iPay   = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;

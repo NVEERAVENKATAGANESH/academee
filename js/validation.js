@@ -208,7 +208,8 @@ function validateFee(d) {
       { check: V.range(d.amt, 1, 1e7), msg: 'Enter a valid amount' },
     ]},
     { id: 'mfe-due', rules: [
-      { check: V.date(d.due), msg: 'Due date is required' },
+      { check: V.date(d.due),          msg: 'Due date is required' },
+      { check: d.due >= today(),       msg: 'Due date must be today or in the future' },
     ]},
   ]);
 }
