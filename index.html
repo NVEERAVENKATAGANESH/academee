@@ -909,22 +909,22 @@
 
 <!-- ══ GRADE CALCULATOR ══ -->
 <div class="page" id="pg-gcalc">
-  <div class="topbar"><div><h1>Grade Calculator</h1><p>What-if scenario — enter hypothetical marks to see GPA impact</p></div></div>
-  <div class="two-col" style="align-items:start">
-    <div class="card"><div class="card-h"><div class="card-t">Enter marks</div></div><div class="card-b" id="gcalc-body"></div></div>
+  <div class="topbar"><div><h1>Grade Calculator</h1><p>What-if marks · target GPA · standing gaps</p></div></div>
+  <div class="two-col" style="align-items:start;grid-template-columns:1.4fr 1fr">
+    <div class="card"><div class="card-h"><div class="card-t">Courses &amp; Marks</div></div><div class="card-b" id="gcalc-body"></div></div>
     <div class="card"><div class="card-b" id="gcalc-result"></div></div>
   </div>
 </div>
 
 <!-- ══ TRANSCRIPT ══ -->
 <div class="page" id="pg-transcript">
-  <div class="topbar"><div><h1>Academic Transcript</h1></div><div class="topbar-r"><button class="btn btn-p" onclick="printTranscript()">⬇ Print</button></div></div>
+  <div class="topbar"><div><h1>Academic Transcript</h1></div><div class="topbar-r"><button class="btn btn-p" onclick="printTranscript()">⬇ Download PDF</button></div></div>
   <div id="transcript-content"></div>
 </div>
 
 <!-- ══ HALL TICKET ══ -->
 <div class="page" id="pg-hallticket">
-  <div class="topbar"><div><h1>Hall Ticket</h1></div><div class="topbar-r"><button class="btn btn-p" onclick="window.print()">⬇ Print</button></div></div>
+  <div class="topbar"><div><h1>Hall Ticket</h1></div><div class="topbar-r"><button class="btn btn-p" onclick="downloadHallTicket()">⬇ Download PDF</button></div></div>
   <div id="hallticket-content"></div>
 </div>
 

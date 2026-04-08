@@ -470,12 +470,25 @@ table.t tbody tr:hover td{background:rgba(255,255,255,0.015)}
 .chart-wrap-sm{position:relative;height:140px}
 
 /* ── GRADE CALC ── */
+.gc-controls{display:flex;align-items:center;justify-content:space-between;padding-bottom:12px;border-bottom:1px solid var(--border);margin-bottom:4px;gap:8px}
+.gc-target-row{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text4);text-transform:uppercase;letter-spacing:.5px}
+.gc-header-row{display:flex;align-items:center;gap:10px;padding:6px 0;font-size:10px;color:var(--text4);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border)}
 .gc-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
 .gc-row:last-child{border-bottom:none}
-.gc-name{font-size:13px;flex:1}
-.gc-inp{width:70px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:5px 8px;color:var(--text);font-family:var(--mono);font-size:13px;text-align:center;outline:none;transition:border-color .15s}
+.gc-name{font-size:13px;flex:1;min-width:0}
+.gc-inp{width:54px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:5px 6px;color:var(--text);font-family:var(--mono);font-size:13px;text-align:center;outline:none;transition:border-color .15s}
 .gc-inp:focus{border-color:var(--blue)}
-.gc-result{width:28px;text-align:center}
+.gc-result{width:32px;text-align:center;flex-shrink:0}
+.gc-slider{flex:1;accent-color:var(--blue);cursor:pointer;min-width:60px}
+.gc-slide-wrap{display:flex;align-items:center;gap:6px;width:160px}
+.gc-result-top{text-align:center;padding-bottom:16px;border-bottom:1px solid var(--border);margin-bottom:12px}
+.gc-section{margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--border)}
+.gc-section:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+.gc-sec-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text4);margin-bottom:8px;font-weight:600}
+.gc-contrib-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.gc-gap-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:12px}
+.gc-target-item{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px}
+.gc-target-item:last-child{border-bottom:none}
 
 /* ── TRANSCRIPT ── */
 .tx-head{background:linear-gradient(135deg,#0f172a,#1e3a5f);border-radius:var(--rl) var(--rl) 0 0;padding:24px;color:#fff}

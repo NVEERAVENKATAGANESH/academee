@@ -315,59 +315,194 @@ function viewMyAssign(id) {
 //  GRADE CALCULATOR
 // ═══════════════════════════════════════════
 function rGCalc() {
-  const user = State.getUser();
-  const enrs = DB.g('enrollments').filter(e => e.sid === user.lid);
-  const gs   = DB.g('grades').filter(g => g.sid === user.lid);
+  const user    = State.getUser();
+  const enrs    = DB.g('enrollments').filter(e => e.sid === user.lid);
+  const gs      = DB.g('grades').filter(g => g.sid === user.lid);
+  const courses = DB.g('courses');
 
-  $('gcalc-body').innerHTML = enrs.map(e => {
-    const c = DB.g('courses').find(x => x.id === e.cid);
-    if (!c) return '';
-    const g = gs.find(x => x.cid === e.cid);
-    return `<div class="gc-row">
-      <div class="gc-name">
-        <div class="bold">${esc(c.code)}</div>
-        <div class="text4" style="font-size:11px">${esc(c.name)}</div>
+  if (!enrs.length) {
+    $('gcalc-body').innerHTML = '<div class="empty"><p>Not enrolled in any courses</p></div>';
+    $('gcalc-result').innerHTML = '';
+    return;
+  }
+
+  $('gcalc-body').innerHTML = `
+    <div class="gc-controls">
+      <div class="gc-target-row">
+        <span>Target GPA</span>
+        <input class="gc-inp" id="gc-target" type="number" min="0" max="4" step="0.1" value="3.70" oninput="calcGPA()">
       </div>
-      <input class="gc-inp" id="gc${e.cid}" type="number" min="0" max="100"
-        value="${g ? g.marks : ''}" placeholder="0" oninput="calcGPA()">
-      <div class="gc-result" id="gcr${e.cid}">${g ? gChip(grade(g.marks)) : ''}</div>
-    </div>`;
-  }).join('') || '<div class="empty"><p>Not enrolled in any courses</p></div>';
+      <button class="btn btn-g" style="font-size:11px" onclick="gcReset()">↺ Reset to Actual</button>
+    </div>
+    <div class="gc-header-row">
+      <span style="flex:1">Course</span>
+      <span style="width:24px;text-align:center">Cr</span>
+      <span style="width:160px;text-align:center">Marks</span>
+      <span style="width:32px;text-align:center">Grade</span>
+    </div>
+    ${enrs.map(e => {
+      const c = courses.find(x => x.id === e.cid);
+      if (!c) return '';
+      const g   = gs.find(x => x.cid === e.cid);
+      const val = g ? g.marks : '';
+      return `<div class="gc-row">
+        <div class="gc-name">
+          <div class="bold" style="font-size:12px">${esc(c.code)}</div>
+          <div class="text4" style="font-size:10px">${esc(c.name)}</div>
+        </div>
+        <div style="width:24px;text-align:center;font-size:11px;color:var(--text3);flex-shrink:0">${c.cr}</div>
+        <div class="gc-slide-wrap">
+          <input class="gc-slider" id="gcs${e.cid}" type="range" min="0" max="100" value="${val || 0}"
+            oninput="gcSync(${e.cid},'sl');calcGPA()">
+          <input class="gc-inp" id="gc${e.cid}" type="number" min="0" max="100"
+            value="${val}" placeholder="—" oninput="gcSync(${e.cid},'num');calcGPA()">
+        </div>
+        <div class="gc-result" id="gcr${e.cid}">${val !== '' ? gChip(grade(val)) : ''}</div>
+      </div>`;
+    }).join('')}`;
 
   calcGPA();
 }
 
-function calcGPA() {
-  const user  = State.getUser();
-  const enrs  = DB.g('enrollments').filter(e => e.sid === user.lid);
-  const courses = DB.g('courses');
-  let totalPoints = 0, totalCredits = 0;
+function gcSync(cid, from) {
+  const sl  = $('gcs' + cid);
+  const num = $('gc'  + cid);
+  if (!sl || !num) return;
+  if (from === 'sl') num.value = sl.value;
+  else sl.value = num.value || 0;
+}
 
+function gcReset() {
+  const user = State.getUser();
+  const enrs = DB.g('enrollments').filter(e => e.sid === user.lid);
+  const gs   = DB.g('grades').filter(g => g.sid === user.lid);
   enrs.forEach(e => {
+    const g   = gs.find(x => x.cid === e.cid);
+    const num = $('gc'  + e.cid);
+    const sl  = $('gcs' + e.cid);
+    if (num) num.value = g ? g.marks : '';
+    if (sl)  sl.value  = g ? g.marks : 0;
+  });
+  calcGPA();
+}
+
+function calcGPA() {
+  const user    = State.getUser();
+  const enrs    = DB.g('enrollments').filter(e => e.sid === user.lid);
+  const courses = DB.g('courses');
+
+  const courseData = [];
+  enrs.forEach(e => {
+    const c   = courses.find(x => x.id === e.cid);
     const inp = $('gc' + e.cid);
-    if (!inp) return;
-    const v = parseInt(inp.value);
-    if (!isNaN(v) && v >= 0 && v <= 100) {
-      const cr = courses.find(c => c.id === e.cid)?.cr || 3;
-      $('gcr' + e.cid).innerHTML = gChip(grade(v));
-      totalPoints  += gpa(v) * cr;
-      totalCredits += cr;
-    }
+    if (!c || !inp) return;
+    const v      = parseInt(inp.value);
+    const hasVal = !isNaN(v) && v >= 0 && v <= 100;
+    const gr = hasVal ? grade(v) : null;
+    const gp = hasVal ? gpa(v)   : null;
+    if (hasVal) $('gcr' + e.cid).innerHTML = gChip(gr);
+    else        $('gcr' + e.cid).innerHTML = '';
+    courseData.push({ c, v: hasVal ? v : null, gp, cr: c.cr, hasVal });
   });
 
-  const gpaVal = totalCredits ? round2(totalPoints / totalCredits) : 0;
-  const st     = standing(gpaVal);
+  const filled   = courseData.filter(d => d.hasVal);
+  const unfilled = courseData.filter(d => !d.hasVal);
+  const totalAllCr  = courseData.reduce((s, d) => s + d.cr, 0);
+  const earnedPts   = filled.reduce((s, d) => s + d.gp * d.cr, 0);
+  const earnedCr    = filled.reduce((s, d) => s + d.cr, 0);
+  const remainCr    = unfilled.reduce((s, d) => s + d.cr, 0);
+  const gpaVal      = earnedCr ? round2(earnedPts / earnedCr) : 0;
+  const st          = standing(earnedCr ? gpaVal : null);
+
+  const gpaColor = gpaVal >= C.STANDING.DEANS_LIST ? 'var(--green)'
+                 : gpaVal >= C.STANDING.GOOD        ? 'var(--blue)'
+                 : gpaVal >= C.STANDING.PROBATION   ? 'var(--amber)'
+                 : 'var(--red)';
+
+  // Target analysis
+  const target    = Math.min(4, Math.max(0, parseFloat($('gc-target')?.value) || 3.7));
+  const neededPts = target * totalAllCr - earnedPts;
+  const neededGPA = remainCr ? neededPts / remainCr : null;
+
+  // Gap to standing thresholds
+  const thresholds = [
+    { label: "Dean's List", val: C.STANDING.DEANS_LIST },
+    { label: 'Good Standing', val: C.STANDING.GOOD },
+  ].filter(t => gpaVal < t.val);
+
+  // Contribution bars
+  const maxPts = courseData.reduce((s, d) => s + 4.0 * d.cr, 0);
+  const breakdownHTML = filled.length ? `
+    <div class="gc-section">
+      <div class="gc-sec-lbl">GPA Contribution</div>
+      ${filled.map(d => {
+        const pct  = maxPts ? Math.round(d.gp * d.cr / maxPts * 100) : 0;
+        const col  = d.gp >= 3.7 ? 'var(--green)' : d.gp >= 3.0 ? 'var(--blue)' : d.gp >= 2.0 ? 'var(--amber)' : 'var(--red)';
+        return `<div class="gc-contrib-row">
+          <span class="mono" style="font-size:10px;width:54px;color:var(--text3);flex-shrink:0">${esc(d.c.code)}</span>
+          <div style="flex:1;height:7px;background:var(--bg3);border-radius:4px;overflow:hidden">
+            <div style="width:${pct}%;height:100%;background:${col};transition:width .3s;border-radius:4px"></div>
+          </div>
+          <span class="mono" style="font-size:10px;width:30px;text-align:right;color:var(--text3)">${d.gp.toFixed(1)}</span>
+        </div>`;
+      }).join('')}
+    </div>` : '';
+
+  // Target section
+  let targetHTML = '';
+  if (unfilled.length) {
+    let needLabel = '';
+    if (neededGPA === null || neededGPA <= 0) {
+      needLabel = `<span style="color:var(--green);font-size:11px">✓ Already achievable</span>`;
+    } else if (neededGPA > 4.0) {
+      needLabel = `<span style="color:var(--red);font-size:11px">✗ Not achievable</span>`;
+    } else {
+      const gr       = neededGPA >= 4.0 ? 'A' : neededGPA >= 3.0 ? 'B' : neededGPA >= 2.0 ? 'C' : neededGPA >= 1.0 ? 'D' : 'F';
+      const minMarks = neededGPA >= 4.0 ? 90  : neededGPA >= 3.0 ? 80  : neededGPA >= 2.0 ? 70  : neededGPA >= 1.0 ? 60  : 0;
+      needLabel = `${gChip(gr)} <span class="text3" style="font-size:11px">${minMarks}+ marks each</span>`;
+    }
+    targetHTML = `
+      <div class="gc-section">
+        <div class="gc-sec-lbl">To reach GPA ${target.toFixed(2)}</div>
+        ${unfilled.map(d => `
+          <div class="gc-target-item">
+            <span class="mono" style="font-size:11px;color:var(--blue)">${esc(d.c.code)}</span>
+            <span>${needLabel}</span>
+          </div>`).join('')}
+      </div>`;
+  }
+
+  // Min marks to pass
+  const minPassHTML = courseData.some(d => !d.hasVal) ? '' :
+    courseData.every(d => d.v >= 60) ? '' :
+    `<div class="gc-section">
+      <div class="gc-sec-lbl">Min marks to pass (60)</div>
+      ${courseData.filter(d => d.v < 60).map(d => `
+        <div class="gc-gap-row">
+          <span class="mono" style="color:var(--red)">${esc(d.c.code)}</span>
+          <span style="color:var(--red);font-size:11px">Need ${60 - d.v} more marks</span>
+        </div>`).join('')}
+    </div>`;
 
   $('gcalc-result').innerHTML = `
-    <div style="text-align:center;padding:16px">
-      <div style="font-size:11px;color:var(--text4);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">Projected GPA</div>
-      <div style="font-size:40px;font-weight:700;letter-spacing:-1px;color:var(--blue)">${gpaVal.toFixed(2)}</div>
-      <div style="font-size:14px;font-weight:500;margin-top:6px">${esc(st.label)}</div>
-      <div class="text4" style="font-size:11px;margin-top:4px">Based on ${totalCredits} credit${totalCredits !== 1 ? 's' : ''}</div>
+    <div class="gc-result-top">
+      <div style="font-size:10px;color:var(--text4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Projected GPA</div>
+      <div style="font-size:48px;font-weight:700;letter-spacing:-2px;color:${gpaColor};line-height:1">${earnedCr ? gpaVal.toFixed(2) : '—'}</div>
+      <div style="font-size:13px;font-weight:500;margin-top:8px">${esc(st.label)}</div>
+      <div style="margin-top:12px;background:var(--bg3);border-radius:4px;overflow:hidden;height:10px">
+        <div style="width:${Math.min(100,Math.round(gpaVal/4*100))}%;height:100%;background:${gpaColor};transition:width .3s;border-radius:4px"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text4);margin-top:3px"><span>0.0</span><span>2.0</span><span>4.0</span></div>
+      <div class="text4" style="font-size:11px;margin-top:6px">${earnedCr} of ${totalAllCr} credits entered</div>
     </div>
-    <div style="margin-top:16px;background:var(--bg2);border-radius:var(--r);overflow:hidden;height:8px">
-      <div style="width:${Math.min(100, Math.round(gpaVal / 4 * 100))}%;height:100%;background:${gpaVal >= 3 ? 'var(--green)' : gpaVal >= 2 ? 'var(--amber)' : 'var(--red)'};transition:width .3s"></div>
-    </div>`;
+    ${thresholds.length ? `<div class="gc-section">${thresholds.map(t => `
+      <div class="gc-gap-row">
+        <span>${esc(t.label)}</span>
+        <span class="mono" style="color:var(--amber)">+${(t.val - gpaVal).toFixed(2)} GPA needed</span>
+      </div>`).join('')}</div>` : `<div class="gc-section"><div style="font-size:12px;color:var(--green)">✓ ${esc(st.label)}</div></div>`}
+    ${breakdownHTML}
+    ${minPassHTML}
+    ${targetHTML}`;
 }
 
 // ═══════════════════════════════════════════
@@ -433,7 +568,13 @@ function rTranscript() {
 }
 
 function printTranscript() {
-  window.print();
+  const user = State.getUser();
+  PDF.transcript(user.lid);
+}
+
+function downloadHallTicket() {
+  const user = State.getUser();
+  PDF.hallTicket(user.lid);
 }
 
 // ═══════════════════════════════════════════
