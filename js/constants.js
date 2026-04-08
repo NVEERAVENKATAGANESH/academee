@@ -76,4 +76,15 @@ const C = {
 
   // ── Event Types ──────────────────────────────────────
   EVENT_TYPES: ['Event', 'Exam', 'Holiday', 'Deadline', 'Meeting'],
+
+  // ── Permission Keys grouped by domain ────────────────
+  // Groups are for UI only; the string keys are what canDo() checks.
+  PERMISSIONS: {
+    Students:      ['view_students', 'edit_students', 'delete_students', 'import_students'],
+    Academic:      ['manage_courses', 'manage_enrollments', 'enter_grades', 'view_all_grades', 'manage_exams'],
+    Attendance:    ['mark_attendance', 'edit_attendance', 'view_attendance_reports'],
+    Finance:       ['view_fees', 'edit_fees', 'mark_paid', 'manage_scholarships'],
+    Communication: ['send_announcements', 'approve_leaves', 'view_messages'],
+    System:        ['export_data', 'view_audit_log', 'manage_users', 'manage_settings'],
+  },
 };

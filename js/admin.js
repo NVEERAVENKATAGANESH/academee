@@ -273,7 +273,7 @@ function saveStudent() {
 function delStudent(id) {
   const s = DB.g('students').find(x => x.id === id);
   if (!s) return;
-  const relKeys = ['enrollments','grades','attendance','fees','leaves','submissions'];
+  const relKeys = ['enrollments','grades','attendance','fees','leaves','submissions','appeals'];
   const counts = { enrollments: DB.g('enrollments').filter(e => e.sid === id).length, grades: DB.g('grades').filter(g => g.sid === id).length, fees: DB.g('fees').filter(f => f.sid === id).length };
   const cascade = Object.entries(counts).filter(([,n]) => n > 0).map(([k,n]) => `${n} ${k}`).join(', ');
   const msg = `Delete ${s.fn} ${s.ln}?${cascade ? ` This will also remove ${cascade}.` : ''}`;
@@ -294,34 +294,87 @@ function delStudent(id) {
 }
 
 function importStudentsCSV() {
-  const csv = prompt('Paste CSV (fn,ln,email,dept,year):\nExample: John,Doe,j.doe@uni.edu,Computer Science,1');
-  if (!csv) return;
+  const ta = $('stu-csv-inp');
+  if (ta) ta.value = '';
+  const pr = $('stu-csv-preview');
+  if (pr) pr.innerHTML = '';
+  openM('m-stu-import');
+}
+
+function previewStudentCSV() {
+  const raw = $('stu-csv-inp')?.value.trim();
+  const pr  = $('stu-csv-preview');
+  if (!raw || !pr) return;
+  const rows = raw.split('\n').map(r => r.split(',').map(x => x.trim()));
+  const valid = [], errors = [];
+  rows.forEach((cols, i) => {
+    const [fn, ln, em, dept, yr] = cols;
+    if (!fn || !em) { errors.push(`Row ${i+1}: missing first name or email`); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) { errors.push(`Row ${i+1}: invalid email "${esc(em)}"`); return; }
+    valid.push({ fn, ln: ln||'', em, dept: dept||'Computer Science', yr: ['1','2','3','4'].includes(yr)?yr:'1' });
+  });
+  pr.innerHTML = (errors.length ? `<div style="color:var(--red);font-size:12px;margin-bottom:8px">${errors.map(e=>`<div>⚠ ${e}</div>`).join('')}</div>` : '')
+    + (valid.length ? `<table class="tw" style="width:100%;font-size:12px"><thead><tr><th>Name</th><th>Email</th><th>Dept</th><th>Yr</th></tr></thead><tbody>${
+        valid.map(r=>`<tr><td>${esc(r.fn)} ${esc(r.ln)}</td><td>${esc(r.em)}</td><td>${esc(r.dept)}</td><td>${esc(r.yr)}</td></tr>`).join('')
+      }</tbody></table><div style="margin-top:8px;font-size:12px;color:var(--text4)">${valid.length} student${valid.length!==1?'s':''} ready to import</div>`
+    : '<div style="font-size:12px;color:var(--text4)">No valid rows found</div>');
+  $('stu-csv-do-btn').style.display = valid.length ? '' : 'none';
+}
+
+function confirmStudentCSV() {
+  const raw = $('stu-csv-inp')?.value.trim();
+  if (!raw) return;
   const sts = DB.g('students');
+  const isDemo = (State.getUser()?.id || 99) <= 16;
   let added = 0;
-  csv.trim().split('\n').forEach(row => {
+  raw.split('\n').forEach(row => {
     const [fn, ln, em, dept, yr] = row.split(',').map(x => x.trim());
-    if (fn && em) {
-      sts.push({ id: DB.nid(sts), fn, ln: ln || '', em, ph: '', dept: dept || 'Computer Science', yr: yr || '1', dob: '', status: 'Active', addr: '', adm: new Date().getFullYear().toString() });
-      added++;
-    }
+    if (!fn || !em) return;
+    sts.push({ id: DB.nid(sts), fn, ln: ln||'', em, ph:'', dept: dept||'Computer Science',
+               yr: ['1','2','3','4'].includes(yr)?yr:'1', dob:'', status:'Active', addr:'',
+               adm: new Date().getFullYear().toString(), ...(isDemo ? {_demo:true} : {}) });
+    added++;
   });
   DB.s('students', sts);
-  toast(`Imported ${added} student${added !== 1 ? 's' : ''}`);
+  toast(`Imported ${added} student${added!==1?'s':''}`);
   addAudit('CSV Import', `${added} students imported`, State.getUser().u, 'var(--purple)');
+  closeM('m-stu-import');
   rStudents();
 }
 
 // ═══════════════════════════════════════════
 //  FACULTY
 // ═══════════════════════════════════════════
+function openNewFaculty() {
+  $('mf-id').value = ''; $('mf-title').textContent = 'Add Faculty';
+  ['fn','ln','em','ph','qual','spec'].forEach(k => { const el = $('mf-'+k); if (el) el.value = ''; });
+  $('mf-dept').value = DB.g('depts')[0]?.name || 'Computer Science';
+  const roleEl = $('mf-role');
+  if (roleEl) {
+    roleEl.innerHTML = '<option value="">Default (Full Access)</option>' +
+      DB.g('roles').map(r => `<option value="${r.id}">${esc(r.name)}</option>`).join('');
+    roleEl.value = '';
+  }
+  openM('m-faculty');
+}
+
 function rFaculty() {
-  const q    = ($('fs')?.value || '').toLowerCase();
-  const facs = DB.g('faculty').filter(f => (f.fn + ' ' + f.ln).toLowerCase().includes(q));
+  const q       = ($('fs')?.value || '').toLowerCase();
+  const facs    = DB.g('faculty').filter(f => (f.fn + ' ' + f.ln).toLowerCase().includes(q));
+  const roles   = DB.g('roles');
+  const users   = DB.g('users');
+  const courses = DB.g('courses');
+  const enrolls = DB.g('enrollments');
 
   paginate(facs, 'ftbody', slice => {
     $('ftbody').innerHTML = slice.map((f, i) => {
-      const cs = DB.g('courses').filter(c => c.fid === f.id);
-      const ss = new Set(DB.g('enrollments').filter(e => cs.find(c => c.id === e.cid)).map(e => e.sid));
+      const cs = courses.filter(c => c.fid === f.id);
+      const ss = new Set(enrolls.filter(e => cs.some(c => c.id === e.cid)).map(e => e.sid));
+      const u    = users.find(x => x.role === 'faculty' && x.lid === f.id);
+      const role = u?.customRoleId ? roles.find(r => r.id === u.customRoleId) : null;
+      const roleBadge = role
+        ? `<span class="bx" style="background:${role.color}20;color:${role.color};border-color:${role.color}40">${esc(role.name)}</span>`
+        : `<span class="bx bx-gy">Default</span>`;
       return `<tr data-id="${f.id}">
         <td><div style="display:flex;align-items:center;gap:8px">
           <div class="av ${avCls(i)}">${esc(f.fn[0])}${esc((f.ln || '')[0] || '')}</div>
@@ -330,6 +383,7 @@ function rFaculty() {
         <td class="mono text3" style="font-size:11px">${facId(f.id)}</td>
         <td>${esc(f.dept)}</td>
         <td><span class="bx bx-gy">${esc(f.qual)}</span></td>
+        <td>${roleBadge}</td>
         <td class="mono">${cs.length}</td>
         <td class="mono">${ss.size}</td>
         <td><div class="act-btns">
@@ -338,7 +392,7 @@ function rFaculty() {
           <button class="bico del"  onclick="delFaculty(${f.id})"  title="Delete faculty">${_iTrash}</button>
         </div></td>
       </tr>`;
-    }).join('') || `<tr><td colspan="7"><div class="empty"><p>No faculty found</p></div></td></tr>`;
+    }).join('') || `<tr><td colspan="8"><div class="empty"><p>No faculty found</p></div></td></tr>`;
   });
 }
 
@@ -348,6 +402,14 @@ function editFaculty(id) {
   $('mf-title').textContent = 'Edit Faculty'; $('mf-id').value = id;
   ['fn','ln','em','ph','qual','spec'].forEach(k => { const el = $('mf-' + k); if (el) el.value = f[k] || ''; });
   $('mf-dept').value = f.dept;
+  // Populate custom-role dropdown
+  const roleEl = $('mf-role');
+  if (roleEl) {
+    roleEl.innerHTML = '<option value="">Default (Full Access)</option>' +
+      DB.g('roles').map(r => `<option value="${r.id}">${esc(r.name)}</option>`).join('');
+    const u = DB.g('users').find(x => x.role === 'faculty' && x.lid === id);
+    roleEl.value = u?.customRoleId || '';
+  }
   openM('m-faculty');
 }
 
@@ -377,6 +439,25 @@ function saveFaculty() {
     addAudit('Faculty Added', `${d.fn} ${d.ln}`, user.u, 'var(--green)');
   }
   DB.s('faculty', facs);
+
+  // Save customRoleId — and create user record if this is a new faculty
+  const roleEl = $('mf-role');
+  const customRoleId = roleEl ? (parseInt(roleEl.value) || null) : null;
+  DB.update('users', us => {
+    const ui = us.findIndex(x => x.role === 'faculty' && x.lid === savedId);
+    if (ui >= 0) {
+      us[ui].customRoleId = customRoleId;
+    } else if (!id) {
+      // New faculty — create login credentials
+      const base = (d.em.split('@')[0] || d.fn.toLowerCase()).replace(/[^a-z0-9]/gi, '').toLowerCase();
+      const uname = us.find(x => x.u === base) ? base + savedId : base;
+      us.push({ id: DB.nid(us), u: uname, p: Auth.hashPw('Welcome@1', uname),
+                role: 'faculty', lid: savedId, name: `${d.fn} ${d.ln}`, customRoleId });
+      toast(`Faculty added · login: ${uname} / Welcome@1`);
+    }
+    return us;
+  });
+
   clearDraft('m-faculty');
   closeM('m-faculty');
   rFaculty();
@@ -389,11 +470,14 @@ function delFaculty(id) {
   const courseCount = DB.g('courses').filter(c => c.fid === id).length;
   const suffix = courseCount ? ` They are assigned to ${courseCount} course${courseCount !== 1 ? 's' : ''}.` : '';
   confirmDlg(`Delete ${f.fn} ${f.ln}?${suffix}`, () => fadeDeleteRow(id, () => {
+    const linkedUser = DB.g('users').find(x => x.role === 'faculty' && x.lid === id);
     DB.s('faculty', DB.g('faculty').filter(x => x.id !== id));
+    DB.update('users', us => us.filter(x => !(x.role === 'faculty' && x.lid === id)));
     addAudit('Faculty Deleted', `${f.fn} ${f.ln} removed`, State.getUser().u, 'var(--red)');
     rFaculty();
     toastUndo(`${f.fn} ${f.ln} deleted`, () => {
       DB.s('faculty', [...DB.g('faculty'), f]);
+      if (linkedUser) DB.update('users', us => [...us, linkedUser]);
       addAudit('Faculty Restore', `${f.fn} ${f.ln} deletion undone`, State.getUser().u, 'var(--green)');
       rFaculty();
     });
@@ -593,19 +677,30 @@ function delCourse(id) {
   if (!c) return;
   const enrCount   = DB.g('enrollments').filter(e => e.cid === id).length;
   const gradeCount = DB.g('grades').filter(g => g.cid === id).length;
-  const parts = [enrCount && `${enrCount} enrollment${enrCount !== 1 ? 's' : ''}`, gradeCount && `${gradeCount} grade${gradeCount !== 1 ? 's' : ''}`].filter(Boolean).join(', ');
+  const parts = [enrCount && `${enrCount} enrollment${enrCount!==1?'s':''}`, gradeCount && `${gradeCount} grade${gradeCount!==1?'s':''}`].filter(Boolean).join(', ');
   const msg = `Delete ${c.code} — ${c.name}?${parts ? ` This will also remove ${parts}.` : ''}`;
   confirmDlg(msg, () => fadeDeleteRow(id, () => {
-    const snapshot = { course: c, enrollments: DB.g('enrollments').filter(e => e.cid === id), grades: DB.g('grades').filter(g => g.cid === id) };
-    DB.s('courses', DB.g('courses').filter(x => x.id !== id));
+    const snapshot = {
+      course:      c,
+      enrollments: DB.g('enrollments').filter(e => e.cid === id),
+      grades:      DB.g('grades').filter(g => g.cid === id),
+      attendance:  DB.g('attendance').filter(a => a.cid === id),
+      exams:       DB.g('exams').filter(x => x.cid === id),
+      assignments: DB.g('assignments').filter(a => a.cid === id),
+    };
+    DB.s('courses',     DB.g('courses').filter(x => x.id !== id));
     DB.s('enrollments', DB.g('enrollments').filter(e => e.cid !== id));
-    DB.s('grades', DB.g('grades').filter(g => g.cid !== id));
+    DB.s('grades',      DB.g('grades').filter(g => g.cid !== id));
+    DB.s('attendance',  DB.g('attendance').filter(a => a.cid !== id));
+    DB.s('exams',       DB.g('exams').filter(x => x.cid !== id));
+    DB.s('assignments', DB.g('assignments').filter(a => a.cid !== id));
     addAudit('Course Deleted', `${c.code} — ${c.name}`, State.getUser().u, 'var(--red)');
     rCourses();
     toastUndo(`${c.code} deleted`, () => {
       DB.s('courses', [...DB.g('courses'), snapshot.course]);
-      if (snapshot.enrollments.length) DB.s('enrollments', [...DB.g('enrollments'), ...snapshot.enrollments]);
-      if (snapshot.grades.length) DB.s('grades', [...DB.g('grades'), ...snapshot.grades]);
+      ['enrollments','grades','attendance','exams','assignments'].forEach(k => {
+        if (snapshot[k].length) DB.s(k, [...DB.g(k), ...snapshot[k]]);
+      });
       addAudit('Course Restore', `${c.code} deletion undone`, State.getUser().u, 'var(--green)');
       rCourses();
     });
@@ -914,6 +1009,13 @@ function saveAttEdit() {
   const att = DB.g('attendance');
   const i   = att.findIndex(x => x.id === id);
   if (i < 0) return;
+  // Hard isolation for faculty — validate the record belongs to their scope
+  const user = State.getUser();
+  if (user.role === 'faculty') {
+    const scope = getFacultyScope();
+    if (!scope.studentIds.has(att[i].sid) || !scope.courseIds.has(att[i].cid)) return;
+    if (!canDo('mark_attendance')) return;
+  }
   att[i].pres = pres; att[i].tot = tot;
   DB.s('attendance', att);
   addAudit('Attendance Updated', `${sn(att[i].sid)} — ${cc(att[i].cid)}: ${pres}/${tot}`, State.getUser().u, 'var(--teal)');
@@ -1032,7 +1134,9 @@ function delExam(id) {
 //  LEAVE REQUESTS  (admin + faculty)
 // ═══════════════════════════════════════════
 function rLeaves() {
-  const user    = State.getUser();
+  const user = State.getUser();
+  // Faculty sees only their scoped students — delegate to faculty.js
+  if (user.role === 'faculty') { rFLeaves(); return; }
   const leaves  = DB.g('leaves');
   const pending = leaves.filter(l => l.status === 'Pending');
   const decided = leaves.filter(l => l.status !== 'Pending');
@@ -1419,6 +1523,8 @@ function delAnn(id) {
 // ═══════════════════════════════════════════
 function rMessages() {
   const user = State.getUser();
+  // Faculty sees only scoped students, gated on view_messages — delegate to faculty.js
+  if (user.role === 'faculty') { rFMessages(); return; }
   const msgs = DB.g('messages');
   const q    = ($('msg-search')?.value || '').toLowerCase();
 
@@ -1700,10 +1806,23 @@ function viewUser(id) {
 }
 function editUser(id) {
   const u = DB.g('users').find(x => x.id === id); if (!u) return;
-  $('mue-id').value        = id;
-  $('mue-u').textContent   = esc(u.u);
-  $('mue-role').value      = u.role;
+  $('mue-id').value      = id;
+  $('mue-u').textContent = esc(u.u);
+  $('mue-role').value    = u.role;
+  // Custom-role dropdown — only meaningful for faculty
+  const roleWrap = $('mue-role-wrap');
+  const roleEl   = $('mue-custom-role');
+  if (roleWrap && roleEl) {
+    roleWrap.style.display = u.role === 'faculty' ? '' : 'none';
+    roleEl.innerHTML = '<option value="">Default (Full Access)</option>' +
+      DB.g('roles').map(r => `<option value="${r.id}">${esc(r.name)}</option>`).join('');
+    roleEl.value = u.customRoleId || '';
+  }
   openM('m-user-edit');
+}
+function _onUserRoleChange() {
+  const roleWrap = $('mue-role-wrap');
+  if (roleWrap) roleWrap.style.display = $('mue-role').value === 'faculty' ? '' : 'none';
 }
 function saveUserEdit() {
   const id   = parseInt($('mue-id').value);
@@ -1712,6 +1831,12 @@ function saveUserEdit() {
   const i    = us.findIndex(x => x.id === id);
   if (i < 0) return;
   us[i].role = role;
+  if (role === 'faculty') {
+    const crEl = $('mue-custom-role');
+    us[i].customRoleId = crEl ? (parseInt(crEl.value) || null) : null;
+  } else {
+    us[i].customRoleId = null;
+  }
   DB.s('users', us);
   addAudit('User Updated', `${us[i].u} role → ${role}`, State.getUser().u, 'var(--blue)');
   toast('User updated');
@@ -1874,4 +1999,314 @@ function _resetData() {
     DB.clearAll();
     location.reload();
   }, true, 'Reset');
+}
+
+// ═══════════════════════════════════════════
+//  ROLES  —  custom role & permissions CRUD
+// ═══════════════════════════════════════════
+// ── Roles UI state ──────────────────────────────────────
+let _activeRoleId = null;
+
+function rRoles() {
+  _renderRolesSidebar();
+  if (_activeRoleId !== null) {
+    const r = DB.g('roles').find(x => x.id === _activeRoleId);
+    if (r) _renderRoleDetail(r);
+    else { _activeRoleId = null; _renderDetailEmpty(); }
+  } else {
+    const roles = DB.g('roles');
+    if (roles.length) { _activeRoleId = roles[0].id; _renderRoleDetail(roles[0]); }
+    else _renderDetailEmpty();
+  }
+}
+
+function _renderRolesSidebar() {
+  const el = $('roles-sidebar-list'); if (!el) return;
+  const prev = el.scrollTop;
+  const allUsers = DB.g('users');
+  el.innerHTML = DB.g('roles').map(r => {
+    const ct = Object.values(r.perms || {}).filter(Boolean).length;
+    const uct = allUsers.filter(u => u.customRoleId === r.id).length;
+    const isActive = _activeRoleId === r.id;
+    return `<div class="role-si${isActive ? ' active' : ''}" data-id="${r.id}"
+      style="--rc:${esc(r.color)}" onclick="_selectRole(${r.id})">
+      <span class="role-si-dot" style="background:${esc(r.color)}"></span>
+      <span class="role-si-name">${esc(r.name)}</span>
+      <span class="role-si-meta">
+        ${uct ? `<span class="role-si-users">${uct}u</span>` : ''}
+        <span class="role-si-ct">${ct}</span>
+      </span>
+    </div>`;
+  }).join('') || '<div style="padding:14px 12px;font-size:12px;color:var(--text4)">No roles yet</div>';
+  el.scrollTop = prev;
+}
+
+function _selectRole(id) {
+  _activeRoleId = id;
+  _renderRolesSidebar();
+  const r = DB.g('roles').find(x => x.id === id);
+  if (r) _renderRoleDetail(r);
+}
+
+function _renderDetailEmpty() {
+  const el = $('roles-detail'); if (!el) return;
+  el.innerHTML = `<div class="roles-empty-state"><div class="roles-empty-ico">🔐</div><span>Select a role or create a new one</span></div>`;
+}
+
+function _buildPermGroups(perms) {
+  return Object.entries(C.PERMISSIONS).map(([group, keys]) => {
+    const onCt = keys.filter(k => perms[k]).length;
+    const allOn = onCt === keys.length;
+    return `<div class="role-perm-group">
+      <div class="role-perm-group-hdr">
+        <span class="role-perm-group-lbl">
+          ${esc(group)}
+          <span class="role-grp-ct" id="rgc-${group}">${onCt}/${keys.length}</span>
+        </span>
+        <button class="role-grp-btn" data-grp="${esc(group)}" onclick="_toggleGroupPerms('${esc(group)}')">${allOn ? 'Clear all' : 'Select all'}</button>
+      </div>
+      <div class="role-perm-grid">
+        ${keys.map(k => `
+          <label class="role-perm-row">
+            <span class="role-perm-label">${esc(k.replace(/_/g, ' '))}</span>
+            <label class="toggle">
+              <input type="checkbox" name="${k}" ${perms[k] ? 'checked' : ''} onchange="_onPermToggle('${esc(group)}')">
+              <span class="toggle-track"></span>
+              <span class="toggle-thumb"></span>
+            </label>
+          </label>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function _toggleGroupPerms(group) {
+  const keys = C.PERMISSIONS[group]; if (!keys) return;
+  const el = $('roles-detail'); if (!el) return;
+  const allOn = keys.every(k => { const cb = el.querySelector(`input[name="${k}"]`); return cb && cb.checked; });
+  keys.forEach(k => { const cb = el.querySelector(`input[name="${k}"]`); if (cb) cb.checked = !allOn; });
+  const onCt = allOn ? 0 : keys.length;
+  const btn = el.querySelector(`[data-grp="${group}"]`);
+  if (btn) btn.textContent = allOn ? 'Select all' : 'Clear all';
+  const ctEl = el.querySelector(`#rgc-${group}`);
+  if (ctEl) ctEl.textContent = `${onCt}/${keys.length}`;
+  _onPermToggle(null);
+}
+
+function _onPermToggle(group) {
+  const el = $('roles-detail'); if (!el) return;
+  const allPerms = Object.values(C.PERMISSIONS).flat();
+  const active = allPerms.filter(k => { const cb = el.querySelector(`input[name="${k}"]`); return cb && cb.checked; }).length;
+  const total = allPerms.length;
+  const cntEl = $('rd-count');
+  if (cntEl) cntEl.textContent = `${active} of ${total} permissions enabled`;
+  const progEl = $('rd-prog');
+  if (progEl) progEl.style.width = `${((active / total) * 100).toFixed(1)}%`;
+  if (group) {
+    const keys = C.PERMISSIONS[group] || [];
+    const onCt = keys.filter(k => { const cb = el.querySelector(`input[name="${k}"]`); return cb && cb.checked; }).length;
+    const allOn = onCt === keys.length;
+    const btn = el.querySelector(`[data-grp="${group}"]`);
+    if (btn) btn.textContent = allOn ? 'Clear all' : 'Select all';
+    const ctEl = el.querySelector(`#rgc-${group}`);
+    if (ctEl) ctEl.textContent = `${onCt}/${keys.length}`;
+  }
+  // Update sidebar badge live (cosmetic — not saved until Save is clicked)
+  if (_activeRoleId !== null) {
+    const badge = $('roles-sidebar-list')?.querySelector(`[data-id="${_activeRoleId}"] .role-si-ct`);
+    if (badge) badge.textContent = active;
+  }
+}
+
+function _rdAssignedHTML(users, rid) {
+  return users.map(u => {
+    const cls = ROLE_COLOR[u.role] || 'av-gy';
+    return `<div class="role-user-chip">
+      <span class="av ${cls}" style="width:26px;height:26px;font-size:10px">${(u.name||u.u||'?')[0].toUpperCase()}</span>
+      <span>${esc(u.name||u.u)}</span>
+      <button class="role-chip-rm" onclick="_unassignUser(${u.id},${rid})" title="Remove">×</button>
+    </div>`;
+  }).join('') || '<span style="font-size:12px;color:var(--text4)">No users assigned</span>';
+}
+
+function _refreshAssignedSection(rid) {
+  const el = $('rd-assigned'); if (!el) return;
+  el.innerHTML = _rdAssignedHTML(DB.g('users').filter(u => u.customRoleId === rid), rid);
+}
+
+function _searchRoleUsers(rid, q) {
+  const res = $('rd-user-results'); if (!res) return;
+  const assigned = new Set(DB.g('users').filter(u => u.customRoleId === rid).map(u => u.id));
+  const facs = DB.g('users').filter(u => u.role === 'faculty' && !assigned.has(u.id));
+  const term = q.toLowerCase().trim();
+  const matches = term ? facs.filter(u => (u.name||'').toLowerCase().includes(term) || u.u.toLowerCase().includes(term)) : facs;
+  if (!matches.length) {
+    res.innerHTML = `<div class="role-user-ri" style="color:var(--text4);cursor:default;font-size:12px">${term ? 'No matching faculty' : 'All faculty assigned'}</div>`;
+  } else {
+    res.innerHTML = matches.slice(0, 8).map(u => {
+      const cls = ROLE_COLOR[u.role] || 'av-gy';
+      return `<div class="role-user-ri" onclick="_assignUserToRole(${u.id},${rid})">
+        <span class="av ${cls}" style="width:22px;height:22px;font-size:9px;flex-shrink:0">${(u.name||u.u||'?')[0].toUpperCase()}</span>
+        <div><div style="font-size:12px;font-weight:500">${esc(u.name||u.u)}</div><div style="font-size:10px;color:var(--text4)">${esc(u.u)}</div></div>
+      </div>`;
+    }).join('');
+  }
+  res.classList.add('open');
+}
+
+function _assignUserToRole(uid, rid) {
+  DB.update('users', us => us.map(u => u.id === uid ? {...u, customRoleId: rid} : u));
+  const u = DB.g('users').find(x => x.id === uid);
+  addAudit('User Assigned to Role', u?.name||u?.u||uid, State.getUser().u, 'var(--purple)');
+  _refreshAssignedSection(rid);
+  const si = $('rd-user-search'); if (si) si.value = '';
+  const res = $('rd-user-results'); if (res) { res.innerHTML = ''; res.classList.remove('open'); }
+  _renderRolesSidebar();
+}
+
+function _unassignUser(uid, rid) {
+  DB.update('users', us => us.map(u => u.id === uid ? {...u, customRoleId: null} : u));
+  const u = DB.g('users').find(x => x.id === uid);
+  addAudit('User Unassigned from Role', u?.name||u?.u||uid, State.getUser().u, 'var(--purple)');
+  _refreshAssignedSection(rid);
+  _renderRolesSidebar();
+}
+
+function _renderRoleDetail(r) {
+  const el = $('roles-detail'); if (!el) return;
+  const users = DB.g('users').filter(u => u.customRoleId === r.id);
+  const allPerms = Object.values(C.PERMISSIONS).flat();
+  const activeCount = allPerms.filter(k => r.perms?.[k]).length;
+
+  el.innerHTML = `<div class="role-detail-inner">
+    <div class="role-detail-hdr">
+      <div class="role-detail-hdr-l">
+        <input type="color" class="role-color-picker" id="rd-color" value="${r.color.startsWith('#') ? esc(r.color) : '#6366f1'}">
+        <input type="text" class="role-name-input" id="rd-name" value="${esc(r.name)}" placeholder="Role name">
+      </div>
+      <div class="role-detail-hdr-r">
+        <button class="btn btn-g" onclick="dupRole(${r.id})">Duplicate</button>
+        <button class="btn btn-p" onclick="saveRole(${r.id})">Save changes</button>
+      </div>
+    </div>
+    <div class="role-detail-body">
+      <div class="role-section">
+        <div class="role-section-hdr">Assigned Users</div>
+        <div class="role-assigned" id="rd-assigned">${_rdAssignedHTML(users, r.id)}</div>
+        <div class="role-user-search-wrap">
+          <input class="role-user-search" id="rd-user-search" placeholder="Search faculty to assign…"
+            oninput="_searchRoleUsers(${r.id}, this.value)"
+            onfocus="_searchRoleUsers(${r.id}, this.value)"
+            onblur="setTimeout(()=>{const res=$('rd-user-results');if(res){res.innerHTML='';res.classList.remove('open');}},200)">
+          <div class="role-user-results" id="rd-user-results"></div>
+        </div>
+      </div>
+      ${_buildPermGroups(r.perms || {})}
+    </div>
+    <div class="role-detail-footer">
+      <div class="role-footer-left">
+        <span class="role-perm-count" id="rd-count">${activeCount} of ${allPerms.length} permissions enabled</span>
+        <div class="role-footer-prog"><div class="role-footer-prog-bar" id="rd-prog" style="width:${((activeCount/allPerms.length)*100).toFixed(1)}%"></div></div>
+      </div>
+      <button class="btn btn-dg" onclick="delRole(${r.id})">Delete role</button>
+    </div>
+  </div>`;
+}
+
+function newRole() {
+  _activeRoleId = null;
+  _renderRolesSidebar();
+  const el = $('roles-detail'); if (!el) return;
+  const total = Object.values(C.PERMISSIONS).flat().length;
+
+  el.innerHTML = `<div class="role-detail-inner">
+    <div class="role-detail-hdr">
+      <div class="role-detail-hdr-l">
+        <input type="color" class="role-color-picker" id="rd-color" value="#6366f1">
+        <input type="text" class="role-name-input" id="rd-name" value="" placeholder="New role name">
+      </div>
+      <div class="role-detail-hdr-r">
+        <button class="btn btn-g" onclick="rRoles()">Cancel</button>
+        <button class="btn btn-p" onclick="saveRole(0)">Create role</button>
+      </div>
+    </div>
+    <div class="role-detail-body">
+      <div class="role-section">
+        <div class="role-section-hdr">Assigned Users</div>
+        <div class="role-assigned" id="rd-assigned"><span style="font-size:12px;color:var(--text4)">Save role first to assign users</span></div>
+      </div>
+      ${_buildPermGroups({})}
+    </div>
+    <div class="role-detail-footer">
+      <div class="role-footer-left">
+        <span class="role-perm-count" id="rd-count">0 of ${total} permissions enabled</span>
+        <div class="role-footer-prog"><div class="role-footer-prog-bar" id="rd-prog" style="width:0%"></div></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function dupRole(id) {
+  const r = DB.g('roles').find(x => x.id === id); if (!r) return;
+  const base = r.name.replace(/ \(copy( \d+)?\)$/, '');
+  const existing = DB.g('roles').filter(x => x.name.startsWith(base + ' (copy'));
+  const copyName = base + ' (copy' + (existing.length > 0 ? ' ' + (existing.length + 1) : '') + ')';
+  let newId;
+  DB.update('roles', roles => {
+    newId = DB.nid(roles);
+    roles.push({ id: newId, name: copyName, color: r.color, perms: { ...r.perms } });
+    return roles;
+  });
+  addAudit('Role Duplicated', r.name, State.getUser().u, 'var(--purple)');
+  toast('Role duplicated');
+  _activeRoleId = newId;
+  rRoles();
+  // Scroll sidebar to bottom to reveal new item
+  setTimeout(() => { const el = $('roles-sidebar-list'); if (el) el.scrollTop = el.scrollHeight; }, 50);
+}
+
+function saveRole(id) {
+  const el = $('roles-detail'); if (!el) return;
+  const nameEl = $('rd-name'); const colorEl = $('rd-color');
+  const name = nameEl ? nameEl.value.trim() : '';
+  const color = colorEl ? colorEl.value : '#6366f1';
+  if (!name) { toast('Role name required', false); return; }
+
+  const perms = {};
+  Object.values(C.PERMISSIONS).flat().forEach(k => {
+    const cb = el.querySelector(`input[name="${k}"]`);
+    perms[k] = cb ? cb.checked : false;
+  });
+
+  let savedId = id;
+  DB.update('roles', roles => {
+    if (id) {
+      const i = roles.findIndex(r => r.id === id);
+      if (i >= 0) roles[i] = { ...roles[i], name, color, perms };
+    } else {
+      const nr = { id: DB.nid(roles), name, color, perms };
+      savedId = nr.id;
+      roles.push(nr);
+    }
+    return roles;
+  });
+
+  addAudit(id ? 'Role Updated' : 'Role Created', name, State.getUser().u, 'var(--purple)');
+  toast(id ? 'Role updated' : 'Role created');
+  _activeRoleId = savedId;
+  rRoles();
+}
+
+function delRole(id) {
+  const r = DB.g('roles').find(x => x.id === id); if (!r) return;
+  const assigned = DB.g('users').filter(u => u.customRoleId === id);
+  const warn = assigned.length ? ` ${assigned.length} user${assigned.length !== 1 ? 's' : ''} will revert to default access.` : '';
+  confirmDlg(`Delete role "${r.name}"?${warn}`, () => {
+    if (assigned.length) DB.update('users', us => us.map(u => u.customRoleId === id ? { ...u, customRoleId: null } : u));
+    DB.update('roles', roles => roles.filter(x => x.id !== id));
+    addAudit('Role Deleted', r.name, State.getUser().u, 'var(--red)');
+    toast('Role deleted');
+    _activeRoleId = null;
+    rRoles();
+  }, true, 'Delete');
 }

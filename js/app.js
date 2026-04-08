@@ -26,6 +26,7 @@ const PAGES = {
   calendar:      rCalendar,
   reports:       rReports,
   users:         rUsers,
+  roles:         rRoles,
   auditlog:      rAudit,
   export:        rExport,
   // Faculty
@@ -51,6 +52,9 @@ const PAGES = {
 };
 
 function go(id) {
+  // Clear dashboard clock when leaving that page
+  if (typeof _clockInterval !== 'undefined' && id !== 'dash') clearInterval(_clockInterval);
+
   // Hide all pages, deactivate all nav items
   $$('.page').forEach(p => p.classList.remove('on'));
   $$('.tn-item,.tn-di').forEach(n => n.classList.remove('on','act'));
@@ -90,6 +94,7 @@ function go(id) {
       mygrades:     [['mygradesbody', 6]],
       myassign:     [['myassigntbl', 6]],
       myfees:       [['myfeebody', 6]],
+      roles:        [['roles-sidebar-list', 3]],
     };
     const skelTargets = _SKEL_MAP[id];
     const _runPage = () => {
@@ -121,19 +126,19 @@ function go(id) {
     const BREADCRUMB_MAP = {
       dash:'Dashboard', students:'People › Students', faculty:'People › Faculty',
       departments:'People › Departments', courses:'Academics › Courses',
-      enrollments:'Academics › Enrollments', grades:'Academics › Grades',
+      enrollment:'Academics › Enrollments', grades:'Academics › Grades',
       attendance:'Academics › Attendance', exams:'Academics › Exams',
       fees:'Finance › Fees', scholarships:'Finance › Scholarships',
       announcements:'Communication › Announcements', messages:'Communication › Messages',
       calendar:'Calendar', reports:'Reports', export:'Export',
-      users:'System › Users', auditlog:'System › Audit Log', settings:'System › Settings',
+      users:'System › Users', roles:'System › Roles', auditlog:'System › Audit Log', settings:'System › Settings',
       myprofile:'My Profile', mycourses:'My Courses', mygrades:'My Grades',
       myatt:'My Attendance', myassign:'My Assignments', myfees:'My Fees',
       gcalc:'Grade Calculator', transcript:'Transcript', hallticket:'Hall Ticket',
       wishlist:'Course Wishlist', achievements:'Achievements', applyleave:'Apply Leave',
       gradeentry:'Teaching › Grade Entry', markatt:'Teaching › Attendance',
-      assignments:'Teaching › Assignments', fleaves:'Teaching › Leave Requests',
-      fmessages:'Teaching › Messages', fdash:'Dashboard',
+      assignments:'Teaching › Assignments', leaves:'Teaching › Leave Requests',
+      fdash:'Dashboard',
     };
     bc.textContent = BREADCRUMB_MAP[id] || (pg?.querySelector('h1')?.textContent || '');
   }
@@ -200,6 +205,55 @@ function _migrateDemoStamps() {
   } catch {}
 }
 
+// Migration: seed roles table + assign demo customRoleIds if roles were added after initial seed
+function _migrateRoles() {
+  try {
+    if (localStorage.getItem('acs_mg_roles')) return;
+    // Seed roles if table is empty
+    if (!DB.g('roles').length) {
+      DB.s('roles', [
+        { id:1, _demo:true, name:'HOD', color:'#6366f1', perms:{
+            view_students:true,  edit_students:true,  delete_students:false, import_students:false,
+            manage_courses:true, manage_enrollments:false, enter_grades:false, view_all_grades:true,  manage_exams:false,
+            mark_attendance:false, edit_attendance:false, view_attendance_reports:false,
+            view_fees:true,  edit_fees:false, mark_paid:false, manage_scholarships:true,
+            send_announcements:false, approve_leaves:true,  view_messages:false,
+            export_data:true, view_audit_log:false, manage_users:false, manage_settings:false,
+        }},
+        { id:2, _demo:true, name:'Exam Cell', color:'#0ea5e9', perms:{
+            view_students:true,  edit_students:false, delete_students:false, import_students:false,
+            manage_courses:false, manage_enrollments:false, enter_grades:true, view_all_grades:true,  manage_exams:true,
+            mark_attendance:false, edit_attendance:false, view_attendance_reports:false,
+            view_fees:false, edit_fees:false, mark_paid:false, manage_scholarships:false,
+            send_announcements:false, approve_leaves:false, view_messages:false,
+            export_data:true, view_audit_log:false, manage_users:false, manage_settings:false,
+        }},
+        { id:3, _demo:true, name:'Finance Officer', color:'#f59e0b', perms:{
+            view_students:true,  edit_students:false, delete_students:false, import_students:false,
+            manage_courses:false, manage_enrollments:false, enter_grades:false, view_all_grades:false, manage_exams:false,
+            mark_attendance:false, edit_attendance:false, view_attendance_reports:false,
+            view_fees:true,  edit_fees:true,  mark_paid:true,  manage_scholarships:true,
+            send_announcements:false, approve_leaves:false, view_messages:false,
+            export_data:true, view_audit_log:false, manage_users:false, manage_settings:false,
+        }},
+      ]);
+    }
+    // Assign customRoleId to demo faculty users if not already set
+    const us = DB.g('users');
+    const roleMap = { 3: 1, 4: 2, 5: 3 }; // userId → roleId (priyanka=HOD, rajini=ExamCell, rashmika=Finance)
+    let changed = false;
+    const patched = us.map(u => {
+      if (roleMap[u.id] !== undefined && u.customRoleId == null) {
+        changed = true;
+        return { ...u, customRoleId: roleMap[u.id] };
+      }
+      return u;
+    });
+    if (changed) DB.s('users', patched);
+    localStorage.setItem('acs_mg_roles', '1');
+  } catch {}
+}
+
 function init() {
   // Clear any stale drafts from previous sessions
   try {
@@ -218,6 +272,9 @@ function init() {
   // One-time migration: stamp demo records that were seeded before _demo flag existed.
   // Runs once per browser; safe because user-created records always get IDs > max demo ID.
   _migrateDemoStamps();
+
+  // One-time migration: seed roles table + assign demo customRoleIds (added after initial seed).
+  _migrateRoles();
 
   // Update landing hero stats from real DB data
   try {

@@ -466,6 +466,7 @@
         <div class="tn-di" onclick="go('calendar')">Academic Calendar</div>
         <div class="tn-di" onclick="go('reports')">Reports</div>
         <div class="tn-di" onclick="go('users')">User Accounts</div>
+        <div class="tn-di" onclick="go('roles')">Roles</div>
         <div class="tn-di" onclick="go('auditlog')">Audit Log</div>
         <div class="tn-di" onclick="go('export')">Data Export</div>
       </div>
@@ -571,8 +572,8 @@
 
 <!-- ══ FACULTY ══ -->
 <div class="page" id="pg-faculty">
-  <div class="topbar"><div><h1>Faculty</h1><p>Teaching staff</p></div><div class="topbar-r"><button class="btn btn-p" onclick="openM('m-faculty')">+ Add Faculty</button></div></div>
-  <div class="card"><div class="card-h"><input class="inp" id="fs" placeholder="Search…" style="width:200px" oninput="State.resetPage('ftbody');rFaculty()"></div><div class="tw"><table class="t"><thead><tr><th>Faculty</th><th>ID</th><th>Department</th><th>Qualification</th><th>Courses</th><th>Students</th><th></th></tr></thead><tbody id="ftbody"></tbody></table></div><div id="ftbody-pg" class="pg"></div></div>
+  <div class="topbar"><div><h1>Faculty</h1><p>Teaching staff</p></div><div class="topbar-r"><button class="btn btn-p" onclick="openNewFaculty()">+ Add Faculty</button></div></div>
+  <div class="card"><div class="card-h"><input class="inp" id="fs" placeholder="Search…" style="width:200px" oninput="State.resetPage('ftbody');rFaculty()"></div><div class="tw"><table class="t"><thead><tr><th>Faculty</th><th>ID</th><th>Department</th><th>Qualification</th><th>Role</th><th>Courses</th><th>Students</th><th></th></tr></thead><tbody id="ftbody"></tbody></table></div><div id="ftbody-pg" class="pg"></div></div>
 </div>
 
 <!-- ══ DEPARTMENTS ══ -->
@@ -731,6 +732,20 @@
 <div class="page" id="pg-users">
   <div class="topbar"><div><h1>User Accounts</h1></div></div>
   <div class="card"><div class="tw"><table class="t"><thead><tr><th>Username</th><th>Role</th><th>Linked To</th><th></th></tr></thead><tbody id="usertbl"></tbody></table></div></div>
+</div>
+
+<!-- ══ ROLES ══ -->
+<div class="page" id="pg-roles">
+  <div class="topbar"><div><h1>Roles</h1><p>Custom permission sets for faculty</p></div></div>
+  <div class="roles-layout">
+    <div class="roles-sidebar">
+      <div class="roles-sidebar-head"><button class="btn btn-p" style="width:100%" onclick="newRole()">+ New role</button></div>
+      <div class="roles-sidebar-list" id="roles-sidebar-list"></div>
+    </div>
+    <div class="roles-detail" id="roles-detail">
+      <div class="roles-empty-state">Select a role or create a new one</div>
+    </div>
+  </div>
 </div>
 
 <!-- ══ AUDIT LOG ══ -->
@@ -986,7 +1001,7 @@
 
 <div class="mbg" id="m-student"><div class="mbox"><div class="mh"><div class="mt" id="mst-title">Add Student</div><button class="mx" onclick="closeM('m-student')">×</button></div><div class="mb"><input type="hidden" id="mst-id"><div class="frow"><div class="ff"><label>First Name <span class="req">*</span></label><input id="mst-fn"></div><div class="ff"><label>Last Name <span class="req">*</span></label><input id="mst-ln"></div></div><div class="ff"><label>Email <span class="req">*</span></label><input id="mst-em" type="email"></div><div class="frow"><div class="ff"><label>Phone</label><input id="mst-ph"></div><div class="ff"><label>Date of Birth</label><input id="mst-dob" type="date"></div></div><div class="frow"><div class="ff"><label>Department</label><select id="mst-dept" class="sel"><option>Computer Science</option><option>Mathematics</option><option>Physics</option><option>Chemistry</option><option>Business</option><option>Arts & Humanities</option><option>Engineering</option></select></div><div class="ff"><label>Year</label><select id="mst-yr" class="sel"><option>1</option><option>2</option><option>3</option><option>4</option></select></div></div><div class="frow"><div class="ff"><label>Status</label><select id="mst-st" class="sel"><option>Active</option><option>Inactive</option><option>Alumni</option></select></div><div class="ff"><label>Admission Year</label><input id="mst-adm" type="number" placeholder="2024"></div></div><div class="ff"><label>Address</label><textarea id="mst-addr"></textarea></div></div><div class="mf"><button class="btn btn-g" onclick="closeM('m-student')">Cancel</button><button class="btn btn-p" onclick="saveStudent()">Save</button></div></div></div>
 
-<div class="mbg" id="m-faculty"><div class="mbox"><div class="mh"><div class="mt" id="mf-title">Add Faculty</div><button class="mx" onclick="closeM('m-faculty')">×</button></div><div class="mb"><input type="hidden" id="mf-id"><div class="frow"><div class="ff"><label>First Name <span class="req">*</span></label><input id="mf-fn"></div><div class="ff"><label>Last Name <span class="req">*</span></label><input id="mf-ln"></div></div><div class="ff"><label>Email <span class="req">*</span></label><input id="mf-em" type="email"></div><div class="ff"><label>Department</label><select id="mf-dept" class="sel"><option>Computer Science</option><option>Mathematics</option><option>Physics</option><option>Chemistry</option><option>Business</option><option>Arts & Humanities</option><option>Engineering</option></select></div><div class="frow"><div class="ff"><label>Qualification</label><input id="mf-qual"></div><div class="ff"><label>Specialization</label><input id="mf-spec"></div></div><div class="ff"><label>Phone</label><input id="mf-ph"></div></div><div class="mf"><button class="btn btn-g" onclick="closeM('m-faculty')">Cancel</button><button class="btn btn-p" onclick="saveFaculty()">Save</button></div></div></div>
+<div class="mbg" id="m-faculty"><div class="mbox"><div class="mh"><div class="mt" id="mf-title">Add Faculty</div><button class="mx" onclick="closeM('m-faculty')">×</button></div><div class="mb"><input type="hidden" id="mf-id"><div class="frow"><div class="ff"><label>First Name <span class="req">*</span></label><input id="mf-fn"></div><div class="ff"><label>Last Name <span class="req">*</span></label><input id="mf-ln"></div></div><div class="ff"><label>Email <span class="req">*</span></label><input id="mf-em" type="email"></div><div class="ff"><label>Department</label><select id="mf-dept" class="sel"><option>Computer Science</option><option>Mathematics</option><option>Physics</option><option>Chemistry</option><option>Business</option><option>Arts & Humanities</option><option>Engineering</option></select></div><div class="frow"><div class="ff"><label>Qualification</label><input id="mf-qual"></div><div class="ff"><label>Specialization</label><input id="mf-spec"></div></div><div class="ff"><label>Phone</label><input id="mf-ph"></div><div class="ff"><label>Custom Role</label><select id="mf-role" class="sel"><option value="">Default (Full Access)</option></select></div></div><div class="mf"><button class="btn btn-g" onclick="closeM('m-faculty')">Cancel</button><button class="btn btn-p" onclick="saveFaculty()">Save</button></div></div></div>
 
 <div class="mbg" id="m-dept"><div class="mbox narrow"><div class="mh"><div class="mt" id="mdept-title">Add Department</div><button class="mx" onclick="closeM('m-dept')">×</button></div><div class="mb"><input type="hidden" id="mdept-id"><div class="ff"><label>Department Name</label><input id="mdept-n"></div><div class="ff"><label>Code</label><input id="mdept-c" placeholder="CS"></div><div class="ff"><label>Head of Department</label><select id="mdept-hod" class="sel"></select></div><div class="ff"><label>Budget ($)</label><input id="mdept-b" type="number"></div></div><div class="mf"><button class="btn btn-g" onclick="closeM('m-dept')">Cancel</button><button class="btn btn-p" onclick="saveDept()">Save</button></div></div></div>
 
@@ -1021,6 +1036,23 @@
       <button class="btn btn-g" onclick="closeM('m-csv-import')">Cancel</button>
       <button class="btn btn-g" onclick="previewCSV()">Preview</button>
       <button class="btn btn-p" id="csv-import-btn" onclick="confirmCSVImport()" style="display:none">Import <span id="csv-count"></span> Grades</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ STUDENT CSV IMPORT MODAL ══ -->
+<div class="mbg" id="m-stu-import">
+  <div class="mbox">
+    <div class="mh"><div class="mt">Import Students — CSV</div><button class="mx" onclick="closeM('m-stu-import')">×</button></div>
+    <div class="mb">
+      <div class="ff"><label>Paste CSV <span style="color:var(--text4);font-weight:400">(columns: first name, last name, email, department, year)</span></label>
+        <textarea id="stu-csv-inp" rows="6" placeholder="John,Doe,john@uni.edu,Computer Science,1&#10;Jane,Smith,jane@uni.edu,Mathematics,2" style="font-family:var(--mono);font-size:12px"></textarea></div>
+      <div id="stu-csv-preview" style="margin-top:10px;max-height:220px;overflow-y:auto"></div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-g" onclick="closeM('m-stu-import')">Cancel</button>
+      <button class="btn btn-g" onclick="previewStudentCSV()">Preview</button>
+      <button class="btn btn-p" id="stu-csv-do-btn" onclick="confirmStudentCSV()" style="display:none">Import</button>
     </div>
   </div>
 </div>
@@ -1072,7 +1104,8 @@
 
 <div class="mbg" id="m-att-edit"><div class="mbox narrow"><div class="mh"><div class="mt">Edit Attendance</div><button class="mx" onclick="closeM('m-att-edit')">×</button></div><div class="mb"><input type="hidden" id="mae-id"><div class="ff"><label>Student</label><div id="mae-stu" class="text2" style="font-size:13px;padding:4px 0"></div></div><div class="ff"><label>Course</label><div id="mae-co" class="text2" style="font-size:13px;padding:4px 0"></div></div><div class="frow"><div class="ff"><label>Present <span class="req">*</span></label><input id="mae-pres" type="number" min="0"></div><div class="ff"><label>Total Classes <span class="req">*</span></label><input id="mae-tot" type="number" min="1"></div></div></div><div class="mf"><button class="btn btn-g" onclick="closeM('m-att-edit')">Cancel</button><button class="btn btn-p" onclick="saveAttEdit()">Save</button></div></div></div>
 
-<div class="mbg" id="m-user-edit"><div class="mbox narrow"><div class="mh"><div class="mt">Edit User</div><button class="mx" onclick="closeM('m-user-edit')">×</button></div><div class="mb"><input type="hidden" id="mue-id"><div class="ff"><label>Username</label><div id="mue-u" class="mono text2" style="font-size:13px;padding:4px 0"></div></div><div class="ff"><label>Role</label><select id="mue-role" class="sel"><option value="admin">admin</option><option value="faculty">faculty</option><option value="student">student</option></select></div></div><div class="mf"><button class="btn btn-g" onclick="closeM('m-user-edit')">Cancel</button><button class="btn btn-p" onclick="saveUserEdit()">Save</button></div></div></div>
+<div class="mbg" id="m-user-edit"><div class="mbox narrow"><div class="mh"><div class="mt">Edit User</div><button class="mx" onclick="closeM('m-user-edit')">×</button></div><div class="mb"><input type="hidden" id="mue-id"><div class="ff"><label>Username</label><div id="mue-u" class="mono text2" style="font-size:13px;padding:4px 0"></div></div><div class="ff"><label>Role</label><select id="mue-role" class="sel" onchange="_onUserRoleChange()"><option value="admin">admin</option><option value="faculty">faculty</option><option value="student">student</option></select></div><div class="ff" id="mue-role-wrap" style="display:none"><label>Custom Role (faculty only)</label><select id="mue-custom-role" class="sel"></select></div></div><div class="mf"><button class="btn btn-g" onclick="closeM('m-user-edit')">Cancel</button><button class="btn btn-p" onclick="saveUserEdit()">Save</button></div></div></div>
+
 
 <!-- ══ SUCCESS POPUP ══ -->
 <div class="success-overlay" id="success-overlay" onclick="closeSuccessPopup()">

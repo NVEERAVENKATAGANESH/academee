@@ -10,10 +10,10 @@ function seed() {
   // Per-user hashes — username is mixed in as salt
   DB.s('users', [
     {id:1,  u:'admin',    p:Auth.hashPw('admin123',   'admin'),    role:'admin',   lid:null, name:'Admin'},
-    {id:2,  u:'srk',      p:Auth.hashPw('faculty123', 'srk'),      role:'faculty', lid:1,    name:'Shah Rukh Khan'},
-    {id:3,  u:'priyanka', p:Auth.hashPw('faculty123', 'priyanka'), role:'faculty', lid:2,    name:'Priyanka Chopra'},
-    {id:4,  u:'rajini',   p:Auth.hashPw('faculty123', 'rajini'),   role:'faculty', lid:3,    name:'Rajini Kanth'},
-    {id:5,  u:'rashmika', p:Auth.hashPw('faculty123', 'rashmika'), role:'faculty', lid:4,    name:'Rashmika Mandanna'},
+    {id:2,  u:'srk',      p:Auth.hashPw('faculty123', 'srk'),      role:'faculty', lid:1, customRoleId:null, name:'Shah Rukh Khan'},
+    {id:3,  u:'priyanka', p:Auth.hashPw('faculty123', 'priyanka'), role:'faculty', lid:2, customRoleId:1,    name:'Priyanka Chopra'},
+    {id:4,  u:'rajini',   p:Auth.hashPw('faculty123', 'rajini'),   role:'faculty', lid:3, customRoleId:2,    name:'Rajini Kanth'},
+    {id:5,  u:'rashmika', p:Auth.hashPw('faculty123', 'rashmika'), role:'faculty', lid:4, customRoleId:3,    name:'Rashmika Mandanna'},
     {id:6,  u:'prabhas',  p:Auth.hashPw('student123', 'prabhas'),  role:'student', lid:1,    name:'Prabhas'},
     {id:7,  u:'katrina',  p:Auth.hashPw('student123', 'katrina'),  role:'student', lid:2,    name:'Katrina Kaif'},
     {id:8,  u:'allu',     p:Auth.hashPw('student123', 'allu'),     role:'student', lid:3,    name:'Allu Arjun'},
@@ -210,6 +210,33 @@ function seed() {
 
   DB.s('wishlist', []);
 
+  DB.s('roles', [
+    { id:1, name:'HOD', color:'#6366f1', perms:{
+        view_students:true,  edit_students:true,  delete_students:false, import_students:false,
+        manage_courses:true, manage_enrollments:false, enter_grades:false, view_all_grades:true,  manage_exams:false,
+        mark_attendance:false, edit_attendance:false, view_attendance_reports:false,
+        view_fees:true,  edit_fees:false, mark_paid:false, manage_scholarships:true,
+        send_announcements:false, approve_leaves:true,  view_messages:false,
+        export_data:true, view_audit_log:false, manage_users:false, manage_settings:false,
+    }},
+    { id:2, name:'Exam Cell', color:'#0ea5e9', perms:{
+        view_students:true,  edit_students:false, delete_students:false, import_students:false,
+        manage_courses:false, manage_enrollments:false, enter_grades:true, view_all_grades:true,  manage_exams:true,
+        mark_attendance:false, edit_attendance:false, view_attendance_reports:false,
+        view_fees:false, edit_fees:false, mark_paid:false, manage_scholarships:false,
+        send_announcements:false, approve_leaves:false, view_messages:false,
+        export_data:true, view_audit_log:false, manage_users:false, manage_settings:false,
+    }},
+    { id:3, name:'Finance Officer', color:'#f59e0b', perms:{
+        view_students:true,  edit_students:false, delete_students:false, import_students:false,
+        manage_courses:false, manage_enrollments:false, enter_grades:false, view_all_grades:false, manage_exams:false,
+        mark_attendance:false, edit_attendance:false, view_attendance_reports:false,
+        view_fees:true,  edit_fees:true,  mark_paid:true,  manage_scholarships:true,
+        send_announcements:false, approve_leaves:false, view_messages:false,
+        export_data:true, view_audit_log:false, manage_users:false, manage_settings:false,
+    }},
+  ]);
+
   DB.s('audit', [
     {id:1, action:'Student Added',    detail:'Prabhas added to system',                      user:'admin', ts:Date.now()-86400000*3, color:'var(--green)'},
     {id:2, action:'Grade Updated',    detail:'CS101 grade updated for Prabhas',              user:'srk',   ts:Date.now()-86400000*2, color:'var(--blue)'},
@@ -225,7 +252,7 @@ function seed() {
     'users','faculty','students','depts','courses','enrollments',
     'grades','attendance','fees','scholarships','exams','announcements',
     'assignments','submissions','leaves','appeals','events','messages',
-    'notifications','wishlist','waitlist','audit'
+    'notifications','wishlist','waitlist','audit','roles'
   ];
   _SEED_KEYS.forEach(k => {
     const arr = DB.g(k);

@@ -140,6 +140,28 @@ function sparkline(vals) {
 function stuId(id) { return 'STU' + String(id).padStart(4, '0'); }
 function facId(id) { return 'FAC' + String(id).padStart(3, '0'); }
 
+// ── Permission check ─────────────────────────────────
+// admin → always true | student → always false
+// faculty without customRoleId → full access (default)
+// faculty with customRoleId → checks role.perms[perm]
+function canDo(perm) {
+  const u = State.getUser();
+  if (!u) return false;
+  if (u.role === 'admin') return true;
+  if (u.role === 'student') return false;
+  if (!u.customRoleId) return true;
+  const role = DB.g('roles').find(r => r.id === u.customRoleId);
+  if (!role) return true;
+  return role.perms?.[perm] === true;
+}
+
+// ── Student name with anonymization ──────────────────
+// Shows "Student [STU0001]" if caller lacks view_students permission.
+function stuName(sid) {
+  if (!canDo('view_students')) return 'Student [' + stuId(sid) + ']';
+  return sn(sid);
+}
+
 // ── Debounce ──────────────────────────────────────────
 function debounce(fn, ms = 200) {
   let t;

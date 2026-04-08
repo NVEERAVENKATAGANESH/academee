@@ -102,7 +102,7 @@ const DB = (() => {
     'users','faculty','students','depts','courses','enrollments',
     'grades','attendance','fees','scholarships','exams','announcements',
     'assignments','submissions','leaves','appeals','events','messages',
-    'notifications','wishlist','waitlist','audit'
+    'notifications','wishlist','waitlist','audit','roles'
   ];
 
   function exportAll() {
