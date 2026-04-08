@@ -36,10 +36,11 @@
 
 <link rel="manifest" href="manifest.json">
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/crypto-js@4.2.0/crypto-js.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/crypto-js@4.2.0/crypto-js.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -54,12 +55,24 @@
       <span class="ln">Academe</span>
     </div>
     <div class="land-links">
-      <span class="land-link" onclick="document.getElementById('land-features').scrollIntoView({behavior:'smooth'})">Features</span>
-      <span class="land-link" onclick="document.getElementById('land-roles').scrollIntoView({behavior:'smooth'})">Roles</span>
-      <span class="land-link" onclick="showSignIn('signup')">Sign up</span>
+      <span class="land-link" role="button" tabindex="0" onclick="document.getElementById('land-features').scrollIntoView({behavior:'smooth'})">Features</span>
+      <span class="land-link" role="button" tabindex="0" onclick="document.getElementById('land-roles').scrollIntoView({behavior:'smooth'})">Roles</span>
+      <span class="land-link" role="button" tabindex="0" onclick="showSignIn('signup')">Sign up</span>
     </div>
     <div class="land-nav-actions">
-      <button class="land-signin-btn" onclick="showSignIn('signin')">Sign in →</button>
+      <button class="land-signin-btn" onclick="showSignIn('signin')" aria-label="Sign in to Academe">Sign in →</button>
+      <!-- Hamburger — visible only at ≤960px -->
+      <button class="land-mob-btn" id="land-mob-btn" onclick="toggleLandMobMenu()" aria-label="Open navigation menu" aria-expanded="false" aria-controls="land-mob-menu">
+        <span class="land-mob-bar"></span>
+        <span class="land-mob-bar"></span>
+        <span class="land-mob-bar"></span>
+      </button>
+    </div>
+    <!-- Mobile nav dropdown -->
+    <div class="land-mob-menu" id="land-mob-menu" role="menu">
+      <span class="land-mob-link" role="menuitem" tabindex="0" onclick="landMobGo('land-features')">Features</span>
+      <span class="land-mob-link" role="menuitem" tabindex="0" onclick="landMobGo('land-roles')">Roles</span>
+      <span class="land-mob-link" role="menuitem" tabindex="0" onclick="landMobGo(null,'signup')">Sign up</span>
     </div>
   </nav>
 
@@ -286,7 +299,7 @@
   </div>
 
   <!-- ── Legal Modal ── -->
-  <div class="land-overlay" id="legal-overlay" onclick="closeLegal()"></div>
+  <div class="land-overlay" id="legal-overlay" style="z-index:509" onclick="closeLegal()"></div>
   <div class="legal-modal" id="legal-modal" role="dialog" aria-modal="true">
     <div class="legal-modal-hdr">
       <div class="legal-modal-title" id="legal-title">Privacy Policy</div>
@@ -425,7 +438,7 @@
 <nav class="topnav" id="topnav">
 
   <!-- ADMIN -->
-  <div id="tnav-admin" class="tn-role" style="display:none">
+  <div id="tnav-admin" class="tn-role">
     <div class="tn-item" onclick="go('dash')">Dashboard</div>
     <div class="tn-grp">
       <div class="tn-item tn-has-drop" onclick="tnToggle('td-people')">People<svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>
@@ -474,7 +487,7 @@
   </div>
 
   <!-- FACULTY -->
-  <div id="tnav-faculty" class="tn-role" style="display:none">
+  <div id="tnav-faculty" class="tn-role">
     <div class="tn-item" onclick="go('fdash')">Dashboard</div>
     <div class="tn-grp">
       <div class="tn-item tn-has-drop" onclick="tnToggle('td-teaching')">Teaching<svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>
@@ -490,7 +503,7 @@
   </div>
 
   <!-- STUDENT -->
-  <div id="tnav-student" class="tn-role" style="display:none">
+  <div id="tnav-student" class="tn-role">
     <div class="tn-item" onclick="go('sdash')">Dashboard</div>
     <div class="tn-grp">
       <div class="tn-item tn-has-drop" onclick="tnToggle('td-sacademics')">Academics<svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>
@@ -541,11 +554,11 @@
 <div class="page" id="pg-dash">
   <div class="topbar"><div><h1>Dashboard</h1><p id="dash-date"></p></div><div class="topbar-r"><span class="mono text4" style="font-size:11px" id="dash-time"></span></div></div>
   <div class="stats" id="astats"></div>
-  <div style="display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:14px">
+  <div class="dash-chart-grid">
     <div class="card"><div class="card-h"><div class="card-t">Enrollment trend</div><span class="text4 mono" style="font-size:11px">Last 6 months</span></div><div class="card-b"><div class="chart-wrap"><canvas id="ch-enroll"></canvas></div></div></div>
     <div class="card"><div class="card-h"><div class="card-t">Grade distribution</div></div><div class="card-b"><div class="chart-wrap-sm"><canvas id="ch-grade"></canvas></div></div></div>
   </div>
-  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px">
+  <div class="dash-bottom-grid">
     <div class="card"><div class="card-h"><div class="card-t">At-risk students</div><span class="bx bx-rd" style="font-size:10px" id="risk-count">0</span></div><div class="tw"><table class="t" id="risk-tbl"></table></div></div>
     <div class="card"><div class="card-h"><div class="card-t">Recent activity</div></div><div class="card-b" id="recent-act" style="max-height:200px;overflow-y:auto"></div></div>
     <div class="card"><div class="card-h"><div class="card-t">Fee collection</div></div><div class="card-b"><div class="chart-wrap-sm"><canvas id="ch-fee"></canvas></div></div></div>
@@ -579,7 +592,7 @@
 <!-- ══ DEPARTMENTS ══ -->
 <div class="page" id="pg-departments">
   <div class="topbar"><div><h1>Departments</h1></div><div class="topbar-r"><button class="btn btn-p" onclick="openM('m-dept')">+ Add Department</button></div></div>
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px" id="dept-grid"></div>
+  <div class="three-col" id="dept-grid"></div>
 </div>
 
 <!-- ══ COURSES ══ -->
@@ -757,7 +770,7 @@
 <!-- ══ DATA EXPORT ══ -->
 <div class="page" id="pg-export">
   <div class="topbar"><div><h1>Data Export</h1><p>Download data as CSV</p></div></div>
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px" id="export-grid"></div>
+  <div class="export-grid-wrap" id="export-grid"></div>
   <div id="sem-settings"></div>
 </div>
 
@@ -867,7 +880,7 @@
 <div class="page" id="pg-sdash">
   <div class="topbar"><div><h1 id="sdash-t">Dashboard</h1><p>Your academic snapshot</p></div></div>
   <div class="stats" id="sstats"></div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+  <div class="two-col" style="margin-bottom:14px">
     <div class="card"><div class="card-h"><div class="card-t">Semester progress</div></div><div class="card-b" id="sem-progress"></div></div>
     <div class="card"><div class="card-h"><div class="card-t">Upcoming deadlines</div></div><div class="card-b" id="deadlines"></div></div>
   </div>
@@ -886,7 +899,7 @@
 <!-- ══ MY GRADES ══ -->
 <div class="page" id="pg-mygrades">
   <div class="topbar"><div><h1>Grades & GPA</h1></div></div>
-  <div style="display:grid;grid-template-columns:200px 1fr;gap:14px;align-items:start">
+  <div class="mygrades-grid">
     <div>
       <div class="card"><div class="card-b" style="text-align:center;padding:20px">
         <div style="position:relative;width:80px;height:80px;margin:0 auto 12px"><svg width="80" height="80" viewBox="0 0 180 180" style="transform:rotate(-90deg)"><circle cx="90" cy="90" r="76" fill="none" stroke="var(--bg3)" stroke-width="14"/><circle cx="90" cy="90" r="76" fill="none" stroke="var(--blue)" stroke-width="14" id="gpa-ring" stroke-dasharray="0 477" stroke-linecap="round"/></svg><div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center"><div style="font-size:18px;font-weight:600;letter-spacing:-0.5px" id="gpa-num">0.0</div><div style="font-size:9px;color:var(--text4);text-transform:uppercase;letter-spacing:0.5px">GPA</div></div></div>

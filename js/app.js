@@ -500,6 +500,35 @@ function quickLogin(u, p) {
   doLogin();
 }
 
+// ── Landing nav mobile hamburger ─────────────
+function toggleLandMobMenu() {
+  const btn  = $('land-mob-btn');
+  const menu = $('land-mob-menu');
+  if (!btn || !menu) return;
+  const opening = !menu.classList.contains('open');
+  btn.classList.toggle('open', opening);
+  menu.classList.toggle('open', opening);
+  btn.setAttribute('aria-expanded', opening);
+}
+function closeLandMobMenu() {
+  $('land-mob-btn')?.classList.remove('open');
+  $('land-mob-menu')?.classList.remove('open');
+  $('land-mob-btn')?.setAttribute('aria-expanded', 'false');
+}
+function landMobGo(sectionId, authTab) {
+  closeLandMobMenu();
+  if (authTab) { showSignIn(authTab); return; }
+  if (sectionId) document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth' });
+}
+// Close landing mobile menu when clicking outside
+document.addEventListener('click', e => {
+  if ($('land-mob-menu')?.classList.contains('open') &&
+      !e.target.closest('#land-mob-btn') &&
+      !e.target.closest('#land-mob-menu')) {
+    closeLandMobMenu();
+  }
+});
+
 // ═══════════════════════════════════════════
 //  CONFIRM DIALOG helpers
 // ═══════════════════════════════════════════

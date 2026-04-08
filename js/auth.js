@@ -271,7 +271,10 @@ const Auth = (() => {
 
     ['admin','faculty','student'].forEach(r => {
       const el = $('tnav-' + r);
-      if (el) el.style.display = (user.role === r) ? 'flex' : 'none';
+      if (el) {
+        el.style.display = '';                                    // clear any inline override
+        el.classList.toggle('tn-role-visible', user.role === r); // CSS handles show/hide
+      }
     });
 
     updateNotifBadge();
